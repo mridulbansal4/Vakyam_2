@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+.kotlin/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# The Gemma model is ~2.6 GB and is pushed to the device with adb, never bundled or committed.
+Models/*.litertlm
+*.litertlm

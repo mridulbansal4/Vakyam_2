@@ -1,6 +1,6 @@
 <resources>
     <!-- Untranslatable Strings -->
-    <string name="app_name" translatable="false">Gaze Link</string>
+    <string name="app_name" translatable="false">Vakyam</string>
 
     <!-- Gaze Types -->
     <string name="Straight">Straight</string>
@@ -29,7 +29,7 @@
     <!-- Calibration UI Strings -->
     <string name="Calibration_TopBarTitle">CALIBRATION</string>
     <string name="Calibration_Title">EYE CALIBRATION</string>
-    <string name="Calibration_Description">Calibrate your eyes for Gaze Link to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see picture below). Press continue to start.</string>
+    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see picture below). Press continue to start.</string>
     <string name="Calibration_Continue">CONTINUE</string>
     <string name="Calibration_LookStraight">Look straight</string>
     <string name="Calibration_LookLeft">Look left</string>

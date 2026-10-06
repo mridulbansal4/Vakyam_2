@@ -72,8 +72,8 @@ class GemmaManager {
         list.add("/data/local/tmp/$primaryFile")
 
         // External shared storage paths
-        list.add("/sdcard/Android/data/com.demo.opencv/files/$primaryFile")
         list.add("/sdcard/Android/data/com.vakyam.app/files/$primaryFile")
+        list.add("/sdcard/Android/data/com.demo.opencv/files/$primaryFile")
         list.add("/sdcard/Download/$primaryFile")
         list.add("/sdcard/Models/$primaryFile")
         list.add("/sdcard/$primaryFile")
@@ -81,10 +81,11 @@ class GemmaManager {
         try {
             val extStorage = Environment.getExternalStorageDirectory()
             if (extStorage != null) {
+                list.add(File(extStorage, "Android/data/com.vakyam.app/files/$primaryFile").absolutePath)
+                list.add(File(extStorage, "Android/data/com.demo.opencv/files/$primaryFile").absolutePath)
                 list.add(File(extStorage, primaryFile).absolutePath)
                 list.add(File(extStorage, "Download/$primaryFile").absolutePath)
                 list.add(File(extStorage, "Models/$primaryFile").absolutePath)
-                list.add(File(extStorage, "Android/data/com.demo.opencv/files/$primaryFile").absolutePath)
             }
         } catch (_: Throwable) {}
 
@@ -127,48 +128,52 @@ class GemmaManager {
     private suspend fun initializeEngine() {
         val ctx = mContext ?: return
         engineMutex.withLock {
-            if (sharedEngine != null || isEngineInitializing) return
-            isEngineInitializing = true
-        }
+            if (sharedEngine != null) return
 
-        try {
-            val candidates = candidateModelPaths(ctx)
-            val modelFile = candidates.map { File(it) }.firstOrNull { it.exists() && it.canRead() }
-            if (modelFile == null) {
-                Log.w(TAG, "Gemma model not found. Searched candidate paths:\n" + candidates.joinToString("\n"))
-                return
-            }
-
-            Log.i(TAG, "Found Gemma model at: ${modelFile.absolutePath} (size: ${modelFile.length()} bytes)")
-
-            // Prefer GPU if available, fallback to CPU
-            val backends = listOf(
-                "GPU" to { Backend.GPU() },
-                "CPU" to { Backend.CPU() }
-            )
-
-            for ((backendName, createBackend) in backends) {
-                try {
-                    val config = EngineConfig(
-                        modelPath = modelFile.absolutePath,
-                        backend = createBackend(),
-                        maxNumTokens = MAX_CONTEXT_TOKENS,
-                        cacheDir = ctx.cacheDir.absolutePath
-                    )
-                    val newEngine = Engine(config)
-                    newEngine.initialize()
-                    engineMutex.withLock {
-                        sharedEngine = newEngine
-                    }
-                    Log.i(TAG, "Gemma 4 E2B engine initialized successfully on $backendName")
+            try {
+                val candidates = candidateModelPaths(ctx)
+                val modelFile = candidates.map { File(it) }.firstOrNull { it.exists() && it.canRead() }
+                if (modelFile == null) {
+                    Log.w(TAG, "Gemma model not found. Searched candidate paths:\n" + candidates.joinToString("\n"))
                     return
-                } catch (e: Throwable) {
-                    Log.w(TAG, "Failed initializing Gemma on $backendName: ${e.message}")
                 }
-            }
-        } finally {
-            engineMutex.withLock {
-                isEngineInitializing = false
+
+                Log.i(TAG, "Found Gemma model at: ${modelFile.absolutePath} (size: ${modelFile.length()} bytes)")
+
+                // Prefer GPU if available, fallback to CPU
+                val backends = listOf(
+                    "GPU" to { Backend.GPU() },
+                    "CPU" to { Backend.CPU() }
+                )
+
+                for ((backendName, createBackend) in backends) {
+                    try {
+                        val config = EngineConfig(
+                            modelPath = modelFile.absolutePath,
+                            backend = createBackend(),
+                            maxNumTokens = MAX_CONTEXT_TOKENS,
+                            cacheDir = ctx.cacheDir.absolutePath
+                        )
+                        val newEngine = Engine(config)
+                        newEngine.initialize()
+
+                        // Verify backend can actually execute inference (e.g. GPU might fail if OpenCL driver is inaccessible)
+                        val testConv = createConversation(newEngine, "English")
+                        try {
+                            testConv.sendMessage("test")
+                        } finally {
+                            runCatching { testConv.close() }
+                        }
+
+                        sharedEngine = newEngine
+                        Log.i(TAG, "Gemma 4 E2B engine initialized and verified successfully on $backendName")
+                        return
+                    } catch (e: Throwable) {
+                        Log.w(TAG, "Failed initializing Gemma on $backendName: ${e.message}")
+                    }
+                }
+            } catch (e: Throwable) {
+                Log.e(TAG, "Unexpected error during Gemma initialization: ${e.message}", e)
             }
         }
     }
@@ -269,6 +274,8 @@ class GemmaManager {
         Log.d(TAG, "Broadcasting sentence: $sentence")
         val intent = Intent("textGenerationEvent")
         intent.putExtra("message", "SP-$sentence")
+        intent.putExtra("content", sentence)
+        intent.putExtra("type", "SP")
         LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent)
     }
 

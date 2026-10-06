@@ -13,8 +13,6 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-rootProject.name = "GazeLink"
+rootProject.name = "Vakyam"
 include ':app'
 include ':opencv'
-project(':app').projectDir = file('Develop/app')
-project(':opencv').projectDir = file('Develop/opencv')

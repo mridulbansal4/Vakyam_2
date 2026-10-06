@@ -1,0 +1,98 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.demo.opencv'
+    compileSdk 34
+
+    sourceSets {
+        main{
+            jniLibs.srcDirs = ["libs"]
+            aidl.srcDirs = ['src']
+        }
+    }
+
+
+
+    defaultConfig {
+        applicationId "com.demo.opencv"
+        minSdk 26
+        targetSdk 34
+        versionCode 2
+        versionName "2.0"
+
+        buildConfigField "String", "MY_OPENAI_KEY", "${findProperty('MY_OPENAI_KEY') ?: '\"\"'}"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    aaptOptions {
+        noCompress "txt"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+
+    buildFeatures {
+        viewBinding true
+        aidl true
+    }
+}
+
+dependencies {
+
+    // LiteRT-LM runtime for on-device Gemma 4 E2B
+    implementation("com.google.ai.edge.litertlm:litertlm-android:0.17.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
+
+    implementation 'org.twitter4j:twitter4j-core:4.0.7'
+    implementation 'com.github.scribejava:scribejava-apis:6.9.0'
+    implementation 'com.github.scribejava:scribejava-core:6.9.0'
+
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    implementation project(path: ':opencv')
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.7.3'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.7.3'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    implementation 'com.google.mlkit:face-detection:16.1.5' // ml kit detection
+
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0' // MP Android Chart
+
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    implementation "androidx.datastore:datastore-preferences-rxjava2:1.0.0" // optional - RxJava2 support
+    implementation "androidx.datastore:datastore-preferences-rxjava3:1.0.0" // optional - RxJava3 support
+
+    def camerax_version = "1.1.0-beta01"
+    implementation "androidx.camera:camera-core:${camerax_version}"
+    implementation "androidx.camera:camera-camera2:${camerax_version}"
+    implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+    implementation "androidx.camera:camera-video:${camerax_version}"
+
+    implementation "androidx.camera:camera-view:${camerax_version}"
+    implementation "androidx.camera:camera-extensions:${camerax_version}"
+}

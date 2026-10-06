@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/textModeFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:backgroundTint="@color/columbia_blue"
+    android:orientation="horizontal"
+    tools:context=".fragments.text_mode_display">
+
+    <!-- TODO: Update blank fragment layout -->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="0.8"
+        android:background="@color/metal_green"
+        android:orientation="vertical"
+        android:padding="5dp">
+
+        <TextView
+            android:id="@+id/textInput"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:ems="10"
+            android:gravity="start|top"
+            android:inputType="textMultiLine"
+            android:padding="6dp"
+            android:textColor="@color/ghost_blue"
+            android:textSize="18sp"
+            tools:text="This is the text inputted by the user" />
+
+        <TextView
+            android:id="@+id/sentenceBox"
+            android:layout_width="match_parent"
+            android:layout_height="113dp"
+            android:background="@drawable/text_rounded_green"
+            android:padding="5sp"
+            android:textColor="@color/ghost_blue"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="This is the sentence generated" />
+
+        <TextView
+            android:id="@+id/contextBox"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="6dp"
+            android:textAlignment="viewStart"
+            android:textColor="@color/ghost_blue"
+            android:textSize="18sp"
+            tools:text="This is the context for the user" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="0.45"
+        android:background="@color/ghost_blue"
+        android:orientation="vertical"
+        android:padding="5dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:padding="1dp">
+
+            <ImageView
+                android:id="@+id/imageView5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:padding="2sp"
+                android:src="@drawable/upgaze" />
+
+            <TextView
+                android:id="@+id/upGazeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Current text" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:padding="1dp">
+
+            <ImageView
+                android:id="@+id/imageView4"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:padding="2sp"
+                android:src="@drawable/leftgaze" />
+
+            <TextView
+                android:id="@+id/leftGazeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Current text" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:padding="1dp">
+
+            <ImageView
+                android:id="@+id/imageView6"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:padding="2sp"
+                android:src="@drawable/rightgaze" />
+
+            <TextView
+                android:id="@+id/rightGazeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Current text" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:padding="1dp">
+
+            <ImageView
+                android:id="@+id/imageView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:padding="2sp"
+                android:src="@drawable/closedgaze" />
+
+            <TextView
+                android:id="@+id/closedGazeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Current text" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:padding="1dp">
+
+            <ImageView
+                android:id="@+id/imageView8"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:padding="2sp"
+                android:src="@drawable/leftupgaze" />
+
+            <TextView
+                android:id="@+id/leftUpGazeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Current text" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:padding="1dp">
+
+            <ImageView
+                android:id="@+id/imageView9"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="5"
+                android:padding="2sp"
+                android:src="@drawable/rightupgaze" />
+
+            <TextView
+                android:id="@+id/rightUpGazeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:padding="6dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                tools:text="Current text" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

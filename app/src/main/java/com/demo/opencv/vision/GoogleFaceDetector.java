@@ -12,6 +12,7 @@ import androidx.camera.core.ExperimentalGetImage;
 import androidx.camera.core.ImageProxy;
 
 import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceContour;
@@ -22,6 +23,7 @@ import com.google.mlkit.vision.face.FaceLandmark;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class GoogleFaceDetector {
 
@@ -29,9 +31,10 @@ public class GoogleFaceDetector {
     FaceDetector detector;
 
     // required public data
+    public boolean faceDetected = false;
     public FaceContour leftEyeContour, rightEyeContour;
     public PointF leftEyePos, rightEyePos;
-    public float rightEyeOpenProb, leftEyeOpenProb, rotY, rotZ;
+    public float rightEyeOpenProb = 1.0f, leftEyeOpenProb = 1.0f, rotY, rotZ;
     public Rect faceBound;
 
     public void initialize() {
@@ -46,9 +49,14 @@ public class GoogleFaceDetector {
     }
 
     public void analyze(List<Face> faces) {
-        if (faces.size() == 0) { // prevent the previous input from continuing to work
+        if (faces == null || faces.size() == 0) { // prevent the previous input from continuing to work
+            faceDetected = false;
             leftEyeContour = null;
             rightEyeContour = null;
+            faceBound = null;
+            leftEyeOpenProb = 1.0f;
+            rightEyeOpenProb = 1.0f;
+            return;
         }
         Face largestFace = null;
         int maxSize = -1;
@@ -61,6 +69,8 @@ public class GoogleFaceDetector {
         }
 
         if (largestFace != null) {
+            faceDetected = true;
+            faceBound = largestFace.getBoundingBox();
             leftEyeContour = largestFace.getContour(FaceContour.LEFT_EYE);
             rightEyeContour = largestFace.getContour(FaceContour.RIGHT_EYE);
 
@@ -79,11 +89,12 @@ public class GoogleFaceDetector {
         InputImage newImage = InputImage.fromBitmap(bm, 0);
         Log.d("googleFaceDetector", "detect begins");
 
-        Task<List<Face>> result = detector.process(newImage)
-                .addOnSuccessListener(this::analyze)
-                .addOnFailureListener(
-                        e -> {
-                            Log.d("googleFaceDetector", "detection failed " + e.getMessage());
-                        });
+        try {
+            List<Face> faces = Tasks.await(detector.process(newImage), 100, TimeUnit.MILLISECONDS);
+            analyze(faces);
+        } catch (Exception e) {
+            Log.e("googleFaceDetector", "detection failed or timed out", e);
+            analyze(null); // safely reset state on failure or timeout
+        }
     }
 }

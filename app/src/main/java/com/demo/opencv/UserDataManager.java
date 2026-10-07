@@ -67,18 +67,26 @@ public class UserDataManager extends Application {
     }
 
 
-    public void getSettings() {
+    private int parseIntOrDefault(String value, int defaultValue) {
+        if (value == null) return defaultValue;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
 
+    public void getSettings() {
         // get string values
         language = getString("Language");
-        lightingThreshold = Integer.parseInt(getString("LightingThreshold"));
-        textEntryMode = Integer.parseInt(getString("TextEntryMode"));
-        sensitivity = Integer.parseInt(getString("Sensitivity"));
+        lightingThreshold = parseIntOrDefault(getString("LightingThreshold"), 0);
+        textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
+        sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);
         accessToken = getString("AccessToken");
         accessTokenSecret = getString("AccessTokenSecret");
         requestToken = getString("RequestToken");
         requestTokenSecret = getString("RequestTokenSecret");
-        sentenceGenerationModel = Integer.parseInt(getString("SentenceGenerationModel"));
+        sentenceGenerationModel = parseIntOrDefault(getString("SentenceGenerationModel"), 1);
 
         // get calibration files
         if (getCalibrationFiles(mContext, leftEyeFileNames) != null) {
@@ -94,20 +102,28 @@ public class UserDataManager extends Application {
     }
 
     public String getString(String name) { // read
-        Preferences.Key<String> preference = PreferencesKeys.stringKey(name);
-        Flowable<String> flowable = dataStore.data().map(prefs -> {
-            if (prefs.get(preference) != null) { // data found
-                return prefs.get(preference);
-            } else { // data not found, set to default
-                String defaultValue = defaultSettings.get(name);
-                Log.d("UserSettings", "Data not found for " + name + ", setting default value to " + defaultValue);
-                setString(name, defaultValue); // init data store
-                return defaultValue;
+        try {
+            Preferences.Key<String> preference = PreferencesKeys.stringKey(name);
+            Flowable<String> flowable = dataStore.data().map(prefs -> {
+                if (prefs.get(preference) != null) { // data found
+                    return prefs.get(preference);
+                } else { // data not found, set to default
+                    String defaultValue = defaultSettings.get(name);
+                    Log.d("UserSettings", "Data not found for " + name + ", setting default value to " + defaultValue);
+                    setString(name, defaultValue); // init data store
+                    return defaultValue != null ? defaultValue : "";
+                }
+            });
+            String result = flowable.firstElement().blockingGet();
+            if (result != null) {
+                Log.d("UserSettings", "Value of " + name + " is " + result);
+                return result;
             }
-        });
-        String result = flowable.firstElement().blockingGet();
-        Log.d("UserSettings", "Value of " + name + " is " + result);
-        return result;
+        } catch (Exception e) {
+            Log.e("UserSettings", "Error reading " + name + ", using default", e);
+        }
+        String fallback = defaultSettings.get(name);
+        return fallback != null ? fallback : "";
     }
 
     public void setString(String name, String value) { // write
@@ -183,6 +199,9 @@ public class UserDataManager extends Application {
     }
 
     public String gazeIndexToString(int index) {
+        if (reference == null || index < 0 || index >= reference.length) {
+            return "Unknown (" + index + ")";
+        }
         return reference[index];
     }
 
@@ -273,8 +292,11 @@ public class UserDataManager extends Application {
         return leftCalibrationData;
     }
     public void setLeftCalibrationData(Bitmap leftCalibrationData, int index) {
+        if (this.leftCalibrationData == null || index < 0 || index >= this.leftCalibrationData.length) return;
         this.leftCalibrationData[index] = leftCalibrationData;
-        storeCalibrationFile(mContext, leftEyeFileNames[index], leftCalibrationData);
+        if (leftEyeFileNames != null && index < leftEyeFileNames.length && leftCalibrationData != null && mContext != null) {
+            storeCalibrationFile(mContext, leftEyeFileNames[index], leftCalibrationData);
+        }
     }
 
     public Bitmap[] getRightCalibrationData() {
@@ -282,7 +304,10 @@ public class UserDataManager extends Application {
     }
 
     public void setRightCalibrationData(Bitmap rightCalibrationData, int index) {
+        if (this.rightCalibrationData == null || index < 0 || index >= this.rightCalibrationData.length) return;
         this.rightCalibrationData[index] = rightCalibrationData;
-        storeCalibrationFile(mContext, rightEyeFileNames[index], rightCalibrationData);
+        if (rightEyeFileNames != null && index < rightEyeFileNames.length && rightCalibrationData != null && mContext != null) {
+            storeCalibrationFile(mContext, rightEyeFileNames[index], rightCalibrationData);
+        }
     }
 }

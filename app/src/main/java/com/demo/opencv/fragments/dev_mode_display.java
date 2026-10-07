@@ -77,7 +77,9 @@ public class dev_mode_display extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        handler.removeCallbacks(updateUI);
+        if (handler != null && updateUI != null) {
+            handler.removeCallbacks(updateUI);
+        }
     }
 
     public void updateSettings() {
@@ -112,27 +114,28 @@ public class dev_mode_display extends Fragment {
         // different image templates on the dev mode display
         userDataManager = (UserDataManager) requireActivity().getApplication();
 
-        images[0] = mActivity.findViewById(R.id.imageView1);
-        texts[0] = mActivity.findViewById(R.id.textView1);
-        texts[1] = mActivity.findViewById(R.id.textView2);
-        texts[2] = mActivity.findViewById(R.id.textView3);
-        texts[3] = mActivity.findViewById(R.id.textView4);
-        texts[4] = mActivity.findViewById(R.id.textView5);
-        gazeInputLog = mActivity.findViewById(R.id.gazeInputLog2);
-        sensitivitySeekBar = mActivity.findViewById(R.id.seekBar);
-        textEntrySpinner = mActivity.findViewById(R.id.textEntrySpinner);
-        languageSpinner = mActivity.findViewById(R.id.languageSpinner);
-        sentenceGenerationModelSpinner = mActivity.findViewById(R.id.sentenceGenerationModelSpinner);
+        images[0] = view.findViewById(R.id.imageView1);
+        texts[0] = view.findViewById(R.id.textView1);
+        texts[1] = view.findViewById(R.id.textView2);
+        texts[2] = view.findViewById(R.id.textView3);
+        texts[3] = view.findViewById(R.id.textView4);
+        texts[4] = view.findViewById(R.id.textView5);
+        gazeInputLog = view.findViewById(R.id.gazeInputLog2);
+        sensitivitySeekBar = view.findViewById(R.id.seekBar);
+        textEntrySpinner = view.findViewById(R.id.textEntrySpinner);
+        languageSpinner = view.findViewById(R.id.languageSpinner);
+        sentenceGenerationModelSpinner = view.findViewById(R.id.sentenceGenerationModelSpinner);
 
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(mActivity, R.array.language_options, R.layout.custom_spinner_item);
+        Context ctx = getContext() != null ? getContext() : requireActivity();
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(ctx, R.array.language_options, R.layout.custom_spinner_item);
         adapter.setDropDownViewResource(R.layout.custom_spinner_item);
         languageSpinner.setAdapter(adapter);
 
-        ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(mActivity, R.array.textEntry_options, R.layout.custom_spinner_item);
+        ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(ctx, R.array.textEntry_options, R.layout.custom_spinner_item);
         adapter2.setDropDownViewResource(R.layout.custom_spinner_item);
         textEntrySpinner.setAdapter(adapter2);
 
-        ArrayAdapter<CharSequence> adapter3 = ArrayAdapter.createFromResource(mActivity, R.array.sentenceGenerationModel_options, R.layout.custom_spinner_item);
+        ArrayAdapter<CharSequence> adapter3 = ArrayAdapter.createFromResource(ctx, R.array.sentenceGenerationModel_options, R.layout.custom_spinner_item);
         adapter3.setDropDownViewResource(R.layout.custom_spinner_item);
         sentenceGenerationModelSpinner.setAdapter(adapter3);
 
@@ -202,44 +205,38 @@ public class dev_mode_display extends Fragment {
             }
         });
 
-        handler = new Handler(Looper.getMainLooper());
-        updateUI = new Runnable(){
-            @Override
-            public void run() {
-                Log.d("devModeDisplay", "Images Displayed");
-                viewModel.getSelectedItem().observe(requireActivity(), item -> {
-                    DetectionOutput detection = item.DetectionOutput;
-                    if (detection == null) {
-                        return;
-                    }
-                    // set testing mat 1:
-                    if (detection.testingMats[0] != null && detection.testingMats[0].width() > 0 && detection.testingMats[0].height() > 0) {
-                        images[0].setImageBitmap(matToBitmap(detection.testingMats[0]));
-                    }
+        viewModel.getSelectedItem().observe(getViewLifecycleOwner(), item -> {
+            if (item == null) return;
+            DetectionOutput detection = item.DetectionOutput;
+            if (detection == null) return;
 
-                    if (detection.prevInputs != null) {
-                        String listString = String.join(", ", detection.prevInputs);
-                        String text = "Gaze input log: " + listString;
-                        gazeInputLog.setText(text);
-                    }
-                    if (detection.AnalyzedData != null) {
-                        String s = "Overall Gaze Type: " + detection.AnalyzedData.getTypeString(detection.AnalyzedData.GazeType);
-                        texts[1].setText(s);
-
-                        s = "Overall Loss: " + String.format("%.2f", detection.AnalyzedData.GazeProbability);
-                        texts[2].setText(s);
-
-                        if (detection.AnalyzedData.Success) { // check if the final output is successful
-                            String text = "GAZE DETECTED";
-                            texts[0].setText(text);
-                        } else {
-                            texts[0].setText("---------------");
-                        }
-                    }
-                });
+            // set testing mat 1:
+            if (detection.testingMats != null && detection.testingMats.length > 0 &&
+                    detection.testingMats[0] != null && !detection.testingMats[0].empty() &&
+                    detection.testingMats[0].width() > 0 && detection.testingMats[0].height() > 0) {
+                images[0].setImageBitmap(matToBitmap(detection.testingMats[0]));
             }
-        };
-        handler.post(updateUI);
+
+            if (detection.prevInputs != null) {
+                String listString = String.join(", ", detection.prevInputs);
+                String text = "Gaze input log: " + listString;
+                gazeInputLog.setText(text);
+            }
+            if (detection.AnalyzedData != null) {
+                String s = "Overall Gaze Type: " + detection.AnalyzedData.getTypeString(detection.AnalyzedData.GazeType);
+                texts[1].setText(s);
+
+                s = "Overall Loss: " + String.format(java.util.Locale.US, "%.2f", detection.AnalyzedData.GazeProbability);
+                texts[2].setText(s);
+
+                if (detection.AnalyzedData.Success) { // check if the final output is successful
+                    String text = "GAZE DETECTED";
+                    texts[0].setText(text);
+                } else {
+                    texts[0].setText("---------------");
+                }
+            }
+        });
     }
 
     @Override

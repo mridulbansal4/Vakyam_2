@@ -75,7 +75,12 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         appliveData.calibrationInstruction = "Eye Calibration";
 
         // audio + speech recognition
-        toneGenerator = new ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 100);
+        try {
+            toneGenerator = new ToneGenerator(android.media.AudioManager.STREAM_MUSIC, 100);
+        } catch (Exception e) {
+            Log.w("Presenter", "ToneGenerator could not be created", e);
+            toneGenerator = null;
+        }
         audioManager.initialize(mContext);
         audioManager.setAudioManagerListener(this);
 
@@ -98,23 +103,27 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             calibrationState = -1;
 
         } else if (calibrationState >= 0) { // during calibration
-            Mat[] eyeMats = appliveData.DetectionOutput.testingMats;
-            if (eyeMats[0] != null && eyeMats[1] != null) { // the images are collectible
-                Log.d("CalibrationInterface", "Recorded successfully");
-                userDataManager.setLeftCalibrationData(matToBitmap(eyeMats[0]), calibrationState); // collect left frame
-                userDataManager.setRightCalibrationData(matToBitmap(eyeMats[1]), calibrationState); // collect right frame
-                calibrationState += 1;
+            if (appliveData.DetectionOutput != null && appliveData.DetectionOutput.testingMats != null) {
+                Mat[] eyeMats = appliveData.DetectionOutput.testingMats;
+                if (eyeMats.length > 1 && eyeMats[0] != null && eyeMats[1] != null && !eyeMats[0].empty() && !eyeMats[1].empty()) { // the images are collectible
+                    Log.d("CalibrationInterface", "Recorded successfully");
+                    userDataManager.setLeftCalibrationData(matToBitmap(eyeMats[0]), calibrationState); // collect left frame
+                    userDataManager.setRightCalibrationData(matToBitmap(eyeMats[1]), calibrationState); // collect right frame
+                    calibrationState += 1;
 
-                if (calibrationState == userDataManager.calibrationTemplateNum) { // finished calibration
-                    model.updateCalibrationTemplates();
-                    appliveData.calibrationInstruction = "CALIBRATION FINISHED!";
-                    Log.d("CalibrationInterface", "Finished calibration");
-                } else { // continue
-                    audioManager.speakText(calibrationMessages[calibrationState]);
-                    appliveData.calibrationInstruction = calibrationMessages[calibrationState];
+                    if (calibrationState >= userDataManager.calibrationTemplateNum) { // finished calibration
+                        model.updateCalibrationTemplates();
+                        appliveData.calibrationInstruction = "CALIBRATION FINISHED!";
+                        Log.d("CalibrationInterface", "Finished calibration");
+                    } else if (calibrationState < calibrationMessages.length) { // continue
+                        audioManager.speakText(calibrationMessages[calibrationState]);
+                        appliveData.calibrationInstruction = calibrationMessages[calibrationState];
+                    }
+                } else {
+                    Log.d("Calibration", "Detection failed, please try again");
                 }
             } else {
-                Log.d("Calibration", "Detection failed, please try again");
+                Log.d("Calibration", "Detection output not ready");
             }
         }
         userDataManager.setCalibrationState(calibrationState);
@@ -150,9 +159,19 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     @Override
     public String getMode() { return mode; }
 
+    private void playBeepTone() {
+        if (toneGenerator != null) {
+            try {
+                toneGenerator.startTone(ToneGenerator.TONE_CDMA_PIP, 150);
+            } catch (Exception e) {
+                Log.e("Presenter", "Failed to play beep tone", e);
+            }
+        }
+    }
+
     @Override
     public void onGazeButtonClicked(int input) { // when the user clicks a gaze button (for both social media and text mode)
-        toneGenerator.startTone(ToneGenerator.TONE_CDMA_PIP, 150);
+        playBeepTone();
         if (Objects.equals(mode, "Text")) {
             textEntryManager.manageUserInput(input, false);
         } else if (Objects.equals(mode, "Social Media")) {
@@ -167,7 +186,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public void onRecordButtonClicked() {
         if (!recording) {
             recording = true;
-            toneGenerator.startTone(ToneGenerator.TONE_CDMA_PIP, 150);
+            playBeepTone();
             audioManager.startListening();
         } else {
             audioManager.stopListening();
@@ -187,7 +206,21 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
 
     @Override
     public void onDestroy() {
-
+        if (toneGenerator != null) {
+            try {
+                toneGenerator.release();
+            } catch (Exception ignored) {}
+            toneGenerator = null;
+        }
+        if (textEntryManager != null) {
+            textEntryManager.onDestroy();
+        }
+        if (quickChatManager != null) {
+            quickChatManager.onDestroy();
+        }
+        if (audioManager != null) {
+            audioManager.destroy();
+        }
     }
 
     @Override
@@ -198,17 +231,21 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         DetectionOutput detectionOutput = model.classifyGaze(rgbMat); // get detection output from model
      //   Log.d("MVPPresenter", "Frame processed");
 
-        if (detectionOutput.AnalyzedData != null) { // when the input is valid
+        if (detectionOutput != null && detectionOutput.leftNIC != null) {
+            clinicalData.addNICPoint((float) detectionOutput.leftNIC.x, (float) detectionOutput.leftNIC.y);
+        }
+
+        if (detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid
             if (Objects.equals(mode, "Text") || Objects.equals(mode, "Dev") || Objects.equals(mode, "Social Media") || Objects.equals(mode, "QuickChat")) { // not calibrating or in clinician mode, process the input
                 int gazeType = detectionOutput.gestureOutput;
 
                 if (gazeType != 0) { // gaze input is meaningful
                     Log.d("IrisDetection", "Gesture Output: " + gazeType);
-                    toneGenerator.startTone(ToneGenerator.TONE_CDMA_PIP, 150);
+                    playBeepTone();
 
                     if (Objects.equals(mode, "Text")) { // only do text input in text mode
                         String gazeLogInput = Calendar.getInstance().getTime() + ": " + userDataManager.gazeIndexToString(gazeType);
-                        clinicalData.gazeLog.add(gazeLogInput);
+                        clinicalData.addGazeLog(gazeLogInput);
 
                         if (userDataManager.getTextEntryMode() == 0) { // letter-by-letter mode
                             keyboardManager.processInput(gazeType);

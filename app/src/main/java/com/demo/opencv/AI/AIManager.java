@@ -77,9 +77,14 @@ public class AIManager { // extends appCompatActivity
     }
 
     public void generateText(String tag, String prompt, String language) { // TODO: add tag to keep track of the usage
-
-       // Log.d("SentenceGeneration", String.valueOf(Looper.myLooper()));
         Log.d("SentenceGeneration", "here");
+        if (OPENAI_API_KEY == null || OPENAI_API_KEY.trim().isEmpty() || textService == null) {
+            Log.w("TextGeneration", "OpenAI key is missing or textService not initialized");
+            if (Objects.equals(tag, "SP")) {
+                sendMessage("SP-OpenAI key not configured. Please use Gemma (Local LLM).");
+            }
+            return;
+        }
 
         // fake output for testing
 //        if (Objects.equals(tag, "SP")) {
@@ -157,6 +162,10 @@ public class AIManager { // extends appCompatActivity
     }
 
     public void speechGenerationService(String text) {
+        if (OPENAI_API_KEY == null || OPENAI_API_KEY.trim().isEmpty()) {
+            Log.d("SpeechGeneration", "OpenAI key is not configured; using offline Android TTS");
+            return;
+        }
 
         JSONObject json = new JSONObject();
         try {

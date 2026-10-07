@@ -70,14 +70,17 @@ public class TwitterClient {
                 long MediaId = twitter.uploadMedia(imageFile).getMediaId();
                 Log.d("SocialMediaPost", "Obtained image ID: " + MediaId);
                 sendTweet(text, String.valueOf(MediaId));
-            } catch (TwitterException e) {
-                Log.d("SocialMediaPost", "Failed to obtain image ID: " + e);
-                throw new RuntimeException(e);
+            } catch (Exception e) {
+                Log.e("SocialMediaPost", "Failed to obtain image ID: " + e.getMessage());
             }
         });
     }
 
     public void sendTweet(String tweetText, String mediaID) {
+        if (userDataManager == null || service == null) {
+            Log.e("SocialMediaPost", "TwitterClient not initialized");
+            return;
+        }
 
         String ACCESS_TOKEN = userDataManager.getAccessToken();
         String ACCESS_TOKEN_SECRET = userDataManager.getAccessTokenSecret();

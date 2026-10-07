@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.demo.opencv.AI.GeminiManager;
@@ -21,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public class TextEntryManager extends AppCompatActivity {
+public class TextEntryManager {
     public boolean LLMEnabled = true;
     public boolean openSocialMedia = false;
     List<String> wordPredictions = new ArrayList<>(); // the word predictions shown in word mode
@@ -39,30 +38,63 @@ public class TextEntryManager extends AppCompatActivity {
     AudioManager audioManager = new AudioManager(); // text-to-speech
     BlurryInput blurryInput = new BlurryInput();
     TextInfo current = new TextInfo();
-    String NoMatchString = String.valueOf(R.string.TextEntry_NoMatch);
-    String NextPageString = String.valueOf(R.string.TextEntry_NextPage);
-    String SwitchString = String.valueOf(R.string.TextEntry_Switch);
-    String DeleteString = String.valueOf(R.string.TextEntry_Delete);
-    String FinishedString = String.valueOf(R.string.TextEntry_Finished);
+
+    String NoMatchString = "NO MATCH";
+    String NextPageString = "NEXT PAGE";
+    String SwitchString = "SWITCH";
+    String DeleteString = "DELETE";
+    String FinishedString = "FINISH";
+
+    String[] wordModeUI;
+    int[] wordIndex = {-1, 2, -1, -1, 0, 1, -1, -1, -1, -1};
+
+    String[] letterModeUI;
+    int[] wordIndex2 = {-1, -1, -1, -1, -1, -1, 2, -1, 0, 1};
+
+    public TextEntryManager() {
+        initUIStrings();
+    }
+
+    private void initUIStrings() {
+        wordModeUI = new String[]{FinishedString, NoMatchString, NextPageString, SwitchString, NoMatchString, NoMatchString, "NOPQRST", "UVWXYZ", "ABCDEF", "GHIJKLM"};
+        letterModeUI = new String[]{DeleteString, "NOPQRST", "UVWXYZ", SwitchString, "ABCDEF", "GHIJKLM", NoMatchString, NoMatchString, NoMatchString, NoMatchString};
+    }
+
     public void initialize(Context mContext) throws IOException {
         this.mContext = mContext;
+        if (mContext != null) {
+            try {
+                NoMatchString = mContext.getString(R.string.TextEntry_NoMatch);
+                NextPageString = mContext.getString(R.string.TextEntry_NextPage);
+                SwitchString = mContext.getString(R.string.TextEntry_Switch);
+                DeleteString = mContext.getString(R.string.TextEntry_Delete);
+                FinishedString = mContext.getString(R.string.TextEntry_Finished);
+            } catch (Exception e) {
+                Log.w("TextEntryManager", "Could not load string resources", e);
+            }
+        }
+        initUIStrings();
+
         AIManager.initialize(mContext);
         audioManager.initialize(mContext);
         current.Sentence = "All ALS patients should have a voice in the digital world.";
-        LocalBroadcastManager.getInstance(mContext).registerReceiver(mMessageReceiver, new IntentFilter("textGenerationEvent"));
+        if (mContext != null) {
+            LocalBroadcastManager.getInstance(mContext).registerReceiver(mMessageReceiver, new IntentFilter("textGenerationEvent"));
+        }
 
         geminiManager.init(mContext);
-        //geminiManager.generate("yes", "do you like music?");
     }
 
     public void updateSettings(Context applicationContext) { // match class settings with the global settings
-        UserDataManager userDataManager = (UserDataManager) applicationContext;
-        this.language = userDataManager.getLanguage();
-        blurryInput.initialize(mContext, language);
-        this.sentenceGenerationModel = userDataManager.getSentenceGenerationModel();
-        this.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
-        if (userDataManager.getTextEntryContext() != null) {
-            updateContext(userDataManager.getTextEntryContext());
+        if (applicationContext instanceof UserDataManager) {
+            UserDataManager userDataManager = (UserDataManager) applicationContext;
+            this.language = userDataManager.getLanguage();
+            blurryInput.initialize(mContext, language);
+            this.sentenceGenerationModel = userDataManager.getSentenceGenerationModel();
+            this.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
+            if (userDataManager.getTextEntryContext() != null) {
+                updateContext(userDataManager.getTextEntryContext());
+            }
         }
     }
 
@@ -71,6 +103,7 @@ public class TextEntryManager extends AppCompatActivity {
         int selection = input;
         if (isGazeType) { // if is gaze type, then process it
             final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
+            if (input < 0 || input >= keyboardInputMat.length) return;
             selection = keyboardInputMat[input];
         }
 
@@ -82,15 +115,10 @@ public class TextEntryManager extends AppCompatActivity {
             } else if (mode == 1){ // baseline text-entry, mode 1
                 letterMode(selection);
             }
-            //Log.d("TextGeneration", "Current Mode: " + mode);
         }
         updateDisplays();
     }
 
-    // up gaze = 0, left gaze = 1, right gaze = 2, closed = 3, left-up gaze = 4, right-up gaze = 5
-    String[] wordModeUI =
-            {FinishedString, NoMatchString, NextPageString, SwitchString, NoMatchString, NoMatchString, "NOPQRST", "UVWXYZ", "ABCDEF", "GHIJKLM"};
-    int[] wordIndex = {-1, 2, -1, -1, 0, 1, -1, -1, -1, -1};
     void WordMode(int selection) { // when the user is typing words
         switch (selection) {
             case 0 -> keyboardData.finished = true; // open finished page
@@ -108,14 +136,8 @@ public class TextEntryManager extends AppCompatActivity {
             case 2 -> {openSocialMedia = true; keyboardData.finished = false;} // open social media page
             case 5 -> keyboardData.finished = false;
         }
-
     }
 
-    // up gaze = 0, left gaze = 1, right gaze = 2, closed = 3, left-up gaze = 4, right-up gaze = 5
-    String[] letterModeUI = {
-            DeleteString, "NOPQRST", "UVWXYZ", SwitchString, "ABCDEF", "GHIJKLM", NoMatchString, NoMatchString, NoMatchString, NoMatchString
-    };
-    int[] wordIndex2 = {-1, -1, -1, -1, -1, -1, 2, -1, 0, 1};
     void letterMode(int selection) {
         switch (selection) {
             case 0 -> { // delete blurry input or word
@@ -133,7 +155,10 @@ public class TextEntryManager extends AppCompatActivity {
             case 5 -> current.addBlurryInput("1");
         }
         if (!Objects.equals(current.BlurryInput, "")) { // blurry input not empty
-            wordPredictions = blurryInput.getMatchingWords(current.BlurryInput);
+            List<String> matched = blurryInput.getMatchingWords(current.BlurryInput);
+            wordPredictions = (matched != null) ? matched : new ArrayList<>();
+        } else {
+            wordPredictions.clear();
         }
     }
 
@@ -142,12 +167,16 @@ public class TextEntryManager extends AppCompatActivity {
     }
 
     public void updateDisplays() {
-
         if (!wordPredictions.isEmpty()) {
             String[] nextPageWords = blurryInput.getWordPage(wordPredictions, currentPage, wordsPerPage);
             wordModeUI = fillWords(nextPageWords, wordIndex, wordModeUI);
             letterModeUI = fillWords(nextPageWords, wordIndex2, letterModeUI);
+        } else {
+            // Reset placeholders when prediction list is empty
+            resetOptionWords(wordModeUI, wordIndex);
+            resetOptionWords(letterModeUI, wordIndex2);
         }
+
         switch (mode) {
             case 0 -> keyboardData.setOptions(wordModeUI);
             case 1 -> keyboardData.setOptions(letterModeUI);
@@ -158,18 +187,27 @@ public class TextEntryManager extends AppCompatActivity {
         if (LLMEnabled) {
             keyboardData.sentence = "LLM: " + current.Sentence;
         } else {
-            keyboardData.sentence = String.valueOf(R.string.TextEntry_EnableLLM);
+            keyboardData.sentence = (mContext != null) ? mContext.getString(R.string.TextEntry_EnableLLM) : "Enable LLM to generate";
         }
-        if (Objects.equals(context, "")) {
-            keyboardData.context = String.valueOf(R.string.TextEntry_EnterContext);
+        if (context == null || context.isEmpty()) {
+            keyboardData.context = (mContext != null) ? mContext.getString(R.string.TextEntry_EnterContext) : "Add Context: ";
         } else {
             keyboardData.context = "Context: " + context;
         }
     }
 
+    private void resetOptionWords(String[] options, int[] indexMap) {
+        if (options == null || indexMap == null) return;
+        for (int i = 0; i < indexMap.length && i < options.length; i++) {
+            if (indexMap[i] != -1) {
+                options[i] = NoMatchString;
+            }
+        }
+    }
+
     public void updateContext(String newContext) {
         Log.d("TextGeneration", "Context updated: " + newContext);
-        context = newContext;
+        context = (newContext != null) ? newContext : "";
         contextWordPrediction(50);
         updateDisplays();
     }
@@ -215,6 +253,7 @@ public class TextEntryManager extends AppCompatActivity {
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() { // tag 1: SP = sentence prediction, NWP = next word prediction, CWP = context word prediction
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent == null) return;
             String output = intent.getStringExtra("message");
             if (output != null) {
                 String[] splitArray = output.split("-", 2);
@@ -234,7 +273,7 @@ public class TextEntryManager extends AppCompatActivity {
                     wordPredictions.clear();
                     String[] wordChoices = content.split(", "); // there should be n words, separated by comma
                     for (int i = 0; i < wordChoices.length; i++) {
-                        wordPredictions.add(i, wordChoices[i]);
+                        wordPredictions.add(wordChoices[i]);
                     }
 
                 } else if (Objects.equals(tag, "CWP")) { // context word prediction
@@ -250,8 +289,9 @@ public class TextEntryManager extends AppCompatActivity {
     };
 
     void selectWord(int index) {
+        if (index < 0) return;
         int wordIndex = index + (currentPage - 1) * wordsPerPage;
-        if (wordPredictions.size() > wordIndex) { // input is valid
+        if (wordIndex >= 0 && wordPredictions.size() > wordIndex) { // input is valid
             current.addWord(wordPredictions.get(wordIndex));
             current.clearBlurryInputs();
         }
@@ -259,11 +299,14 @@ public class TextEntryManager extends AppCompatActivity {
     }
 
     String[] fillWords(String[] words, int[] wordIndex, String[] options) { // fill words in a UI page
+        if (words == null || options == null || wordIndex == null) return options;
         Log.d("TextMode", Arrays.toString(words));
-        for (int i = 0; i < wordIndex.length; i++) {
-            if (wordIndex[i] != -1) { // check that there's enough words to output
-                if (words.length > wordIndex[i]) { // a word is available to display
+        for (int i = 0; i < wordIndex.length && i < options.length; i++) {
+            if (wordIndex[i] != -1) {
+                if (wordIndex[i] >= 0 && wordIndex[i] < words.length && words[wordIndex[i]] != null) {
                     options[i] = words[wordIndex[i]];
+                } else {
+                    options[i] = NoMatchString;
                 }
             }
         }
@@ -271,7 +314,7 @@ public class TextEntryManager extends AppCompatActivity {
     }
 
     void nextPage() {
-        String[] words = blurryInput.getWordPage(wordPredictions,currentPage + 1, wordsPerPage);
+        String[] words = blurryInput.getWordPage(wordPredictions, currentPage + 1, wordsPerPage);
         if (words == null) { // page doesn't exist
             Log.d("TextMode", "Max page reached");
             currentPage = 1;
@@ -288,13 +331,35 @@ public class TextEntryManager extends AppCompatActivity {
         } else {
             text = current.getWords();
         }
-        //audioManager.speakText(text); // android built-in speech
-        AIManager.speechGenerationService(text); // openAI speech
+        if (audioManager != null) {
+            audioManager.speakText(text); // on-device speech
+        }
+        AIManager.speechGenerationService(text); // optional secondary
     }
 
-    @Override
+    public TextInfo getCurrent() {
+        return current;
+    }
+
+    public int getMode() {
+        return mode;
+    }
+
+    public void setMode(int mode) {
+        this.mode = mode;
+        updateDisplays();
+    }
+
     public void onDestroy() {
-        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mMessageReceiver);
-        super.onDestroy();
+        if (mContext != null && mMessageReceiver != null) {
+            try {
+                LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mMessageReceiver);
+            } catch (Exception e) {
+                Log.w("TextEntryManager", "Error unregistering receiver", e);
+            }
+        }
+        if (audioManager != null) {
+            audioManager.destroy();
+        }
     }
 }

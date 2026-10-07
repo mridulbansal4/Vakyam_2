@@ -18,6 +18,8 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
     int characterThreshold = 5; // determines the number of characters before expanding the blurry input to longer words
 
     public void initialize(Context mContext, String language) {
+        wordList.clear();
+        blurryInputProcessed.clear();
 
         if (Objects.equals(language, "English")) {
             characterThreshold = 5;
@@ -26,6 +28,7 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         } else if (Objects.equals(language, "Chinese")) {
             characterThreshold = 4;
         }
+        if (mContext == null) return;
         try {
             InputStream inputStream = mContext.getAssets().open(language + "Words.txt"); // set the correct language
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -42,33 +45,35 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         }
     }
 
-    private String processWord(String word) { // converts original word to processed word for blurry input
+    public String processWord(String word) { // converts original word to processed word for blurry input
+        if (word == null) return "";
         StringBuilder processed = new StringBuilder();
         word = word.toLowerCase();
         word = Normalizer.normalize(word, Normalizer.Form.NFD);
-        word = word.replaceAll("^\\p{ASCII}]", "");
-        Log.d("BlurryInput", "Processed word: " + word);
+        word = word.replaceAll("[^\\p{ASCII}]", "");
 
         for (int i = 0; i < word.length(); i++) {
-            if (word.charAt(i) <= 'f') { processed.append("0"); } // group 1
-            else if (word.charAt(i) <= 'm') { processed.append("1"); } // group 2
-            else if (word.charAt(i) <= 't') { processed.append("2"); } // group 3
-            else if (word.charAt(i) <= 'z') { processed.append("3"); } // group 4
+            char c = word.charAt(i);
+            if (c >= 'a' && c <= 'f') { processed.append("0"); } // group 1
+            else if (c >= 'g' && c <= 'm') { processed.append("1"); } // group 2
+            else if (c >= 'n' && c <= 't') { processed.append("2"); } // group 3
+            else if (c >= 'u' && c <= 'z') { processed.append("3"); } // group 4
         }
         return processed.toString();
     }
 
     public List<String> getMatchingWords(String codeA) { // predict the word based on a blurry input
         List<String> wordPredictions = new ArrayList<>();
-        if (codeA.length() == 0) { // the string is empty, nothing to compare
-            return null;
+        if (codeA == null || codeA.length() == 0) { // the string is empty, nothing to compare
+            return wordPredictions;
         }
 
         // normal 5000 word bank prediction
         for (int i = 0; i < blurryInputProcessed.size(); i++) {
             String codeB = blurryInputProcessed.get(i);
+            if (codeB == null) continue;
             boolean match1 = codeA.length() == codeB.length(); // the two words are the same length
-            boolean match2 = (codeA.length() < codeB.length()) && codeA.length() > characterThreshold; // A is less than B, but A is more than 5 characters long
+            boolean match2 = (codeA.length() < codeB.length()) && codeA.length() > characterThreshold; // A is less than B, but A is more than threshold characters long
             if (match1 || match2) {
                 String subString = codeB.substring(0, codeA.length());
                 //Log.d("TextPrediction", "Code: " + codeA + ", substring from word: " + subString);
@@ -80,14 +85,16 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
 
         // extended word bank prediction (smaller, maybe around 500 words max)
         for (int i = 0; i < extendedWordList.size(); i++) {
-            String codeB = processWord(extendedWordList.get(i));
+            String word = extendedWordList.get(i);
+            if (word == null) continue;
+            String codeB = processWord(word);
             boolean match1 = codeA.length() == codeB.length(); // the two words are the same length
-            boolean match2 = (codeA.length() < codeB.length()) && codeA.length() > characterThreshold; // A is less than B, but A is more than 5 characters long
+            boolean match2 = (codeA.length() < codeB.length()) && codeA.length() > characterThreshold; // A is less than B, but A is more than threshold characters long
             if (match1 || match2) {
                 String subString = codeB.substring(0, codeA.length());
                 //Log.d("TextPrediction", "Code: " + codeA + ", substring from word: " + subString);
                 if (subString.equals(codeA)) {
-                    wordPredictions.add(extendedWordList.get(i));
+                    wordPredictions.add(word);
                 }
             }
         }
@@ -96,8 +103,8 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
 
     public String[] getWordPage(List<String> wordPredictions, int page, int wordsPerPage) { // gets the word prediction of a page with a certain number of words
         // page begins from 1
-        if (wordPredictions == null) return null;
-        int wordsPredicted = wordPredictions.size(); //
+        if (wordPredictions == null || wordPredictions.isEmpty() || page < 1 || wordsPerPage <= 0) return null;
+        int wordsPredicted = wordPredictions.size();
         if ((page - 1) * wordsPerPage >= wordsPredicted) { // if the page doesn't exist (page 3, 3 words per page, 7 words detected)
             return null;
         } else {

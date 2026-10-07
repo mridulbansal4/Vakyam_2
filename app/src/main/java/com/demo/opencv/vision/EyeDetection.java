@@ -59,6 +59,9 @@ public class EyeDetection {
     }
 
     private double mse(Mat a, Mat b, int h, int w) { // minimum squared error calculations
+        if (a == null || b == null || a.empty() || b.empty()) {
+            return 1000000.0;
+        }
         double sum;
         Mat difMat = new Mat(h, w, CvType.CV_8UC4);
         Imgproc.cvtColor(difMat, difMat, Imgproc.COLOR_BGR2GRAY);
@@ -66,18 +69,25 @@ public class EyeDetection {
         Mat norB = new Mat();
         a.convertTo(norA, CvType.CV_32F, 1.0/255, 0);
         b.convertTo(norB, CvType.CV_32F, 1.0/255, 0);
-        //Log.d("EyeDetection", a.channels() + " " + b.channels() + " " + difMat.channels());
         Core.subtract(norA, norB, difMat);
         Mat destSquared = difMat.mul(difMat);
         Scalar s = Core.sumElems(destSquared);
         double d = (float) h * w;
         sum = s.val[0] / d;
+
+        difMat.release();
+        norA.release();
+        norB.release();
+        destSquared.release();
         return sum;
     }
     public double[] runEyeModel(DetectionOutput detectionOutput, Mat eyeROI, int type) {
         Log.d("GestureDetection", "Here!");
         Mat[] compareTemplates;
-        double[] templateError = new double[userDataManager.calibrationTemplateNum];
+        double[] templateError = new double[userDataManager != null ? userDataManager.calibrationTemplateNum : 6];
+        if (eyeROI == null || eyeROI.empty() || detectionOutput == null) {
+            return templateError;
+        }
 
         // resize the eyeROI to the correct image size/format
         eyeROI.convertTo(eyeROI, CvType.CV_8UC4);
@@ -95,7 +105,10 @@ public class EyeDetection {
         double minError = 10000000;
         int index = 0;
         for (int i = 0; i < userDataManager.calibrationTemplateNum; i++) {
-            double sum = mse(compareTemplates[i], tensorMat, IMAGE_HEIGHT, IMAGE_WIDTH); // - DETECT_BIAS[tags[i]];
+            double sum = 1000000.0;
+            if (compareTemplates != null && i < compareTemplates.length && compareTemplates[i] != null && !compareTemplates[i].empty()) {
+                sum = mse(compareTemplates[i], tensorMat, IMAGE_HEIGHT, IMAGE_WIDTH);
+            }
             templateError[i] = sum;
             if (sum < minError) {
                 minError = sum;
@@ -105,7 +118,8 @@ public class EyeDetection {
         Log.d("GestureDetection", "Sensitivity = " + sensitivity);
         Boolean success = minError <= sensitivity; // get threshold for the specific type
         Log.d("GestureDetection", "The gaze for ");
-        detectionOutput.setEyeData(type, success, tags[index], 1, (float)minError);
+        int gazeTag = (index >= 0 && index < tags.length) ? tags[index] : 0;
+        detectionOutput.setEyeData(type, success, gazeTag, 1, (float)minError);
 
         return templateError;
 
@@ -147,8 +161,14 @@ public class EyeDetection {
         if (maxValIdx != -1) {
             MatOfPoint maxContour = contours.get(maxValIdx);
             Moments moments = Imgproc.moments(maxContour);
-            irisCenter.x = moments.get_m10() / moments.get_m00();
-            irisCenter.y = moments.get_m01() / moments.get_m00();
+            double m00 = moments.get_m00();
+            if (Math.abs(m00) > 1e-5) {
+                irisCenter.x = moments.get_m10() / m00;
+                irisCenter.y = moments.get_m01() / m00;
+            } else {
+                irisCenter.x = ROI.cols() / 2.0;
+                irisCenter.y = ROI.rows() / 2.0;
+            }
             //Imgproc.drawContours(draw, contours, maxValIdx, new Scalar(255,255,255), 2);
             draw = new Mat(ROI.rows(), ROI.cols(), Imgproc.COLOR_BGR2GRAY);
             draw.setTo(new Scalar(0,0,0));

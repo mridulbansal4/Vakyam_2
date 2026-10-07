@@ -75,27 +75,23 @@ public class calibration_display extends Fragment {
     }
 
     private void toggleInfoPage(boolean state) {
-        int visibility;
-        if (state) {
-            visibility = View.VISIBLE; // true = visible
-        } else {
-            visibility = View.INVISIBLE; // false = invisible
-        }
-        calibrationDescription.setVisibility(visibility);
-        calibrationImage.setVisibility(visibility);
+        int visibility = state ? View.VISIBLE : View.INVISIBLE;
+        if (calibrationDescription != null) calibrationDescription.setVisibility(visibility);
+        if (calibrationImage != null) calibrationImage.setVisibility(visibility);
     }
 
     private void toggleCalibrationPage(boolean state) {
-        int visibility;
-        if (state) {
-            visibility = View.VISIBLE; // true = visible
-        } else {
-            visibility = View.INVISIBLE; // false = invisible
+        int visibility = state ? View.VISIBLE : View.INVISIBLE;
+        if (calibrationTemplateViews != null) {
+            for (int i = 0; i < calibrationTemplates && i < calibrationTemplateViews.length; i++) {
+                if (calibrationTemplateViews[i] != null) {
+                    calibrationTemplateViews[i].setVisibility(visibility);
+                }
+            }
         }
-        for (int i = 0; i < calibrationTemplates; i++) {
-            calibrationTemplateViews[i].setVisibility(visibility);
+        if (switchEyesButton != null) {
+            switchEyesButton.setVisibility(visibility);
         }
-        switchEyesButton.setVisibility(visibility);
     }
 
     @Override
@@ -112,19 +108,19 @@ public class calibration_display extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
         userDataManager = (UserDataManager) requireActivity().getApplication();
-        calibrationDescription = mActivity.findViewById(R.id.CalibrationDescription);
-        calibrationImage = mActivity.findViewById(R.id.CalibrationImage);
-        instruction = mActivity.findViewById(R.id.calibrationInstruction);
+        calibrationDescription = view.findViewById(R.id.CalibrationDescription);
+        calibrationImage = view.findViewById(R.id.CalibrationImage);
+        instruction = view.findViewById(R.id.calibrationInstruction);
         calibrationTemplateViews = new ImageView[calibrationTemplates];
-        calibrationTemplateViews[0] = mActivity.findViewById(R.id.calibrationStraight);
-        calibrationTemplateViews[1] = mActivity.findViewById(R.id.calibrationLeft);
-        calibrationTemplateViews[2] = mActivity.findViewById(R.id.calibrationRight);
-        calibrationTemplateViews[3] = mActivity.findViewById(R.id.calibrationUp);
-        calibrationTemplateViews[4] = mActivity.findViewById(R.id.calibrationLeftUp);
-        calibrationTemplateViews[5] = mActivity.findViewById(R.id.calibrationRightUp);
+        calibrationTemplateViews[0] = view.findViewById(R.id.calibrationStraight);
+        calibrationTemplateViews[1] = view.findViewById(R.id.calibrationLeft);
+        calibrationTemplateViews[2] = view.findViewById(R.id.calibrationRight);
+        calibrationTemplateViews[3] = view.findViewById(R.id.calibrationUp);
+        calibrationTemplateViews[4] = view.findViewById(R.id.calibrationLeftUp);
+        calibrationTemplateViews[5] = view.findViewById(R.id.calibrationRightUp);
 
-        calibrationButton = mActivity.findViewById(R.id.calibrationButton);
-        switchEyesButton = mActivity.findViewById(R.id.switchEyesButton);
+        calibrationButton = view.findViewById(R.id.calibrationButton);
+        switchEyesButton = view.findViewById(R.id.switchEyesButton);
         Log.d("Calibration", "here");
         calibrationButton.setOnClickListener(v -> onCalibrationButtonClick());
         switchEyesButton.setOnClickListener(v -> leftEyesDisplayed = !leftEyesDisplayed);
@@ -138,47 +134,42 @@ public class calibration_display extends Fragment {
             toggleCalibrationPage(true);
         }
 
+        viewModel.getSelectedItem().observe(getViewLifecycleOwner(), item -> {
+            if (item == null) return;
+            DetectionOutput detection = item.DetectionOutput;
+            int calibrationState = item.calibrationState;
+            Log.d("CalibrationInterface", "Current State: " + calibrationState);
+            if (calibrationState == -1) { // pre-calibration page
+                instruction.setText(R.string.Calibration_Title);
+            } else { // calibration page
+                Bitmap[] images;
+                if (leftEyesDisplayed) {
+                    images = item.leftTemplates;
+                } else {
+                    images = item.rightTemplates;
+                }
 
-        handler = new Handler(Looper.getMainLooper());
-        updateUI = new Runnable(){
-            @Override
-            public void run() {
-                viewModel.getSelectedItem().observe(requireActivity(), item -> {
-                    DetectionOutput detection = item.DetectionOutput;
-                    int calibrationState = item.calibrationState;
-                    Log.d("CalibrationInterface", "Current State: " + calibrationState);
-                    if (calibrationState == -1) { // pre-calibration page
-                        instruction.setText(R.string.Calibration_Title);
-                    } else { // calibration page
-                        Bitmap[] images;
-                        if (leftEyesDisplayed) {
-                            images = item.leftTemplates;
-                        } else {
-                            images = item.rightTemplates;
-                        }
-
-                        if (images != null) {
-                            for (int i = 0; i < calibrationTemplates; i++) {
-                                if (images[i] == null || i == calibrationState) {  // show the live camera
-                                    if (detection.testingMats[0] != null) {
-                                        calibrationTemplateViews[i].setImageBitmap(matToBitmap(detection.testingMats[0]));
-                                    }
-                                } else { // show the calibration frame
-                                    calibrationTemplateViews[i].setImageBitmap(images[i]);
-                                }
+                if (images != null) {
+                    for (int i = 0; i < calibrationTemplates; i++) {
+                        if (i >= calibrationTemplateViews.length || calibrationTemplateViews[i] == null) continue;
+                        if (i >= images.length || images[i] == null || i == calibrationState) {  // show the live camera
+                            if (detection != null && detection.testingMats != null && detection.testingMats.length > 0 &&
+                                    detection.testingMats[0] != null && !detection.testingMats[0].empty()) {
+                                calibrationTemplateViews[i].setImageBitmap(matToBitmap(detection.testingMats[0]));
                             }
-                            if (calibrationState == 6) {
-                                instruction.setText(R.string.Calibration_Finished);
-                            } else {
-                                instruction.setText(calibrationMessageID[calibrationState]);
-                            }
+                        } else { // show the calibration frame
+                            calibrationTemplateViews[i].setImageBitmap(images[i]);
                         }
                     }
-
-                });
+                    if (calibrationState == 6) {
+                        instruction.setText(R.string.Calibration_Finished);
+                    } else if (calibrationState >= 0 && calibrationState < calibrationMessageID.length) {
+                        instruction.setText(calibrationMessageID[calibrationState]);
+                    }
+                }
             }
-        };
-        handler.post(updateUI);
+
+        });
     }
     @Override
     public void onCreate(Bundle savedInstanceState) {

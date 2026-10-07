@@ -1,6 +1,5 @@
 package com.demo.opencv.other;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
@@ -15,16 +14,18 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 
-public class AudioManager extends Activity {
+public class AudioManager {
     MediaPlayer mediaPlayer = new MediaPlayer();
     private SpeechRecognizer speechRecognizer;
     TextToSpeech textToSpeech;
     MediaRecorder recorder;
     private String fileName;
     String finalText;
+    private volatile boolean isTtsReady = false;
+    private final List<String> pendingUtterances = new ArrayList<>();
 
     public interface AudioManagerListener {
         void onAudioUpdated(String key, String value);
@@ -36,124 +37,220 @@ public class AudioManager extends Activity {
     }
 
     public void initialize(Context mContext) {
+        if (mContext == null) return;
+
         textToSpeech = new TextToSpeech(mContext, status -> {
-            if (status != TextToSpeech.ERROR) {
-                textToSpeech.setLanguage(Locale.US);
-                Log.d("AudioManager", "initialized");
-                //textToSpeech.speak("Thank you for using gaze link.", TextToSpeech.QUEUE_FLUSH, null, null);
+            if (status == TextToSpeech.SUCCESS) {
+                if (textToSpeech != null) {
+                    textToSpeech.setLanguage(Locale.US);
+                }
+                isTtsReady = true;
+                Log.d("AudioManager", "TTS initialized successfully");
+                synchronized (pendingUtterances) {
+                    for (String utterance : pendingUtterances) {
+                        if (textToSpeech != null) {
+                            textToSpeech.speak(utterance, TextToSpeech.QUEUE_ADD, null, null);
+                        }
+                    }
+                    pendingUtterances.clear();
+                }
             } else {
-                Log.d("AudioManager", "Error: " + status);
+                isTtsReady = false;
+                Log.d("AudioManager", "TTS initialization error: " + status);
             }
         });
-        fileName = Objects.requireNonNull(mContext.getExternalCacheDir()).getAbsolutePath();
-        fileName += "/contextAudio.3gp";
+
+        File cacheDir = mContext.getExternalCacheDir();
+        if (cacheDir == null) {
+            cacheDir = mContext.getCacheDir();
+        }
+        if (cacheDir != null) {
+            fileName = new File(cacheDir, "contextAudio.3gp").getAbsolutePath();
+        }
 
         setSpeechRecognizer(mContext); // set speech to text
     }
+
     public void speakText(String text) {
-        Log.d("AudioManager", text);
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+        if (text == null || text.trim().isEmpty()) return;
+        Log.d("AudioManager", "Speaking: " + text);
+        if (isTtsReady && textToSpeech != null) {
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+        } else {
+            synchronized (pendingUtterances) {
+                pendingUtterances.add(text);
+            }
+        }
+    }
+
+    public boolean isTtsReady() {
+        return isTtsReady;
     }
 
     public void playAudio(File audio) {
+        if (audio == null || !audio.exists()) return;
         try {
-            String path = audio.getAbsolutePath();
-            mediaPlayer.setDataSource(path);
+            if (mediaPlayer == null) {
+                mediaPlayer = new MediaPlayer();
+            } else {
+                mediaPlayer.reset();
+            }
+            mediaPlayer.setDataSource(audio.getAbsolutePath());
             mediaPlayer.prepare();
             mediaPlayer.start();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e("AudioManager", "playAudio failed", e);
         }
     }
 
     public void startRecording() {
-        recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setOutputFile(fileName);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-
+        if (fileName == null) return;
         try {
+            if (recorder != null) {
+                recorder.release();
+            }
+            recorder = new MediaRecorder();
+            recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+            recorder.setOutputFile(fileName);
+            recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             recorder.prepare();
-        } catch (IOException e) {
-            Log.e("AudioManager", "prepare() failed");
+            recorder.start();
+        } catch (Exception e) {
+            Log.e("AudioManager", "prepare() or start() failed", e);
+            if (recorder != null) {
+                recorder.release();
+                recorder = null;
+            }
         }
-        recorder.start();
     }
 
     public void stopRecording() {
-        recorder.stop();
-        recorder.release();
-        recorder = null;
+        if (recorder != null) {
+            try {
+                recorder.stop();
+            } catch (Exception e) {
+                Log.e("AudioManager", "recorder stop failed", e);
+            } finally {
+                recorder.release();
+                recorder = null;
+            }
+        }
     }
 
-
     public void startListening() {
+        if (speechRecognizer == null) return;
         Log.d("AudioManager", "Began recording");
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
-        speechRecognizer.startListening(intent);
+        try {
+            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+            speechRecognizer.startListening(intent);
+        } catch (Exception e) {
+            Log.e("AudioManager", "startListening error", e);
+        }
     }
 
     public void stopListening() {
-        speechRecognizer.stopListening();
+        if (speechRecognizer != null) {
+            try {
+                speechRecognizer.stopListening();
+            } catch (Exception e) {
+                Log.e("AudioManager", "stopListening error", e);
+            }
+        }
     }
 
     public void setSpeechRecognizer(Context context) {
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
-        speechRecognizer.setRecognitionListener(new RecognitionListener() {
-            @Override
-            public void onReadyForSpeech(Bundle params) {
+        if (context == null) return;
+        try {
+            if (SpeechRecognizer.isRecognitionAvailable(context)) {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context);
+                speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                    @Override
+                    public void onReadyForSpeech(Bundle params) { }
 
+                    @Override
+                    public void onBeginningOfSpeech() { }
+
+                    @Override
+                    public void onRmsChanged(float rmsdB) { }
+
+                    @Override
+                    public void onBufferReceived(byte[] buffer) { }
+
+                    @Override
+                    public void onEndOfSpeech() { }
+
+                    @Override
+                    public void onError(int error) {
+                        Log.e("AudioManager", "Speech recognition error: " + error);
+                        if (audioManagerListener != null) {
+                            audioManagerListener.onAudioUpdated("Error", String.valueOf(error));
+                        }
+                    }
+
+                    @Override
+                    public void onResults(Bundle results) {
+                        if (results == null) return;
+                        ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                        if (matches != null && !matches.isEmpty()) {
+                            finalText = matches.get(0).toLowerCase();
+                            if (audioManagerListener != null) {
+                                audioManagerListener.onAudioUpdated("Context", finalText);
+                            }
+                            Log.d("AudioManager", "Text recognized: " + finalText);
+                        } else {
+                            Log.d("AudioManager", "No recognized text");
+                        }
+                    }
+
+                    @Override
+                    public void onPartialResults(Bundle partialResults) { }
+
+                    @Override
+                    public void onEvent(int eventType, Bundle params) { }
+                });
             }
+        } catch (Exception e) {
+            Log.e("AudioManager", "Failed to initialize SpeechRecognizer", e);
+        }
+    }
 
-            @Override
-            public void onBeginningOfSpeech() {
-
+    public void destroy() {
+        try {
+            if (textToSpeech != null) {
+                textToSpeech.stop();
+                textToSpeech.shutdown();
+                textToSpeech = null;
+                isTtsReady = false;
             }
-
-            @Override
-            public void onRmsChanged(float rmsdB) {
-
+        } catch (Exception e) {
+            Log.e("AudioManager", "Error shutting down TTS", e);
+        }
+        try {
+            if (speechRecognizer != null) {
+                speechRecognizer.destroy();
+                speechRecognizer = null;
             }
-
-            @Override
-            public void onBufferReceived(byte[] buffer) {
-
+        } catch (Exception e) {
+            Log.e("AudioManager", "Error destroying speech recognizer", e);
+        }
+        try {
+            if (mediaPlayer != null) {
+                mediaPlayer.release();
+                mediaPlayer = null;
             }
-
-            @Override
-            public void onEndOfSpeech() {
-
+        } catch (Exception e) {
+            Log.e("AudioManager", "Error releasing media player", e);
+        }
+        try {
+            if (recorder != null) {
+                recorder.release();
+                recorder = null;
             }
-
-            @Override
-            public void onError(int error) {
-
-            }
-
-            // Implement the necessary methods
-            @Override
-            public void onResults(Bundle results) {
-                ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                if (matches != null) {
-                    finalText = matches.get(0).toLowerCase();
-                    audioManagerListener.onAudioUpdated("Context", finalText);
-                    Log.d("AudioManager", "Text recognized: " + finalText);
-                } else {
-//                    audioManagerListener.onAudioUpdated("Context", "");
-                    Log.d("AudioManager", "No recognized text");
-                }
-            }
-
-            @Override
-            public void onPartialResults(Bundle partialResults) { }
-
-            @Override
-            public void onEvent(int eventType, Bundle params) { }
-
-            // Implement other abstract methods like onReadyForSpeech, onError, etc.
-        });
+        } catch (Exception e) {
+            Log.e("AudioManager", "Error releasing recorder", e);
+        }
     }
 }

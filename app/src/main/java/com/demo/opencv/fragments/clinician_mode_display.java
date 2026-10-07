@@ -40,25 +40,34 @@ public class clinician_mode_display extends Fragment {
     }
 
     private static float[] FloatListToArray(List<Float> floatList) {
-        float[] floatArray = new float[floatList.size()];
-        for (int i = 0; i < floatList.size(); i++) {
-            floatArray[i] = floatList.get(i);
+        if (floatList == null) return new float[0];
+        synchronized (floatList) {
+            float[] floatArray = new float[floatList.size()];
+            for (int i = 0; i < floatList.size(); i++) {
+                Float val = floatList.get(i);
+                floatArray[i] = (val != null) ? val : 0f;
+            }
+            return floatArray;
         }
-        return floatArray;
     }
 
     private static String[] StringListToArray(List<String> stringList) {
-        String[] stringArray = new String[stringList.size()];
-        for (int i = 0; i < stringList.size(); i++) {
-            stringArray[i] = stringList.get(i);
+        if (stringList == null) return new String[0];
+        synchronized (stringList) {
+            String[] stringArray = new String[stringList.size()];
+            for (int i = 0; i < stringList.size(); i++) {
+                stringArray[i] = stringList.get(i);
+            }
+            return stringArray;
         }
-        return stringArray;
     }
 
     private static ArrayList<Entry> setChartData(float[] floatArray, String[] gazeType) {
         ArrayList<Entry> dataset = new ArrayList<>();
+        if (floatArray == null) return dataset;
         for (int i = 0; i < floatArray.length; i++) {
-            if (gazeType.length > i && floatArray[i] < 1 && floatArray[i] > 0 && !Objects.equals(gazeType[i], "Closed")) {
+            boolean isClosed = (gazeType != null && gazeType.length > i && Objects.equals(gazeType[i], "Closed"));
+            if (!isClosed && floatArray[i] < 1 && floatArray[i] > 0) {
                 // only get values in the range
                 dataset.add(new Entry(i, floatArray[i]));
             }
@@ -115,9 +124,11 @@ public class clinician_mode_display extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
-        mChart = mActivity.findViewById(R.id.chart); // create chart
-        mChart.setTouchEnabled(true);
-        mChart.setPinchZoom(true);
+        mChart = view.findViewById(R.id.chart); // create chart
+        if (mChart != null) {
+            mChart.setTouchEnabled(true);
+            mChart.setPinchZoom(true);
+        }
 
         Bundle args = getArguments();
         if (args != null) {
@@ -128,16 +139,18 @@ public class clinician_mode_display extends Fragment {
 
             if (gazeInputLog != null) { // adding the gaze input log
                 Log.d("ClinicalMode", "Gaze input log size = " + gazeInputLog.length);
-                TextView gazeInputLogView = mActivity.findViewById(R.id.gazeLogText);
-                StringBuilder targetString = new StringBuilder();
-                for (String s : gazeInputLog) {
-                    targetString.append(s);
-                    targetString.append('\n');
+                TextView gazeInputLogView = view.findViewById(R.id.gazeLogText);
+                if (gazeInputLogView != null) {
+                    StringBuilder targetString = new StringBuilder();
+                    for (String s : gazeInputLog) {
+                        targetString.append(s);
+                        targetString.append('\n');
+                    }
+                    gazeInputLogView.setText(targetString.toString());
                 }
-                gazeInputLogView.setText(targetString.toString());
             }
 
-            if (leftNICX != null && leftNICY != null) { // if data present, adding graph
+            if (mChart != null && leftNICX != null && leftNICY != null) { // if data present, adding graph
                 ArrayList<Entry> dataset1 = setChartData(leftNICX, gazeInputLog); // convert to data type
                 ArrayList<Entry> dataset2 = setChartData(leftNICY, gazeInputLog);
 
@@ -154,6 +167,7 @@ public class clinician_mode_display extends Fragment {
                 yAxis.setAxisMinimum(0f);
                 yAxis.setAxisMaximum(1f);
                 yAxis.setGranularity(0.1f);
+                mChart.invalidate();
             } else {
                 Log.d("ClinicalMode",  "Data incomplete or missing");
             }

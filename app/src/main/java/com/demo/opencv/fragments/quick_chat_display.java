@@ -50,7 +50,9 @@ public class quick_chat_display extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        handler.removeCallbacks(updateUI);
+        if (handler != null && updateUI != null) {
+            handler.removeCallbacks(updateUI);
+        }
     }
 
     @Override
@@ -65,11 +67,16 @@ public class quick_chat_display extends Fragment {
     }
 
     private void setText(TextView textView, String string) {
+        if (textView == null) return;
         if (string != null && !Objects.equals(string, "") && TextUtils.isDigitsOnly(string)) {
-            textView.setText(Integer.parseInt(string)); // set string resource
-        } else {
-            textView.setText(string); // set the original string
+            try {
+                textView.setText(Integer.parseInt(string)); // set string resource
+                return;
+            } catch (Exception ignored) {
+                // Not a valid string resource ID, fall through
+            }
         }
+        textView.setText(string != null ? string : ""); // set the original string
     }
 
     @Override
@@ -77,31 +84,32 @@ public class quick_chat_display extends Fragment {
 
         UserDataManager userDataManager = (UserDataManager) requireActivity().getApplication();
         gazeButtons.clear();
-        gazeButtons.add(mActivity.findViewById(R.id.QuickChatUp));
-        gazeButtons.add(mActivity.findViewById(R.id.QuickChatLeftUp));
-        gazeButtons.add(mActivity.findViewById(R.id.QuickChatRightUp));
-        gazeButtons.add(mActivity.findViewById(R.id.QuickChatLeft));
-        gazeButtons.add(mActivity.findViewById(R.id.QuickChatClosed));
-        gazeButtons.add(mActivity.findViewById(R.id.QuickChatRight));
+        gazeButtons.add(view.findViewById(R.id.QuickChatUp));
+        gazeButtons.add(view.findViewById(R.id.QuickChatLeftUp));
+        gazeButtons.add(view.findViewById(R.id.QuickChatRightUp));
+        gazeButtons.add(view.findViewById(R.id.QuickChatLeft));
+        gazeButtons.add(view.findViewById(R.id.QuickChatClosed));
+        gazeButtons.add(view.findViewById(R.id.QuickChatRight));
 
-        for (int i = 0; i < 6; i++) { // add click listeners for the eye gesture buttons
+        for (int i = 0; i < gazeButtons.size(); i++) { // add click listeners for the eye gesture buttons
             int finalI = i;
-            gazeButtons.get(i).setOnClickListener(v -> quickChatListener.onQuickChatButtonClicked(finalI));
+            TextView btn = gazeButtons.get(i);
+            if (btn != null) {
+                btn.setOnClickListener(v -> quickChatListener.onQuickChatButtonClicked(finalI));
+            }
         }
 
-        handler = new Handler(Looper.getMainLooper());
-        updateUI = new Runnable() {
-            @Override
-            public void run() {
-                viewModel.getSelectedItem().observe(requireActivity(), item -> {
-                    QuickChatData quickChatData =  item.quickChatData;
-                    for (int i = 0; i < 6; i++) {
+        viewModel.getSelectedItem().observe(getViewLifecycleOwner(), item -> {
+            if (item == null) return;
+            QuickChatData quickChatData = item.quickChatData;
+            if (quickChatData != null && quickChatData.texts != null) {
+                for (int i = 0; i < 6; i++) {
+                    if (i < gazeButtons.size() && i < quickChatData.texts.length) {
                         setText(gazeButtons.get(i), quickChatData.texts[i]);
                     }
-                });
+                }
             }
-        };
-        handler.post(updateUI);
+        });
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

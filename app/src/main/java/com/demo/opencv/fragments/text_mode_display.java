@@ -59,7 +59,9 @@ public class text_mode_display extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        handler.removeCallbacks(updateUI);
+        if (handler != null && updateUI != null) {
+            handler.removeCallbacks(updateUI);
+        }
     }
 
     public interface TextModeListener {
@@ -82,14 +84,16 @@ public class text_mode_display extends Fragment {
     }
 
     private void setBackground(int index, int originalID, int newID, long delayMillis) {
+        if (index < 0 || index >= keyboardOptions.size()) return;
         TextView target = keyboardOptions.get(index);
+        if (target == null) return;
         int left = target.getPaddingLeft();
         int top = target.getPaddingTop();
         int right = target.getPaddingRight();
         int bottom = target.getPaddingBottom();
         target.setBackgroundResource(newID);
         target.setPadding(left, top, right, bottom);
-        new Handler().postDelayed(new Runnable() {
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
             @Override
             public void run() {
                 target.setBackgroundResource(originalID);
@@ -125,11 +129,16 @@ public class text_mode_display extends Fragment {
     }
 
     private void setText(TextView textView, String string) {
+        if (textView == null) return;
         if (string != null && !Objects.equals(string, "") && TextUtils.isDigitsOnly(string)) {
-            textView.setText(Integer.parseInt(string)); // set string resource
-        } else {
-            textView.setText(string); // set the original string
+            try {
+                textView.setText(Integer.parseInt(string)); // set string resource
+                return;
+            } catch (Exception ignored) {
+                // Not a valid resource ID, fall through
+            }
         }
+        textView.setText(string != null ? string : ""); // set the original string
     }
 
     @Override
@@ -137,112 +146,126 @@ public class text_mode_display extends Fragment {
 
         UserDataManager userDataManager = (UserDataManager) requireActivity().getApplication();
 
-        finishedScreenTexts.add(mActivity.findViewById(R.id.speakButton));
-        finishedScreenTexts.add(mActivity.findViewById(R.id.uploadButton));
-        finishedScreenTexts.add(mActivity.findViewById(R.id.backButton));
-        finishedScreenTexts.add(mActivity.findViewById(R.id.finishBox));
-        finishedScreenTexts.add(mActivity.findViewById(R.id.darkenLayer));
+        finishedScreenTexts.clear();
+        finishedScreenImages.clear();
+        keyboardOptions.clear();
 
-        finishedScreenImages.add(mActivity.findViewById(R.id.speakButtonImage));
-        finishedScreenImages.add(mActivity.findViewById(R.id.uploadButtonImage));
-        finishedScreenImages.add(mActivity.findViewById(R.id.backButtonImage));
+        finishedScreenTexts.add(view.findViewById(R.id.speakButton));
+        finishedScreenTexts.add(view.findViewById(R.id.uploadButton));
+        finishedScreenTexts.add(view.findViewById(R.id.backButton));
+        finishedScreenTexts.add(view.findViewById(R.id.finishBox));
+        finishedScreenTexts.add(view.findViewById(R.id.darkenLayer));
+
+        finishedScreenImages.add(view.findViewById(R.id.speakButtonImage));
+        finishedScreenImages.add(view.findViewById(R.id.uploadButtonImage));
+        finishedScreenImages.add(view.findViewById(R.id.backButtonImage));
         toggleFinishedScreen(false); // closed finished screen
 
         if (useFirstLayout) {
-            textInput = mActivity.findViewById(R.id.textInput);
-            contextBox = mActivity.findViewById(R.id.contextBox);
-            sentenceBox = mActivity.findViewById(R.id.sentenceBox);
-            keyboardOptions.add(mActivity.findViewById(R.id.upGazeText)); // 0: up
-            keyboardOptions.add(mActivity.findViewById(R.id.leftGazeText)); // 1: left
-            keyboardOptions.add(mActivity.findViewById(R.id.rightGazeText)); // 2: right
-            keyboardOptions.add(mActivity.findViewById(R.id.closedGazeText)); // 3: closed gaze
-            keyboardOptions.add(mActivity.findViewById(R.id.leftUpGazeText)); // 4: left up
-            keyboardOptions.add(mActivity.findViewById(R.id.rightUpGazeText)); // 5: right up
+            textInput = view.findViewById(R.id.textInput);
+            contextBox = view.findViewById(R.id.contextBox);
+            sentenceBox = view.findViewById(R.id.sentenceBox);
+            keyboardOptions.add(view.findViewById(R.id.upGazeText)); // 0: up
+            keyboardOptions.add(view.findViewById(R.id.leftGazeText)); // 1: left
+            keyboardOptions.add(view.findViewById(R.id.rightGazeText)); // 2: right
+            keyboardOptions.add(view.findViewById(R.id.closedGazeText)); // 3: closed gaze
+            keyboardOptions.add(view.findViewById(R.id.leftUpGazeText)); // 4: left up
+            keyboardOptions.add(view.findViewById(R.id.rightUpGazeText)); // 5: right up
         } else {
-            textInput = mActivity.findViewById(R.id.textInput2);
-            contextBox = mActivity.findViewById(R.id.contextBox2);
-            sentenceBox = mActivity.findViewById(R.id.sentenceBox2);
-            keyboardOptions.add(mActivity.findViewById(R.id.upGazeText2)); // 0: up
-            keyboardOptions.add(mActivity.findViewById(R.id.leftGazeText2)); // 1: left
-            keyboardOptions.add(mActivity.findViewById(R.id.rightGazeText2)); // 2: right
-            keyboardOptions.add(mActivity.findViewById(R.id.closedGazeText2)); // 3: closed gaze
-            keyboardOptions.add(mActivity.findViewById(R.id.leftUpGazeText2)); // 4: left up
-            keyboardOptions.add(mActivity.findViewById(R.id.rightUpGazeText2)); // 5: right up
-            keyboardOptions.add(mActivity.findViewById(R.id.leftGazeSubText)); // 6. left sub text
-            keyboardOptions.add(mActivity.findViewById(R.id.rightGazeSubText)); // 7. right sub text
-            keyboardOptions.add(mActivity.findViewById(R.id.leftUpGazeSubText)); // 8. left up sub text
-            keyboardOptions.add(mActivity.findViewById(R.id.rightUpGazeSubText)); // 9. right up sub text
-            recordButton = mActivity.findViewById(R.id.recordButton);
-            recordButton.setOnClickListener(v -> textModeListener.recordButtonClicked());
+            textInput = view.findViewById(R.id.textInput2);
+            contextBox = view.findViewById(R.id.contextBox2);
+            sentenceBox = view.findViewById(R.id.sentenceBox2);
+            keyboardOptions.add(view.findViewById(R.id.upGazeText2)); // 0: up
+            keyboardOptions.add(view.findViewById(R.id.leftGazeText2)); // 1: left
+            keyboardOptions.add(view.findViewById(R.id.rightGazeText2)); // 2: right
+            keyboardOptions.add(view.findViewById(R.id.closedGazeText2)); // 3: closed gaze
+            keyboardOptions.add(view.findViewById(R.id.leftUpGazeText2)); // 4: left up
+            keyboardOptions.add(view.findViewById(R.id.rightUpGazeText2)); // 5: right up
+            keyboardOptions.add(view.findViewById(R.id.leftGazeSubText)); // 6. left sub text
+            keyboardOptions.add(view.findViewById(R.id.rightGazeSubText)); // 7. right sub text
+            keyboardOptions.add(view.findViewById(R.id.leftUpGazeSubText)); // 8. left up sub text
+            keyboardOptions.add(view.findViewById(R.id.rightUpGazeSubText)); // 9. right up sub text
+            recordButton = view.findViewById(R.id.recordButton);
+            if (recordButton != null) {
+                recordButton.setOnClickListener(v -> textModeListener.recordButtonClicked());
+            }
         }
 
         // add click listeners for finished screen
-        finishedScreenTexts.get(0).setOnClickListener(v -> textModeListener.onTextModeButtonClicked(1));
-        finishedScreenTexts.get(1).setOnClickListener(v -> textModeListener.onTextModeButtonClicked(2));
-        finishedScreenTexts.get(2).setOnClickListener(v -> textModeListener.onTextModeButtonClicked(5));
+        if (finishedScreenTexts.size() >= 3) {
+            TextView speakBtn = finishedScreenTexts.get(0);
+            if (speakBtn != null) speakBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(1));
+            TextView uploadBtn = finishedScreenTexts.get(1);
+            if (uploadBtn != null) uploadBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(2));
+            TextView backBtn = finishedScreenTexts.get(2);
+            if (backBtn != null) backBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(5));
+        }
 
-        for (int i = 0; i < 6; i++) { // add click listeners for the eye gesture buttons
+        for (int i = 0; i < Math.min(6, keyboardOptions.size()); i++) { // add click listeners for the eye gesture buttons
             int finalI = i;
-            keyboardOptions.get(i).setOnClickListener(v -> textModeListener.onTextModeButtonClicked(finalI));
+            TextView opt = keyboardOptions.get(i);
+            if (opt != null) {
+                opt.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(finalI));
+            }
         }
 
         String context = userDataManager.getTextEntryContext();
         setText(contextBox, context);
-        contextBox.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_DONE) {
-                userDataManager.setTextEntryContext(v.getText().toString());
+        if (contextBox != null) {
+            contextBox.setOnEditorActionListener((v, actionId, event) -> {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    userDataManager.setTextEntryContext(v.getText().toString());
+                }
+                return false;
+            });
+        }
+
+        viewModel.getSelectedItem().observe(getViewLifecycleOwner(), item -> {
+            if (item == null) return;
+            KeyboardData keyboardData = item.KeyboardData;
+
+            if (keyboardData != null) {
+                if (finishedScreenDisplayed != keyboardData.finished) { // check if finished screen should be displayed
+                    if (finishedScreenTexts.size() > 3) {
+                        setText(finishedScreenTexts.get(3), keyboardData.sentence);
+                    }
+                    finishedScreenDisplayed = keyboardData.finished;
+                    toggleFinishedScreen(keyboardData.finished);
+                }
+                for (int i = 0; i < keyboardOptions.size(); i++) {
+                    if (keyboardData.Options != null && keyboardData.Options.length > i) {
+                        setText(keyboardOptions.get(i), keyboardData.Options[i]); // set string resource
+                    }
+                }
+                setText(contextBox, keyboardData.context); // set context
+                setText(textInput, keyboardData.TextInput);
+                setText(sentenceBox, keyboardData.sentence);
+
+                if (!useFirstLayout && recordButton != null) {
+                    if (item.isRecording) {
+                        recordButton.setBackgroundResource(R.drawable.record_button_recording);
+                    } else {
+                        recordButton.setBackgroundResource(R.drawable.record_button_idle);
+                    }
+                }
             }
-            return false;
+
+            if (!useFirstLayout && item.DetectionOutput != null) {
+                int gesture = item.DetectionOutput.gestureOutput;
+                int actual = -1;
+                if (gesture >= 0 && gesture < keyboardInputMat.length) {
+                    actual = keyboardInputMat[gesture];
+                }
+
+                if (actual != -1 && actual >= 0 && actual < keyboardOptions.size()) {
+                    if (actual == 0 || actual == 3) {
+                        setBackground(actual, R.drawable.gaze_option_bg_2, R.drawable.gaze_option_bg_selected, 300);
+                    } else {
+                        setBackground(actual, R.drawable.gaze_option_bg_1, R.drawable.gaze_option_bg_selected, 300);
+                    }
+                }
+            }
         });
-
-        handler = new Handler(Looper.getMainLooper());
-        updateUI = new Runnable(){
-            @Override
-            public void run() {
-                viewModel.getSelectedItem().observe(requireActivity(), item -> {
-
-                    KeyboardData keyboardData = item.KeyboardData;
-
-                    if (keyboardData != null) {
-                        if (finishedScreenDisplayed != keyboardData.finished) { // check if finished screen should be displayed
-                            setText(finishedScreenTexts.get(3), keyboardData.sentence);
-                            finishedScreenDisplayed = keyboardData.finished;
-                            toggleFinishedScreen(keyboardData.finished);
-                        }
-                        for (int i = 0; i < keyboardOptions.size(); i++) {
-                            if (keyboardData.Options.length > i) {
-                                setText(keyboardOptions.get(i), keyboardData.Options[i]); // set string resource
-                            }
-                        }
-                        setText(contextBox, keyboardData.context); // set context
-                        setText(textInput, keyboardData.TextInput);
-                        setText(sentenceBox, keyboardData.sentence);
-
-                        if (!useFirstLayout) {
-                            if (item.isRecording) {
-                                recordButton.setBackgroundResource(R.drawable.record_button_recording);
-                            } else {
-                                recordButton.setBackgroundResource(R.drawable.record_button_idle);
-                            }
-                        }
-                    }
-
-                    if (!useFirstLayout && item.DetectionOutput != null) {
-                        //int detection = keyboardInputMat[item.DetectionOutput.AnalyzedData.GazeType]; // the determination for that frame
-                        int actual = keyboardInputMat[item.DetectionOutput.gestureOutput]; // the actual input by the user
-
-                        if (actual != -1) {
-                            if (actual == 0 || actual == 3) {
-                                setBackground(actual, R.drawable.gaze_option_bg_2, R.drawable.gaze_option_bg_selected, 300);
-                            } else {
-                                setBackground(actual, R.drawable.gaze_option_bg_1, R.drawable.gaze_option_bg_selected, 300);
-                            }
-                        }
-                    }
-                });
-            }
-        };
-        handler.post(updateUI);
     }
 
     @Override

@@ -95,7 +95,6 @@ public class MainActivity extends AppCompatActivity
             startCamera(); //start camera if permission has been granted by user
         } else{
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_RECORD_AUDIO_PERMISSION);
         }
         viewModel = new ViewModelProvider(this).get(UIViewModel.class);
 
@@ -185,62 +184,84 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void openSocialMedia() {
-        presenter.setMode("Social Media");
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, social_media_display.class, null)
-                .setReorderingAllowed(true)
-                .addToBackStack("SocialMediaFragment") // Name can be null
-                .commit();
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("Social Media");
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, social_media_display.class, null)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("SocialMediaFragment")
+                    .commitAllowingStateLoss();
+        });
     }
+
     @Override
     public void openTextEntry() {
-        presenter.setMode("Text");
-        Fragment textFragment = text_mode_display.newInstance();
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, textFragment)
-                .setReorderingAllowed(true)
-                .addToBackStack("text_fragment") // Name can be null
-                .commit();
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("Text");
+            Fragment textFragment = text_mode_display.newInstance();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, textFragment)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("text_fragment")
+                    .commitAllowingStateLoss();
+        });
     }
+
     @Override
     public void openCalibration() {
-        presenter.setMode("Calibration");
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, calibration_display.class, null)
-                .setReorderingAllowed(true)
-                .addToBackStack("calibrate_fragment") // Name can be null
-                .commit();
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("Calibration");
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, calibration_display.class, null)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("calibrate_fragment")
+                    .commitAllowingStateLoss();
+        });
     }
+
     @Override
     public void openSettings() {
-        presenter.setMode("Dev");
-        Fragment devFragment = dev_mode_display.newInstance();
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, devFragment)
-                .setReorderingAllowed(true)
-                .addToBackStack("dev_fragment") // Name can be null
-                .commit();
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("Dev");
+            Fragment devFragment = dev_mode_display.newInstance();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, devFragment)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("dev_fragment")
+                    .commitAllowingStateLoss();
+        });
     }
 
     @Override
     public void openQuickChat() {
-        presenter.setMode("QuickChat");
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, quick_chat_display.class, null)
-                .setReorderingAllowed(true)
-                .addToBackStack("quick_chat_fragment") // Name can be null
-                .commit();
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("QuickChat");
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, quick_chat_display.class, null)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("quick_chat_fragment")
+                    .commitAllowingStateLoss();
+        });
     }
+
     @Override
     public void openClinician() {
-        presenter.setMode("Clinician");
-        ClinicalData clinicalData = presenter.getClinicalData(); // get clinical data from the presenter
-        Fragment calibrationFragment = clinician_mode_display.newInstance(clinicalData);
-        fragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainerView, calibrationFragment)
-                .setReorderingAllowed(true)
-                .addToBackStack("clinician_fragment") // Name can be null
-                .commit();
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("Clinician");
+            ClinicalData clinicalData = presenter.getClinicalData();
+            Fragment calibrationFragment = clinician_mode_display.newInstance(clinicalData);
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, calibrationFragment)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("clinician_fragment")
+                    .commitAllowingStateLoss();
+        });
     }
 
 
@@ -248,8 +269,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        presenter.onDestroy();
-        cameraExecutor.shutdown();
+        if (presenter != null) {
+            presenter.onDestroy();
+        }
+        if (cameraExecutor != null) {
+            cameraExecutor.shutdown();
+        }
     }
 
     private void startCamera() {
@@ -276,7 +301,7 @@ public class MainActivity extends AppCompatActivity
         ImageAnalysis.Builder newBuilder = new ImageAnalysis.Builder();
 
         Camera2Interop.Extender<ImageAnalysis> ext = new Camera2Interop.Extender<>(newBuilder);
-        int TARGET_FRAME_RATE = 13;
+        int TARGET_FRAME_RATE = 30;
         ext.setCaptureRequestOption(
                 CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
                 new Range<>(TARGET_FRAME_RATE, TARGET_FRAME_RATE)
@@ -293,13 +318,23 @@ public class MainActivity extends AppCompatActivity
                     image.close();
                 } else {
                     if (image.getFormat() == ImageFormat.YUV_420_888 && image.getPlanes().length == 3) {
-                        //Log.d("MVPView", "Image Format Correct: Frame Loaded");
                         Image newImage = image.getImage();
-                        Mat rgbaMat = ImageFormatUtils.rgb(newImage);
-
-                        presenter.onFrame(rgbaMat);
-                        assert newImage != null;
-                        newImage.close();
+                        Mat rgbaMat = null;
+                        try {
+                            if (newImage != null) {
+                                rgbaMat = ImageFormatUtils.rgb(newImage);
+                                presenter.onFrame(rgbaMat);
+                            }
+                        } catch (Exception e) {
+                            Log.e("MVPView", "Error analyzing frame", e);
+                        } finally {
+                            if (newImage != null) {
+                                newImage.close();
+                            }
+                            if (rgbaMat != null) {
+                                rgbaMat.release();
+                            }
+                        }
                     } else {
                         Log.d("MVPView", "Image format not correct");
                     }

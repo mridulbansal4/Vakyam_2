@@ -9,15 +9,15 @@ public class KeyboardManager {
     int page = 0;
 
     public KeyboardData getDisplays() {
-
         KeyboardData keyboardData = new KeyboardData();
         String[] options = new String[6];
 
-        if (layer == 1) {
+        if (layer == 1 || page < 0 || page >= layer2Options.length) {
+            layer = 1;
             options = layer1Options;
         } else {
             String selected = layer2Options[page];
-            for (int i = 0; i < selected.length(); i++) {
+            for (int i = 0; i < selected.length() && i < options.length; i++) {
                 if (selected.charAt(i) == ' ') { // space operation
                     options[i] = "Add space";
                 } else if (selected.charAt(i) == '*') { // delete operation
@@ -38,28 +38,56 @@ public class KeyboardManager {
     public void processInput(int selection) { // 0: up, 1: left, 2: down, 3: right
         // left gaze = 1, right gaze = 2, up gaze = 0, down gaze = -1, closed = 3, left-up gaze = 4, right-up gaze = 5
         final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 5, 4}; // convert gaze type into keyboard input
+        if (selection < 0 || selection >= keyboardInputMat.length) return;
         int input = keyboardInputMat[selection];
         if (input == -1) return;
 
-        if (layer == 1 && input < layer1Options.length) {
-            layer = 2;
-            page = input;
-        } else if (input < layer2Options[page].length()){
-            char operation = layer2Options[page].charAt(input);
-            if (operation == '*' && textInput.length() > 0) {
-                textInput = textInput.substring(0, textInput.length() - 1); // delete operation
-            } else if (operation == '#') {
-                textInput = "";
-            } else {
-                textInput += operation; // add the letter/space
+        if (layer == 1) {
+            if (input >= 0 && input < layer1Options.length) {
+                layer = 2;
+                page = input;
+            }
+        } else {
+            if (page >= 0 && page < layer2Options.length && input >= 0 && input < layer2Options[page].length()){
+                char operation = layer2Options[page].charAt(input);
+                if (operation == '*') {
+                    if (textInput.length() > 0) {
+                        textInput = textInput.substring(0, textInput.length() - 1); // delete operation
+                    }
+                } else if (operation == '#') {
+                    textInput = "";
+                } else {
+                    textInput += operation; // add the letter/space
+                }
             }
             layer = 1;
         }
+    }
 
+    public String getTextInput() {
+        return textInput;
+    }
+
+    public void setTextInput(String textInput) {
+        this.textInput = (textInput != null) ? textInput : "";
+    }
+
+    public int getLayer() {
+        return layer;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public void reset() {
+        layer = 1;
+        page = 0;
+        textInput = "";
     }
 
     public void initialize() {
-
+        reset();
     }
 
 }

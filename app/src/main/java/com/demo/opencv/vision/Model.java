@@ -14,6 +14,7 @@ import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.EyeDetection;
 import com.demo.opencv.vision.GazeData;
 import com.demo.opencv.vision.GoogleFaceDetector;
+import com.google.mlkit.vision.face.FaceContour;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -37,7 +38,7 @@ public class Model implements ContractInterface.Model {
     private final EyeDetection detector = new EyeDetection(); // create eye detection object to analyze user input
     private final GoogleFaceDetector faceDetector = new GoogleFaceDetector();
     DetectionOutput detectionOutput = new DetectionOutput();
-    private ArrayList<String> prevInputs;
+    private ArrayList<String> prevInputs = new ArrayList<>();
     int gazeNum = 8; // number of types of gaze inputs
     int currentGaze = -1;
     int length = 0;
@@ -46,6 +47,13 @@ public class Model implements ContractInterface.Model {
     Integer[] tags = new Integer[]{1, 2, 0, 3, 4, 6, 7}; // should be flipped because of perspective
     Point[] corners = new Point[4]; // left, top, right, down
     double[] leftTemplateError, rightTemplateError;
+
+    // Transit-robust gaze stabilization and gesture detection stack
+    private MotionSensorStabilizer motionStabilizer;
+    private final NormalizedIrisEstimator irisEstimator = new NormalizedIrisEstimator();
+    private final OneEuroFilter filterX = new OneEuroFilter(1.0, 0.5, 1.0);
+    private final OneEuroFilter filterY = new OneEuroFilter(1.0, 0.5, 1.0);
+    private final BallisticGestureDetector gestureDetector = new BallisticGestureDetector(1.8f, 0.18f, 400L);
 
     @Override
     public void initialize(Context context, Context applicationContext) throws IOException { // initialize models, libraries, and datastore
@@ -67,6 +75,10 @@ public class Model implements ContractInterface.Model {
         gazeCount = new int[gazeNum]; // change based on how many detections there are
 
         faceDetector.initialize(); // initialize Google ML Kit
+
+        // Initialize motion sensor stabilizer (circuit breaker for transit shock)
+        motionStabilizer = new MotionSensorStabilizer(mContext, 4.5f, 300L);
+        motionStabilizer.start();
 
     }
 
@@ -113,15 +125,19 @@ public class Model implements ContractInterface.Model {
             } else { // combine the two losses
                 int index = -1;
                 double minError = 1000000f;
-                for (int i = 0; i < userDataManager.calibrationTemplateNum; i++) {
-                    double error = leftTemplateError[i] + rightTemplateError[i];
-                    if (error < minError) {
-                        index = i;
-                        minError = error;
+                if (leftTemplateError != null && rightTemplateError != null) {
+                    int maxTemplates = Math.min(userDataManager.calibrationTemplateNum, Math.min(leftTemplateError.length, rightTemplateError.length));
+                    for (int i = 0; i < maxTemplates; i++) {
+                        double error = leftTemplateError[i] + rightTemplateError[i];
+                        if (error < minError) {
+                            index = i;
+                            minError = error;
+                        }
                     }
                 }
-                boolean success = minError <= 0;
-                detectionOutput.setEyeData(2, success, tags[index], 1, (float)minError);
+                boolean success = (index >= 0) && (minError <= 0);
+                int selectedGaze = (index >= 0 && index < tags.length) ? tags[index] : 0;
+                detectionOutput.setEyeData(2, success, selectedGaze, 1, (float)minError);
             }
 
         }
@@ -234,73 +250,174 @@ public class Model implements ContractInterface.Model {
         Bitmap bmp;
 
         // google ml kit detection
-        Mat rgbaMat = new Mat(rgbMat.cols(), rgbMat.rows(), CvType.CV_8UC4);
-        Imgproc.cvtColor(rgbMat, rgbaMat, Imgproc.COLOR_BGR2RGBA);
+        Mat rgbaMat = new Mat();
+        Imgproc.cvtColor(rgbMat, rgbaMat, Imgproc.COLOR_RGB2RGBA);
         bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgbaMat, bmp);
+        rgbaMat.release();
         faceDetector.detect(bmp);
 
         // initialization
         detectionOutput.initialize(4);
-        
-        if (faceDetector.leftEyeContour == null && faceDetector.rightEyeContour == null) { // no eye detection
+        detectionOutput.gestureOutput = 0;
+
+        if (!faceDetector.faceDetected && faceDetector.leftEyeContour == null && faceDetector.rightEyeContour == null) { // no face/eye detection
             return detectionOutput;
-        
-        } else if (faceDetector.leftEyeOpenProb <= 0.1 && faceDetector.rightEyeOpenProb <= 0.1) { // check if eyes are closed
-            detectionOutput.setEyeData(0, true, 5, 1, faceDetector.leftEyeOpenProb);
-            detectionOutput.setEyeData(1, true, 5, 1, faceDetector.rightEyeOpenProb);
-        } else {
-            if (faceDetector.leftEyeContour != null) { // left eye available
+        }
 
-                List<PointF> leftEyePoints = faceDetector.leftEyeContour.getPoints();
-                Rect leftEyeBound = getBoundingBox(leftEyePoints, rgbMat);
+        Rect leftEyeBound = null;
+        if (faceDetector.leftEyeContour != null) { // left eye available
+            List<PointF> leftEyePoints = faceDetector.leftEyeContour.getPoints();
+            leftEyeBound = getBoundingBox(leftEyePoints, rgbMat);
+            if (leftEyeBound != null) {
+                leftEye = new Mat(rgbMat, leftEyeBound);
+                Imgproc.resize(leftEye, leftEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
+                Imgproc.cvtColor(leftEye, leftEye, Imgproc.COLOR_RGB2GRAY);
 
-                //Rect leftEyeBound = getSurroundBox(faceDetector.leftEyePos, rgbMat);
-                if (leftEyeBound != null) {
-                  //  Log.d("MVPModel", "Rect Dimensions: " + leftEyeBound.x + ' ' + leftEyeBound.y + ' ' + leftEyeBound.height + ' ' + leftEyeBound.width);
-                    leftEye = new Mat(rgbMat, leftEyeBound);
-                    Log.d("MVPModel", "Image Dimensions: " + leftEye.cols() + " " + leftEye.rows());
-
-                    // image processing
-                    Imgproc.resize(leftEye, leftEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
-                    Imgproc.cvtColor(leftEye, leftEye, Imgproc.COLOR_RGB2GRAY);
-                    //Imgproc.equalizeHist(leftEye, leftEye);
-
-                    if (userDataManager.checkCalibrationFiles()) { // true = calibration complete
-                        leftTemplateError = detector.runEyeModel(detectionOutput, leftEye, 0);
-                    }
-                }
-            }
-            if (faceDetector.rightEyeContour != null) { // right eye available
-
-                List<PointF> rightEyePoints = faceDetector.rightEyeContour.getPoints();
-                Rect rightEyeBound = getBoundingBox(rightEyePoints, rgbMat);
-
-                //Rect rightEyeBound = getSurroundBox(faceDetector.rightEyePos, rgbMat);
-                if (rightEyeBound != null) {
-                  //  Log.d("MVPModel", "Rect Dimensions: " + rightEyeBound.x + ' ' + rightEyeBound.y + ' ' + rightEyeBound.height + ' ' + rightEyeBound.width);
-                    rightEye = new Mat(rgbMat, rightEyeBound);
-
-                    // image processing
-                    Imgproc.resize(rightEye, rightEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
-                    Imgproc.cvtColor(rightEye, rightEye, Imgproc.COLOR_RGB2GRAY);
-                    //Imgproc.equalizeHist(rightEye, rightEye);
-
-                    if (userDataManager.checkCalibrationFiles()) { // if there are calibration images
-                        rightTemplateError = detector.runEyeModel(detectionOutput, rightEye, 1);
-                    }
+                if (userDataManager.checkCalibrationFiles()) { // true = calibration complete
+                    leftTemplateError = detector.runEyeModel(detectionOutput, leftEye, 0);
                 }
             }
         }
 
-        //testing data
+        Rect rightEyeBound = null;
+        if (faceDetector.rightEyeContour != null) { // right eye available
+            List<PointF> rightEyePoints = faceDetector.rightEyeContour.getPoints();
+            rightEyeBound = getBoundingBox(rightEyePoints, rgbMat);
+            if (rightEyeBound != null) {
+                rightEye = new Mat(rgbMat, rightEyeBound);
+                Imgproc.resize(rightEye, rightEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
+                Imgproc.cvtColor(rightEye, rightEye, Imgproc.COLOR_RGB2GRAY);
+
+                if (userDataManager.checkCalibrationFiles()) { // if there are calibration images
+                    rightTemplateError = detector.runEyeModel(detectionOutput, rightEye, 1);
+                }
+            }
+        }
+
+        // testing data
         detectionOutput.testingMats[0] = leftEye;
         detectionOutput.testingMats[1] = rightEye;
         analyzeGazeOutput(); // analyze the output before returning to the presenter
 
-        // NIC detection
-        detectionOutput.leftNIC = getIrisCenter(leftEye);
-        Log.d("IrisDetection", "Normalized x = " + detectionOutput.leftNIC.x + ", y = " + detectionOutput.leftNIC.y);
+        // Transit-robust Normalized Iris Estimation and Ballistic Gesture Detection
+        long nowMs = System.currentTimeMillis();
+        boolean motionStable = (motionStabilizer == null) || motionStabilizer.isMotionStable();
+
+        boolean eyesClosedByProb = (faceDetector.leftEyeOpenProb >= 0 && faceDetector.leftEyeOpenProb <= 0.15f)
+                || (faceDetector.rightEyeOpenProb >= 0 && faceDetector.rightEyeOpenProb <= 0.15f);
+
+        // Robust eye contour selection: prefer left eye, fallback to right eye if left eye is missing or out of frame
+        FaceContour primaryContour = null;
+        Rect primaryBound = null;
+        Mat primaryEyeMat = null;
+        if (faceDetector.leftEyeContour != null && leftEyeBound != null && leftEye != null) {
+            primaryContour = faceDetector.leftEyeContour;
+            primaryBound = leftEyeBound;
+            primaryEyeMat = leftEye;
+        } else if (faceDetector.rightEyeContour != null && rightEyeBound != null && rightEye != null) {
+            primaryContour = faceDetector.rightEyeContour;
+            primaryBound = rightEyeBound;
+            primaryEyeMat = rightEye;
+        }
+
+        if (primaryContour != null && primaryBound != null && primaryEyeMat != null
+                && primaryContour.getPoints() != null && !primaryContour.getPoints().isEmpty()) {
+            List<PointF> points = primaryContour.getPoints();
+            List<NormalizedIrisEstimator.Point2D> pts = new ArrayList<>(points.size());
+            for (PointF p : points) {
+                pts.add(new NormalizedIrisEstimator.Point2D(p.x, p.y));
+            }
+
+            Point irisRoi = detector.irisDetection(primaryEyeMat);
+            detectionOutput.testingMats[2] = detector.opening;
+
+            NormalizedIrisEstimator.Point2D irisPt = null;
+            if (!Double.isNaN(irisRoi.x) && !Double.isNaN(irisRoi.y) && irisRoi.x > 0 && irisRoi.y > 0) {
+                float irisX = primaryBound.x + (float) (irisRoi.x * primaryBound.width / (double) IMAGE_WIDTH);
+                float irisY = primaryBound.y + (float) (irisRoi.y * primaryBound.height / (double) IMAGE_HEIGHT);
+                irisPt = new NormalizedIrisEstimator.Point2D(irisX, irisY);
+            }
+
+            // Rotation-invariant anatomical landmark extraction
+            NormalizedIrisEstimator.EyeLandmarks landmarks = irisEstimator.extractLandmarksFromContour(pts, irisPt);
+            NormalizedIrisEstimator.GazeMetrics metrics = irisEstimator.computeMetrics(landmarks);
+
+            double smoothedX = filterX.filter((double) metrics.getHorizontalRatio(), nowMs);
+            double smoothedY = filterY.filter((double) metrics.getVerticalRatio(), nowMs);
+
+            detectionOutput.leftNIC = new Point(smoothedX, smoothedY);
+            Log.d("IrisDetection", "Normalized x = " + smoothedX + ", y = " + smoothedY);
+
+            float eyeOpenRatio = metrics.getEyeOpenRatio();
+            if (eyesClosedByProb) {
+                eyeOpenRatio = Math.min(eyeOpenRatio, 0.05f);
+            }
+
+            if (motionStable) {
+                BallisticGestureDetector.Gesture gesture = gestureDetector.process(
+                        (float) smoothedX,
+                        (float) smoothedY,
+                        eyeOpenRatio,
+                        nowMs
+                );
+
+                int gestureCode = 0;
+                switch (gesture) {
+                    case FLICK_LEFT:
+                        gestureCode = 1;
+                        break;
+                    case FLICK_RIGHT:
+                        gestureCode = 2;
+                        break;
+                    case FLICK_UP:
+                        gestureCode = 3;
+                        break;
+                    case BLINK_CONFIRM:
+                        gestureCode = 5;
+                        break;
+                    case NONE:
+                    default:
+                        gestureCode = 0;
+                        break;
+                }
+
+                detectionOutput.gestureOutput = gestureCode;
+                if (gestureCode != 0) {
+                    detectionOutput.AnalyzedData.Success = true;
+                    detectionOutput.AnalyzedData.GazeType = gestureCode;
+                    String typeStr = detectionOutput.AnalyzedData.getTypeString(gestureCode);
+                    if (prevInputs.size() > 25) {
+                        prevInputs.clear();
+                    }
+                    prevInputs.add(typeStr);
+                    detectionOutput.prevInputs = prevInputs;
+                }
+            } else {
+                detectionOutput.gestureOutput = 0;
+                gestureDetector.reset();
+                Log.d("MotionStabilizer", "Gesture suppressed due to vehicle shock/motion");
+            }
+        } else if (motionStable) {
+            float eyeOpenRatio = eyesClosedByProb ? 0.05f : 0.5f;
+            BallisticGestureDetector.Gesture gesture = gestureDetector.process(0.5f, 0.5f, eyeOpenRatio, nowMs);
+            int gestureCode = (gesture == BallisticGestureDetector.Gesture.BLINK_CONFIRM) ? 5 : 0;
+            detectionOutput.gestureOutput = gestureCode;
+            if (gestureCode != 0) {
+                detectionOutput.AnalyzedData.Success = true;
+                detectionOutput.AnalyzedData.GazeType = gestureCode;
+                String typeStr = detectionOutput.AnalyzedData.getTypeString(gestureCode);
+                if (prevInputs.size() > 25) {
+                    prevInputs.clear();
+                }
+                prevInputs.add(typeStr);
+                detectionOutput.prevInputs = prevInputs;
+            }
+        } else {
+            detectionOutput.gestureOutput = 0;
+            gestureDetector.reset();
+        }
+
         return detectionOutput;
     }
 }

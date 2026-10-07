@@ -32,7 +32,11 @@ public class SocialMediaManager {
     }
 
     public void updateCameraFrame(Mat cameraFrame) {
-        this.currentFrame = cameraFrame;
+        if (cameraFrame == null || cameraFrame.empty()) return;
+        if (this.currentFrame == null) {
+            this.currentFrame = new Mat();
+        }
+        cameraFrame.copyTo(this.currentFrame);
     }
 
     public void manageUserInput(int input, boolean isGazeType) {
@@ -40,7 +44,11 @@ public class SocialMediaManager {
         int selection = input;
         if (isGazeType) { // if is gaze type, then process it (is false for touchscreen)
             final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
-            selection = keyboardInputMat[input];
+            if (input >= 0 && input < keyboardInputMat.length) {
+                selection = keyboardInputMat[input];
+            } else {
+                selection = -1;
+            }
         }
 
         // up gaze = 0, left gaze = 1, right gaze = 2, closed = 3, left-up gaze = 4, right-up gaze = 5
@@ -66,6 +74,7 @@ public class SocialMediaManager {
     }
 
     void cameraCountdown() {
+        if (mContext == null) return;
         ContextCompat.getMainExecutor(mContext).execute(()  -> {
             new CountDownTimer(3000, 1000) { // 3 seconds, countdown per second
                 public void onTick(long millisUntilFinished) { // tick every second

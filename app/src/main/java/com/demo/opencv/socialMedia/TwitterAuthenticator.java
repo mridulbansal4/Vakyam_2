@@ -33,33 +33,37 @@ public class TwitterAuthenticator { // used to obtain user's Twitter access toke
     }
 
     public void startAuthentication(Context applicationContext) {
+        if (!(applicationContext instanceof UserDataManager)) return;
         UserDataManager userDataManager = (UserDataManager) applicationContext;
         Log.d("SocialMediaPost", "Starting Twitter Authentication");
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // storing in shared preferences
-                    RequestToken requestToken = twitter.getOAuthRequestToken(CALLBACK_URL);
+        new Thread(() -> {
+            try {
+                // storing in shared preferences
+                RequestToken requestToken = twitter.getOAuthRequestToken(CALLBACK_URL);
+                if (requestToken != null) {
                     userDataManager.setRequestToken(requestToken.getToken());
                     userDataManager.setRequestTokenSecret(requestToken.getTokenSecret());
 
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(requestToken.getAuthenticationURL()));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     context.startActivity(intent);
-                } catch (TwitterException e) {
-                    e.printStackTrace();
                 }
+            } catch (Exception e) {
+                Log.e("SocialMediaPost", "Twitter OAuth request failed", e);
             }
         }).start();
     }
 
     public void handleCallback(Uri uri, Context applicationContext) {
-        if (uri != null && uri.toString().startsWith(CALLBACK_URL)) { // if the intent is correct
+        if (uri != null && (uri.toString().startsWith(CALLBACK_URL) || uri.toString().startsWith("vakyam://oauth-callback"))) { // if the intent is correct
             String verifier = uri.getQueryParameter("oauth_verifier");
+            if (verifier == null) return;
+            if (!(applicationContext instanceof UserDataManager)) return;
 
             UserDataManager userDataManager = (UserDataManager) applicationContext;
             String requestTokenString = userDataManager.getRequestToken();
             String requestTokenSecretString = userDataManager.getRequestTokenSecret();
+            if (requestTokenString == null || requestTokenSecretString == null) return;
             Log.d("SocialMediaPost", "Callback Request Token: " + requestTokenString);
             Log.d("SocialMediaPost", "Callback Request Token Secret: " + requestTokenSecretString);
 
@@ -72,9 +76,8 @@ public class TwitterAuthenticator { // used to obtain user's Twitter access toke
                     userDataManager.setAccessToken(accessToken.getToken());
                     userDataManager.setAccessTokenSecret(accessToken.getTokenSecret());
                     Log.d("SocialMediaPost", "Authentication Access token obtained: " + accessToken);
-                } catch (TwitterException e) {
-                    Log.d("SocialMediaPost", "Authentication token access failed: " + e);
-                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    Log.e("SocialMediaPost", "Authentication token access failed: " + e.getMessage());
                 }
             });
         }

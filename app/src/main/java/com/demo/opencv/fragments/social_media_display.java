@@ -56,7 +56,9 @@ public class social_media_display extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        handler.removeCallbacks(updateUI);
+        if (handler != null && updateUI != null) {
+            handler.removeCallbacks(updateUI);
+        }
     }
 
     @Override
@@ -71,8 +73,9 @@ public class social_media_display extends Fragment {
     }
 
     private Bitmap matToBitmap(Mat mat) {
+        if (mat == null || mat.empty() || mat.cols() <= 0 || mat.rows() <= 0) return null;
         Bitmap bm = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(mat,bm);
+        Utils.matToBitmap(mat, bm);
         return bm;
     }
 
@@ -81,57 +84,64 @@ public class social_media_display extends Fragment {
 
         UserDataManager userDataManager = (UserDataManager) requireActivity().getApplication();
         logged_in = !(Objects.equals(userDataManager.getAccessToken(), ""));
-        textBox = mActivity.findViewById(R.id.socialMediaText);
-        imageBox = mActivity.findViewById(R.id.socialMediaImage);
-        cameraCountdown = mActivity.findViewById(R.id.socialMediaCameraText);
-        userNameBox = mActivity.findViewById(R.id.socialMediaUsernameText);
+        textBox = view.findViewById(R.id.socialMediaText);
+        imageBox = view.findViewById(R.id.socialMediaImage);
+        cameraCountdown = view.findViewById(R.id.socialMediaCameraText);
+        userNameBox = view.findViewById(R.id.socialMediaUsernameText);
         gazeButtons.clear();
-        gazeButtons.add(mActivity.findViewById(R.id.socialMediaDeleteTextButton)); // up
-        gazeButtons.add(mActivity.findViewById(R.id.socialMediaTakePictureButton)); // left
-        gazeButtons.add(mActivity.findViewById(R.id.socialMediaGenerateImageButton)); // right
-        gazeButtons.add(mActivity.findViewById(R.id.socialMediaRefineTextButton)); // closed
-        gazeButtons.add(mActivity.findViewById(R.id.socialMediaBackButton)); // left up
-        gazeButtons.add(mActivity.findViewById(R.id.socialMediaUploadButton)); // right up
+        gazeButtons.add(view.findViewById(R.id.socialMediaDeleteTextButton)); // up
+        gazeButtons.add(view.findViewById(R.id.socialMediaTakePictureButton)); // left
+        gazeButtons.add(view.findViewById(R.id.socialMediaGenerateImageButton)); // right
+        gazeButtons.add(view.findViewById(R.id.socialMediaRefineTextButton)); // closed
+        gazeButtons.add(view.findViewById(R.id.socialMediaBackButton)); // left up
+        gazeButtons.add(view.findViewById(R.id.socialMediaUploadButton)); // right up
 
-        for (int i = 0; i < 6; i++) { // add click listeners for the eye gesture buttons
+        for (int i = 0; i < gazeButtons.size(); i++) { // add click listeners for the eye gesture buttons
             int finalI = i;
-            gazeButtons.get(i).setOnClickListener(v -> socialMediaModeListener.onSocialMediaButtonClicked(finalI));
-        }
-        userNameBox.setOnClickListener(v -> socialMediaModeListener.AuthenticationButtonClicked());
-
-        handler = new Handler(Looper.getMainLooper());
-        updateUI = new Runnable() {
-            @Override
-            public void run() {
-                viewModel.getSelectedItem().observe(requireActivity(), item -> {
-
-                    SocialMediaData socialMediaData = item.socialMediaData;
-                    if (socialMediaData != null) {
-                        String finalText = "Tweet Text: " + socialMediaData.textBox;
-                        textBox.setText(finalText); // update the text box
-                        if (socialMediaData.cameraImage != null) { // update camera frame
-                            imageBox.setImageBitmap(matToBitmap(socialMediaData.cameraImage));
-                        }
-                        if (socialMediaData.cameraState == -1) {
-                            cameraCountdown.setText("");
-                            gazeButtons.get(1).setText(R.string.SocialMedia_TakePhoto);
-                        } else if (socialMediaData.cameraState == 0){
-                            cameraCountdown.setText("");
-                            gazeButtons.get(1).setText(R.string.SocialMedia_CancelPhoto);
-                        } else {
-                            cameraCountdown.setText(String.valueOf(socialMediaData.cameraState));
-                            gazeButtons.get(1).setText(R.string.SocialMedia_TakingPhoto);
-                        }
-                        if (logged_in) {
-                            userNameBox.setText(R.string.SocialMedia_LoggedIn);
-                        } else {
-                            userNameBox.setText(R.string.SocialMedia_ClickAuthenticate);
-                        }
-                    }
-                });
+            TextView btn = gazeButtons.get(i);
+            if (btn != null) {
+                btn.setOnClickListener(v -> socialMediaModeListener.onSocialMediaButtonClicked(finalI));
             }
-        };
-        handler.post(updateUI);
+        }
+        if (userNameBox != null) {
+            userNameBox.setOnClickListener(v -> socialMediaModeListener.AuthenticationButtonClicked());
+        }
+
+        viewModel.getSelectedItem().observe(getViewLifecycleOwner(), item -> {
+            if (item == null) return;
+            SocialMediaData socialMediaData = item.socialMediaData;
+            if (socialMediaData != null) {
+                String finalText = "Tweet Text: " + (socialMediaData.textBox != null ? socialMediaData.textBox : "");
+                if (textBox != null) textBox.setText(finalText); // update the text box
+                if (socialMediaData.cameraImage != null && !socialMediaData.cameraImage.empty() && imageBox != null) { // update camera frame
+                    Bitmap bm = matToBitmap(socialMediaData.cameraImage);
+                    if (bm != null) imageBox.setImageBitmap(bm);
+                }
+                if (cameraCountdown != null) {
+                    if (socialMediaData.cameraState == -1 || socialMediaData.cameraState == 0) {
+                        cameraCountdown.setText("");
+                    } else {
+                        cameraCountdown.setText(String.valueOf(socialMediaData.cameraState));
+                    }
+                }
+                if (gazeButtons.size() > 1 && gazeButtons.get(1) != null) {
+                    if (socialMediaData.cameraState == -1) {
+                        gazeButtons.get(1).setText(R.string.SocialMedia_TakePhoto);
+                    } else if (socialMediaData.cameraState == 0) {
+                        gazeButtons.get(1).setText(R.string.SocialMedia_CancelPhoto);
+                    } else {
+                        gazeButtons.get(1).setText(R.string.SocialMedia_TakingPhoto);
+                    }
+                }
+                if (userNameBox != null) {
+                    if (logged_in) {
+                        userNameBox.setText(R.string.SocialMedia_LoggedIn);
+                    } else {
+                        userNameBox.setText(R.string.SocialMedia_ClickAuthenticate);
+                    }
+                }
+            }
+        });
     }
 
 

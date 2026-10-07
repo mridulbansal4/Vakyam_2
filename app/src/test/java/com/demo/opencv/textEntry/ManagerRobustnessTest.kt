@@ -88,7 +88,7 @@ class ManagerRobustnessTest {
 
         // Backspace operation when deleting
         // Enter layer 2 page 5 (" *#")
-        km.processInput(6) // gaze 6 is left-up -> input 5
+        km.processInput(7) // gaze 7 is right-up -> input 5
         assertEquals(2, km.layer)
         assertEquals(5, km.page)
         // input 1 is '*' (delete)
@@ -97,7 +97,7 @@ class ManagerRobustnessTest {
         assertEquals("", km.textInput)
 
         // Backspace on empty text does not throw StringIndexOutOfBoundsException
-        km.processInput(6)
+        km.processInput(7)
         km.processInput(1)
         assertEquals("", km.textInput)
     }

@@ -44,7 +44,7 @@ public class Model implements ContractInterface.Model {
     int length = 0;
     int[] gazeCount;
     static int IMAGE_WIDTH = 44, IMAGE_HEIGHT = 18;
-    Integer[] tags = new Integer[]{1, 2, 0, 3, 4, 6, 7}; // should be flipped because of perspective
+    Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches calibration template index to gaze tag
     Point[] corners = new Point[4]; // left, top, right, down
     double[] leftTemplateError, rightTemplateError;
 
@@ -77,7 +77,7 @@ public class Model implements ContractInterface.Model {
         faceDetector.initialize(); // initialize Google ML Kit
 
         // Initialize motion sensor stabilizer (circuit breaker for transit shock)
-        motionStabilizer = new MotionSensorStabilizer(mContext, 4.5f, 300L);
+        motionStabilizer = new MotionSensorStabilizer(mContext, 35.0f, 300L);
         motionStabilizer.start();
 
     }
@@ -113,7 +113,11 @@ public class Model implements ContractInterface.Model {
             GazeData leftGazeData = detectionOutput.LeftData;
             GazeData rightGazeData = detectionOutput.RightData;
 
-            if (leftGazeData.GazeType == 5 && rightGazeData.GazeType == 5) { // eyes closed
+            if (leftGazeData.GazeType == rightGazeData.GazeType) {
+                // If both eyes agree on gaze direction (straight, left, right, up, closed, etc.), take lowest error
+                detectionOutput.AnalyzedData = (leftGazeData.GazeProbability <= rightGazeData.GazeProbability) ? leftGazeData : rightGazeData;
+
+            } else if (leftGazeData.GazeType == 5 && rightGazeData.GazeType == 5) { // eyes closed
                 detectionOutput.AnalyzedData = rightGazeData;
 
             } else if (gazingLeft(leftGazeData) && gazingLeft(rightGazeData)) { // eyes looking left, take left eye
@@ -126,7 +130,8 @@ public class Model implements ContractInterface.Model {
                 int index = -1;
                 double minError = 1000000f;
                 if (leftTemplateError != null && rightTemplateError != null) {
-                    int maxTemplates = Math.min(userDataManager.calibrationTemplateNum, Math.min(leftTemplateError.length, rightTemplateError.length));
+                    int maxTemplates = (userDataManager != null) ? userDataManager.calibrationTemplateNum : 6;
+                    maxTemplates = Math.min(maxTemplates, Math.min(leftTemplateError.length, rightTemplateError.length));
                     for (int i = 0; i < maxTemplates; i++) {
                         double error = leftTemplateError[i] + rightTemplateError[i];
                         if (error < minError) {
@@ -135,7 +140,8 @@ public class Model implements ContractInterface.Model {
                         }
                     }
                 }
-                boolean success = (index >= 0) && (minError <= 0);
+                double combinedSensitivity = (detector != null ? detector.sensitivity : 0.015f) * 2.0;
+                boolean success = (index >= 0) && (minError <= combinedSensitivity);
                 int selectedGaze = (index >= 0 && index < tags.length) ? tags[index] : 0;
                 detectionOutput.setEyeData(2, success, selectedGaze, 1, (float)minError);
             }
@@ -160,8 +166,11 @@ public class Model implements ContractInterface.Model {
                 }
             } else {
                 currentGaze = type;
-                length = 0;
+                length = 1;
             }
+        } else {
+            currentGaze = -1;
+            length = 0;
         }
     }
 
@@ -265,6 +274,14 @@ public class Model implements ContractInterface.Model {
             return detectionOutput;
         }
 
+        boolean bothEyesClosed = (faceDetector.leftEyeOpenProb >= 0 && faceDetector.leftEyeOpenProb <= 0.15f)
+                && (faceDetector.rightEyeOpenProb >= 0 && faceDetector.rightEyeOpenProb <= 0.15f);
+
+        if (bothEyesClosed) {
+            detectionOutput.setEyeData(0, true, 5, 1, faceDetector.leftEyeOpenProb);
+            detectionOutput.setEyeData(1, true, 5, 1, faceDetector.rightEyeOpenProb);
+        }
+
         Rect leftEyeBound = null;
         if (faceDetector.leftEyeContour != null) { // left eye available
             List<PointF> leftEyePoints = faceDetector.leftEyeContour.getPoints();
@@ -274,7 +291,7 @@ public class Model implements ContractInterface.Model {
                 Imgproc.resize(leftEye, leftEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
                 Imgproc.cvtColor(leftEye, leftEye, Imgproc.COLOR_RGB2GRAY);
 
-                if (userDataManager.checkCalibrationFiles()) { // true = calibration complete
+                if (!bothEyesClosed && userDataManager != null && userDataManager.checkCalibrationFiles()) { // true = calibration complete
                     leftTemplateError = detector.runEyeModel(detectionOutput, leftEye, 0);
                 }
             }
@@ -289,7 +306,7 @@ public class Model implements ContractInterface.Model {
                 Imgproc.resize(rightEye, rightEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
                 Imgproc.cvtColor(rightEye, rightEye, Imgproc.COLOR_RGB2GRAY);
 
-                if (userDataManager.checkCalibrationFiles()) { // if there are calibration images
+                if (!bothEyesClosed && userDataManager != null && userDataManager.checkCalibrationFiles()) { // if there are calibration images
                     rightTemplateError = detector.runEyeModel(detectionOutput, rightEye, 1);
                 }
             }
@@ -382,8 +399,8 @@ public class Model implements ContractInterface.Model {
                         break;
                 }
 
-                detectionOutput.gestureOutput = gestureCode;
                 if (gestureCode != 0) {
+                    detectionOutput.gestureOutput = gestureCode;
                     detectionOutput.AnalyzedData.Success = true;
                     detectionOutput.AnalyzedData.GazeType = gestureCode;
                     String typeStr = detectionOutput.AnalyzedData.getTypeString(gestureCode);
@@ -392,6 +409,9 @@ public class Model implements ContractInterface.Model {
                     }
                     prevInputs.add(typeStr);
                     detectionOutput.prevInputs = prevInputs;
+                } else if (detectionOutput.gestureOutput != 0) {
+                    // Calibrated gaze from analyzeGazeOutput() is preserved for text entry
+                    gestureDetector.reset();
                 }
             } else {
                 detectionOutput.gestureOutput = 0;
@@ -402,8 +422,8 @@ public class Model implements ContractInterface.Model {
             float eyeOpenRatio = eyesClosedByProb ? 0.05f : 0.5f;
             BallisticGestureDetector.Gesture gesture = gestureDetector.process(0.5f, 0.5f, eyeOpenRatio, nowMs);
             int gestureCode = (gesture == BallisticGestureDetector.Gesture.BLINK_CONFIRM) ? 5 : 0;
-            detectionOutput.gestureOutput = gestureCode;
             if (gestureCode != 0) {
+                detectionOutput.gestureOutput = gestureCode;
                 detectionOutput.AnalyzedData.Success = true;
                 detectionOutput.AnalyzedData.GazeType = gestureCode;
                 String typeStr = detectionOutput.AnalyzedData.getTypeString(gestureCode);
@@ -412,6 +432,8 @@ public class Model implements ContractInterface.Model {
                 }
                 prevInputs.add(typeStr);
                 detectionOutput.prevInputs = prevInputs;
+            } else if (detectionOutput.gestureOutput != 0) {
+                gestureDetector.reset();
             }
         } else {
             detectionOutput.gestureOutput = 0;

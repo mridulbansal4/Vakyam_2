@@ -24,7 +24,7 @@ import kotlin.math.sqrt
  */
 class MotionSensorStabilizer @JvmOverloads constructor(
     private val context: Context? = null,
-    private val jerkThreshold: Float = 4.5f,
+    private val jerkThreshold: Float = 35.0f,
     private val suppressionDurationMs: Long = 300L
 ) : SensorEventListener {
 
@@ -116,13 +116,39 @@ class MotionSensorStabilizer @JvmOverloads constructor(
         return processor.update(ax, ay, az, timestampNs, currentTimeMs)
     }
 
+    private var gravityX = 0f
+    private var gravityY = 0f
+    private var gravityZ = 0f
+    private var hasGravityBaseline = false
+
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
         val nowMs = System.currentTimeMillis()
+        var ax = event.values[0]
+        var ay = event.values[1]
+        var az = event.values[2]
+
+        if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+            val alpha = 0.8f
+            if (!hasGravityBaseline) {
+                gravityX = ax
+                gravityY = ay
+                gravityZ = az
+                hasGravityBaseline = true
+            } else {
+                gravityX = alpha * gravityX + (1f - alpha) * ax
+                gravityY = alpha * gravityY + (1f - alpha) * ay
+                gravityZ = alpha * gravityZ + (1f - alpha) * az
+            }
+            ax -= gravityX
+            ay -= gravityY
+            az -= gravityZ
+        }
+
         processor.update(
-            event.values[0],
-            event.values[1],
-            event.values[2],
+            ax,
+            ay,
+            az,
             event.timestamp,
             nowMs
         )

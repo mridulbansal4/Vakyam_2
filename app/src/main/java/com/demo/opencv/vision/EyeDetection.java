@@ -28,7 +28,11 @@ public class EyeDetection {
     static int IMAGE_WIDTH = 40, IMAGE_HEIGHT = 14;
 
     public void updateCalibrationTemplates(Context applicationContext, boolean left) {
+        if (applicationContext == null) return;
         userDataManager = (UserDataManager) applicationContext;
+        if (userDataManager.getSensitivity() > 0) {
+            sensitivity = userDataManager.getSensitivity() / 1000.0f;
+        }
         Mat[] templates = new Mat[userDataManager.calibrationTemplateNum];
         Bitmap[] bm;
         if (left) {
@@ -46,7 +50,7 @@ public class EyeDetection {
                 continue; // one frame incomplete, skip
             }
             Log.d("CalibrationInterface", "Recorded = " + i);
-            templates[i] = new Mat(bm[i].getWidth(), bm[i].getHeight(), CvType.CV_8UC4);
+            templates[i] = new Mat(bm[i].getHeight(), bm[i].getWidth(), CvType.CV_8UC4);
             Utils.bitmapToMat(bm[i], templates[i]);
             Imgproc.cvtColor(templates[i], templates[i], Imgproc.COLOR_BGR2GRAY);
             Imgproc.resize(templates[i], templates[i], new Size(IMAGE_WIDTH,IMAGE_HEIGHT), Imgproc.INTER_AREA);
@@ -104,7 +108,8 @@ public class EyeDetection {
         // MSE
         double minError = 10000000;
         int index = 0;
-        for (int i = 0; i < userDataManager.calibrationTemplateNum; i++) {
+        int numTemplates = (userDataManager != null) ? userDataManager.calibrationTemplateNum : 6;
+        for (int i = 0; i < numTemplates; i++) {
             double sum = 1000000.0;
             if (compareTemplates != null && i < compareTemplates.length && compareTemplates[i] != null && !compareTemplates[i].empty()) {
                 sum = mse(compareTemplates[i], tensorMat, IMAGE_HEIGHT, IMAGE_WIDTH);
@@ -115,8 +120,11 @@ public class EyeDetection {
                 index = i;
             }
         }
-        Log.d("GestureDetection", "Sensitivity = " + sensitivity);
-        Boolean success = minError <= sensitivity; // get threshold for the specific type
+        float effectiveSensitivity = (userDataManager != null && userDataManager.getSensitivity() > 0)
+                ? (userDataManager.getSensitivity() / 1000.0f)
+                : sensitivity;
+        Log.d("GestureDetection", "Sensitivity = " + effectiveSensitivity);
+        Boolean success = minError <= effectiveSensitivity; // get threshold for the specific type
         Log.d("GestureDetection", "The gaze for ");
         int gazeTag = (index >= 0 && index < tags.length) ? tags[index] : 0;
         detectionOutput.setEyeData(type, success, gazeTag, 1, (float)minError);

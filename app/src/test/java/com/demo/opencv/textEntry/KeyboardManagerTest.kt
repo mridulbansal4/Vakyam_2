@@ -64,8 +64,8 @@ class KeyboardManagerTest {
         keyboardManager.processInput(3)
         assertEquals("a", keyboardManager.textInput)
 
-        // Enter page 5 (gaze 6 -> input 5: " *#")
-        keyboardManager.processInput(6)
+        // Enter page 5 (gaze 7 -> input 5: " *#")
+        keyboardManager.processInput(7)
         assertEquals(2, keyboardManager.layer)
         assertEquals(5, keyboardManager.page)
 
@@ -73,6 +73,32 @@ class KeyboardManagerTest {
         keyboardManager.processInput(1)
         assertEquals(1, keyboardManager.layer)
         assertEquals("", keyboardManager.textInput)
+    }
+
+    @Test
+    fun testLeftUpGazeEntersPage4() {
+        // Gaze 6 (LeftUp) -> input 4 (Page 4: "yz,.!?")
+        keyboardManager.processInput(6)
+        assertEquals(2, keyboardManager.layer)
+        assertEquals(4, keyboardManager.page)
+
+        // Gaze 3 (Up) -> input 0 -> 'y'
+        keyboardManager.processInput(3)
+        assertEquals(1, keyboardManager.layer)
+        assertEquals("y", keyboardManager.textInput)
+    }
+
+    @Test
+    fun testDirectTouchInput() {
+        // Direct button index 5 (Page 5) without gaze translation
+        keyboardManager.processInput(5, false)
+        assertEquals(2, keyboardManager.layer)
+        assertEquals(5, keyboardManager.page)
+
+        // Direct button index 0 (Space ' ')
+        keyboardManager.processInput(0, false)
+        assertEquals(1, keyboardManager.layer)
+        assertEquals(" ", keyboardManager.textInput)
     }
 
     @Test
@@ -84,8 +110,8 @@ class KeyboardManagerTest {
         keyboardManager.processInput(1) // 'b' (gaze 1 -> input 1)
         assertEquals("ab", keyboardManager.textInput)
 
-        // Enter page 5 (gaze 6 -> input 5)
-        keyboardManager.processInput(6)
+        // Enter page 5 (gaze 7 -> input 5)
+        keyboardManager.processInput(7)
         // Gaze 2 -> input 2 -> '#' (clear)
         keyboardManager.processInput(2)
         assertEquals(1, keyboardManager.layer)
@@ -95,7 +121,7 @@ class KeyboardManagerTest {
     @Test
     fun testBackspaceOnEmptyTextDoesNotAppendAsterisk() {
         // On empty text, trigger delete
-        keyboardManager.processInput(6) // page 5
+        keyboardManager.processInput(7) // page 5
         keyboardManager.processInput(1) // delete '*'
         assertEquals(1, keyboardManager.layer)
         assertEquals("", keyboardManager.textInput)

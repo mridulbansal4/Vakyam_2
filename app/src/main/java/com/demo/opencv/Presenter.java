@@ -173,7 +173,13 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public void onGazeButtonClicked(int input) { // when the user clicks a gaze button (for both social media and text mode)
         playBeepTone();
         if (Objects.equals(mode, "Text")) {
-            textEntryManager.manageUserInput(input, false);
+            if (userDataManager.getTextEntryMode() == 0) {
+                keyboardManager.processInput(input, false);
+                KeyboardData keyboardData = keyboardManager.getDisplays();
+                appliveData.setKeyboardDisplays(keyboardData);
+            } else {
+                textEntryManager.manageUserInput(input, false);
+            }
         } else if (Objects.equals(mode, "Social Media")) {
             socialMediaManager.manageUserInput(input, false);
         } else if (Objects.equals(mode, "QuickChat")) {
@@ -274,9 +280,20 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         }
 
         // setting the app live data for the fragment displays
-        textEntryManager.updateDisplays();
-        KeyboardData keyboardData = textEntryManager.getDisplays();
-        appliveData.setKeyboardDisplays(keyboardData); // update text entry information
+        if (Objects.equals(mode, "Text")) {
+            if (userDataManager.getTextEntryMode() == 0) {
+                KeyboardData keyboardData = keyboardManager.getDisplays();
+                appliveData.setKeyboardDisplays(keyboardData);
+            } else {
+                textEntryManager.updateDisplays();
+                KeyboardData keyboardData = textEntryManager.getDisplays();
+                appliveData.setKeyboardDisplays(keyboardData);
+            }
+        } else {
+            textEntryManager.updateDisplays();
+            KeyboardData keyboardData = textEntryManager.getDisplays();
+            appliveData.setKeyboardDisplays(keyboardData); // update text entry information
+        }
 
         // social media manager
         socialMediaManager.updateCameraFrame(rgbMat); // update camera

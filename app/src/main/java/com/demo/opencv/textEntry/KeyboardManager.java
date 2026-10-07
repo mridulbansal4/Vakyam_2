@@ -35,21 +35,22 @@ public class KeyboardManager {
         return keyboardData;
     }
 
-    public void processInput(int selection) { // 0: up, 1: left, 2: down, 3: right
-        // left gaze = 1, right gaze = 2, up gaze = 0, down gaze = -1, closed = 3, left-up gaze = 4, right-up gaze = 5
-        final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 5, 4}; // convert gaze type into keyboard input
-        if (selection < 0 || selection >= keyboardInputMat.length) return;
-        int input = keyboardInputMat[selection];
-        if (input == -1) return;
+    public void processInput(int input, boolean isGazeType) {
+        int selection = input;
+        if (isGazeType) {
+            // left gaze = 1, right gaze = 2, up gaze = 0, down gaze = -1, closed = 3, left-up gaze = 4, right-up gaze = 5
+            final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
+            if (input < 0 || input >= keyboardInputMat.length) return;
+            selection = keyboardInputMat[input];
+        }
+        if (selection < 0 || selection >= layer1Options.length) return;
 
         if (layer == 1) {
-            if (input >= 0 && input < layer1Options.length) {
-                layer = 2;
-                page = input;
-            }
+            layer = 2;
+            page = selection;
         } else {
-            if (page >= 0 && page < layer2Options.length && input >= 0 && input < layer2Options[page].length()){
-                char operation = layer2Options[page].charAt(input);
+            if (page >= 0 && page < layer2Options.length && selection >= 0 && selection < layer2Options[page].length()){
+                char operation = layer2Options[page].charAt(selection);
                 if (operation == '*') {
                     if (textInput.length() > 0) {
                         textInput = textInput.substring(0, textInput.length() - 1); // delete operation
@@ -62,6 +63,10 @@ public class KeyboardManager {
             }
             layer = 1;
         }
+    }
+
+    public void processInput(int selection) {
+        processInput(selection, true);
     }
 
     public String getTextInput() {

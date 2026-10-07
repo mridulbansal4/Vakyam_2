@@ -8,26 +8,23 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class BlurryInput { // supports languages with alphabet characters: English and Spanish
     private final List<String> wordList = new ArrayList<>(); // top words frequency list
     private final List<String> blurryInputProcessed = new ArrayList<>(); // processed string with 1, 2, 3, and 4 for blurry input
     List<String> extendedWordList = new ArrayList<>(); // extra words provided by OpenAI for context-based prediction
-    int characterThreshold = 5; // determines the number of characters before expanding the blurry input to longer words
+
+
+    private final Map<String, List<String>> bigramMap = new HashMap<>();
 
     public void initialize(Context mContext, String language) {
         wordList.clear();
         blurryInputProcessed.clear();
-
-        if (Objects.equals(language, "English")) {
-            characterThreshold = 5;
-        } else if (Objects.equals(language, "Spanish")) {
-            characterThreshold = 7;
-        } else if (Objects.equals(language, "Chinese")) {
-            characterThreshold = 4;
-        }
+        bigramMap.clear();
         if (mContext == null) return;
         try {
             InputStream inputStream = mContext.getAssets().open(language + "Words.txt"); // set the correct language
@@ -43,6 +40,25 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         } catch (Exception e) {
             e.printStackTrace();
         }
+        try {
+            InputStream inputStream = mContext.getAssets().open(language + "Bigrams.txt");
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] parts = line.split(" ");
+                if (parts.length >= 2) {
+                    List<String> nextWords = bigramMap.get(parts[0]);
+                    if (nextWords == null) {
+                        nextWords = new ArrayList<>();
+                        bigramMap.put(parts[0], nextWords);
+                    }
+                    nextWords.add(parts[1]);
+                }
+            }
+            inputStream.close();
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     public String processWord(String word) { // converts original word to processed word for blurry input
@@ -50,35 +66,41 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         StringBuilder processed = new StringBuilder();
         word = word.toLowerCase();
         word = Normalizer.normalize(word, Normalizer.Form.NFD);
-        word = word.replaceAll("[^\\p{ASCII}]", "");
+        // Retain ASCII and Devanagari characters
+        word = word.replaceAll("[^a-z\\u0900-\\u097F]", "");
 
         for (int i = 0; i < word.length(); i++) {
             char c = word.charAt(i);
-            if (c >= 'a' && c <= 'f') { processed.append("0"); } // group 1
-            else if (c >= 'g' && c <= 'm') { processed.append("1"); } // group 2
-            else if (c >= 'n' && c <= 't') { processed.append("2"); } // group 3
-            else if (c >= 'u' && c <= 'z') { processed.append("3"); } // group 4
+            if ((c >= 'a' && c <= 'f') || (c >= '\u0900' && c <= '\u091F')) { processed.append("0"); } // group 1
+            else if ((c >= 'g' && c <= 'm') || (c >= '\u0920' && c <= '\u093F')) { processed.append("1"); } // group 2
+            else if ((c >= 'n' && c <= 't') || (c >= '\u0940' && c <= '\u095F')) { processed.append("2"); } // group 3
+            else if ((c >= 'u' && c <= 'z') || (c >= '\u0960' && c <= '\u097F')) { processed.append("3"); } // group 4
         }
         return processed.toString();
     }
 
-    public List<String> getMatchingWords(String codeA) { // predict the word based on a blurry input
+    public List<String> getMatchingWords(String codeA, List<String> currentWords) { // predict the word based on a blurry input
         List<String> wordPredictions = new ArrayList<>();
         if (codeA == null || codeA.length() == 0) { // the string is empty, nothing to compare
             return wordPredictions;
         }
 
-        // normal 5000 word bank prediction
-        for (int i = 0; i < blurryInputProcessed.size(); i++) {
-            String codeB = blurryInputProcessed.get(i);
-            if (codeB == null) continue;
-            boolean match1 = codeA.length() == codeB.length(); // the two words are the same length
-            boolean match2 = (codeA.length() < codeB.length()) && codeA.length() > characterThreshold; // A is less than B, but A is more than threshold characters long
-            if (match1 || match2) {
-                String subString = codeB.substring(0, codeA.length());
-                //Log.d("TextPrediction", "Code: " + codeA + ", substring from word: " + subString);
-                if (subString.equals(codeA)) {
-                    wordPredictions.add(wordList.get(i));
+        // bigram map prediction based on context
+        if (currentWords != null && !currentWords.isEmpty()) {
+            String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
+            List<String> nextWords = bigramMap.get(lastWord);
+            if (nextWords != null) {
+                for (String word : nextWords) {
+                    if (word == null) continue;
+                    String codeB = processWord(word);
+                    if (codeB.length() >= codeA.length()) { // any prefix match
+                        String subString = codeB.substring(0, codeA.length());
+                        if (subString.equals(codeA)) {
+                            if (!wordPredictions.contains(word)) {
+                                wordPredictions.add(word);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -88,14 +110,58 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
             String word = extendedWordList.get(i);
             if (word == null) continue;
             String codeB = processWord(word);
-            boolean match1 = codeA.length() == codeB.length(); // the two words are the same length
-            boolean match2 = (codeA.length() < codeB.length()) && codeA.length() > characterThreshold; // A is less than B, but A is more than threshold characters long
-            if (match1 || match2) {
+            if (codeB.length() >= codeA.length()) { // any prefix match
                 String subString = codeB.substring(0, codeA.length());
-                //Log.d("TextPrediction", "Code: " + codeA + ", substring from word: " + subString);
                 if (subString.equals(codeA)) {
-                    wordPredictions.add(word);
+                    if (!wordPredictions.contains(word)) {
+                        wordPredictions.add(word);
+                    }
                 }
+            }
+        }
+
+        // normal 5000 word bank prediction
+        for (int i = 0; i < blurryInputProcessed.size(); i++) {
+            String codeB = blurryInputProcessed.get(i);
+            if (codeB == null) continue;
+            if (codeB.length() >= codeA.length()) { // any prefix match
+                String subString = codeB.substring(0, codeA.length());
+                if (subString.equals(codeA)) {
+                    String word = wordList.get(i);
+                    if (!wordPredictions.contains(word)) {
+                        wordPredictions.add(word);
+                    }
+                }
+            }
+        }
+        return wordPredictions;
+    }
+
+    public List<String> getExactMatchingWords(String prefix, List<String> currentWords) {
+        List<String> wordPredictions = new ArrayList<>();
+        if (prefix == null) return wordPredictions;
+
+        if (currentWords != null && !currentWords.isEmpty()) {
+            String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
+            List<String> nextWords = bigramMap.get(lastWord);
+            if (nextWords != null) {
+                for (String word : nextWords) {
+                    if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
+                        wordPredictions.add(word);
+                    }
+                }
+            }
+        }
+
+        if (prefix == null) return wordPredictions;
+        for (String word : extendedWordList) {
+            if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
+                wordPredictions.add(word);
+            }
+        }
+        for (String word : wordList) {
+            if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
+                wordPredictions.add(word);
             }
         }
         return wordPredictions;

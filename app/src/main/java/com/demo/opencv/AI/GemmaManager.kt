@@ -297,6 +297,14 @@ class GemmaManager {
                     "Keywords: dolor, espalda. Context: " to "Tengo dolor en la espalda."
                 )
             )
+            "Hindi" -> Pair(
+                "You are an AI assistant for a person who cannot speak or move. The user communicates by selecting Hindi keywords. Generate ONE natural, grammatical, first-person Hindi sentence in Devanagari script using the keywords that fits the conversation context. Reply with the sentence only.",
+                listOf(
+                    "Keywords: पानी, ठंडा. Context: " to "मुझे ठंडा पानी चाहिए।",
+                    "Keywords: दर्द, पीठ. Context: " to "मेरी पीठ में दर्द हो रहा है।",
+                    "Keywords: खाना, क्या. Context: " to "खाने में क्या है?"
+                )
+            )
             else -> Pair(
                 "You are an AI assistant for a person who cannot speak or move due to ALS/motor neuron disease. The user communicates by selecting keywords with their eyes. Your task is to generate ONE natural, grammatical, first-person sentence using the provided keywords that fits the conversation context. Reply with the sentence only, without quotes or explanation.",
                 listOf(
@@ -349,16 +357,18 @@ class GemmaManager {
             text = text.removePrefix("Output:").trim()
             text = text.replace("*", "").trim()
             text = text.trim('"', '“', '”', '\'', '`').trim()
-            // Replace hyphens so Gaze-Link's TextEntryManager output.split("-") does not cut sentence!
-            text = text.replace("-", " ")
             return text
         }
 
-        fun fallbackSentence(keywords: String): String {
+        fun fallbackSentence(keywords: String, language: String? = null): String {
             val clean = keywords.trim().trim(',', '.', ';')
-            if (clean.isEmpty()) return "Yes."
+            val lang = language ?: defaultInstance?.activeLanguage ?: "English"
+            if (clean.isEmpty()) {
+                return if (lang == "Hindi") "हाँ।" else "Yes."
+            }
             val capitalized = clean.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            return capitalized.replace("-", " ") + "."
+            val suffix = if (lang == "Hindi") "।" else "."
+            return capitalized + suffix
         }
     }
 }

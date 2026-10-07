@@ -49,11 +49,11 @@ class GemmaManagerTest {
     }
 
     @Test
-    fun testCleanSentenceReplacesHyphens() {
+    fun testCleanSentenceKeepsHyphens() {
         val raw = "I am well-rested and feel good."
         val cleaned = GemmaManager.cleanSentence(raw)
-        assertFalse(cleaned.contains("-"))
-        assertEquals("I am well rested and feel good.", cleaned)
+        assertTrue(cleaned.contains("-"))
+        assertEquals("I am well-rested and feel good.", cleaned)
     }
 
     @Test
@@ -71,7 +71,7 @@ class GemmaManagerTest {
         assertEquals("Cold water please.", fallback)
 
         val fallbackWithHyphen = GemmaManager.fallbackSentence("part-time")
-        assertEquals("Part time.", fallbackWithHyphen)
+        assertEquals("Part-time.", fallbackWithHyphen)
 
         val fallbackEmpty = GemmaManager.fallbackSentence("")
         assertEquals("Yes.", fallbackEmpty)

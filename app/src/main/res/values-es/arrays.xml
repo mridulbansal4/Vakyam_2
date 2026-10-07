@@ -4,6 +4,7 @@
         <item>Ingles</item>
         <item>Espanol</item>
         <item>Chino</item>
+        <item>Hindi</item>
     </string-array>
     <string-array name="textEntry_options">
         <item>Letter-by-letter</item>

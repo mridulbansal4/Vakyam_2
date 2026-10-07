@@ -19,7 +19,15 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
     List<String> extendedWordList = new ArrayList<>(); // extra words provided by OpenAI for context-based prediction
 
 
-    private final Map<String, List<String>> bigramMap = new HashMap<>();
+    private static class BigramEntry {
+        String word;
+        int frequency;
+        BigramEntry(String word, int frequency) {
+            this.word = word;
+            this.frequency = frequency;
+        }
+    }
+    private final Map<String, List<BigramEntry>> bigramMap = new HashMap<>();
 
     public void initialize(Context mContext, String language) {
         wordList.clear();
@@ -46,13 +54,13 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 String[] parts = line.split(" ");
-                if (parts.length >= 2) {
-                    List<String> nextWords = bigramMap.get(parts[0]);
+                if (parts.length >= 3) {
+                    List<BigramEntry> nextWords = bigramMap.get(parts[0]);
                     if (nextWords == null) {
                         nextWords = new ArrayList<>();
                         bigramMap.put(parts[0], nextWords);
                     }
-                    nextWords.add(parts[1]);
+                    nextWords.add(new BigramEntry(parts[1], Integer.parseInt(parts[2])));
                 }
             }
             inputStream.close();
@@ -88,9 +96,11 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         // bigram map prediction based on context
         if (currentWords != null && !currentWords.isEmpty()) {
             String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
-            List<String> nextWords = bigramMap.get(lastWord);
+            List<BigramEntry> nextWords = bigramMap.get(lastWord);
             if (nextWords != null) {
-                for (String word : nextWords) {
+                nextWords.sort((a, b) -> Integer.compare(b.frequency, a.frequency));
+                for (BigramEntry entry : nextWords) {
+                    String word = entry.word;
                     if (word == null) continue;
                     String codeB = processWord(word);
                     if (codeB.length() >= codeA.length()) { // any prefix match
@@ -143,9 +153,11 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
 
         if (currentWords != null && !currentWords.isEmpty()) {
             String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
-            List<String> nextWords = bigramMap.get(lastWord);
+            List<BigramEntry> nextWords = bigramMap.get(lastWord);
             if (nextWords != null) {
-                for (String word : nextWords) {
+                nextWords.sort((a, b) -> Integer.compare(b.frequency, a.frequency));
+                for (BigramEntry entry : nextWords) {
+                    String word = entry.word;
                     if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
                         wordPredictions.add(word);
                     }

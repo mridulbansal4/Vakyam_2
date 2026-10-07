@@ -71,6 +71,28 @@ public class AudioManager {
         setSpeechRecognizer(mContext); // set speech to text
     }
 
+    public void setLanguage(String language) {
+        Locale locale = Locale.US;
+        String speechLang = "en-US";
+        if ("Spanish".equals(language)) {
+            locale = new Locale("es", "ES");
+            speechLang = "es-ES";
+        } else if ("Chinese".equals(language)) {
+            locale = Locale.CHINESE;
+            speechLang = "zh-CN";
+        } else if ("Hindi".equals(language)) {
+            locale = new Locale("hi", "IN");
+            speechLang = "hi-IN";
+        }
+        
+        if (textToSpeech != null) {
+            textToSpeech.setLanguage(locale);
+        }
+        this.speechLang = speechLang;
+    }
+    
+    private String speechLang = "en-US";
+
     public void speakText(String text) {
         if (text == null || text.trim().isEmpty()) return;
         Log.d("AudioManager", "Speaking: " + text);
@@ -144,7 +166,7 @@ public class AudioManager {
         try {
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
+            intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, speechLang);
             speechRecognizer.startListening(intent);
         } catch (Exception e) {
             Log.e("AudioManager", "startListening error", e);

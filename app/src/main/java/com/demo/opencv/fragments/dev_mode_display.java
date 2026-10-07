@@ -101,6 +101,8 @@ public class dev_mode_display extends Fragment {
             languageSpinner.setSelection(1);
         } else if (Objects.equals(language, "Chinese")) {
             languageSpinner.setSelection(2);
+        } else if (Objects.equals(language, "Hindi")) {
+            languageSpinner.setSelection(3);
         }
     }
 
@@ -171,6 +173,7 @@ public class dev_mode_display extends Fragment {
                     case 0 -> language = "English";
                     case 1 -> language = "Spanish";
                     case 2 -> language = "Chinese";
+                    case 3 -> language = "Hindi";
                 }
                 Log.d("SpinnerTesting", "language changed to " + language);
                 userDataManager.setLanguage(language);

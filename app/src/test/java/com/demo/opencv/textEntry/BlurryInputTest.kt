@@ -42,11 +42,11 @@ class BlurryInputTest {
 
     @Test
     fun testGetMatchingWordsEmptyOrNullInput() {
-        val emptyResult = blurryInput.getMatchingWords("")
+        val emptyResult = blurryInput.getMatchingWords("", ArrayList())
         assertNotNull(emptyResult)
         assertTrue(emptyResult.isEmpty())
 
-        val nullResult = blurryInput.getMatchingWords(null)
+        val nullResult = blurryInput.getMatchingWords(null, ArrayList())
         assertNotNull(nullResult)
         assertTrue(nullResult.isEmpty())
     }

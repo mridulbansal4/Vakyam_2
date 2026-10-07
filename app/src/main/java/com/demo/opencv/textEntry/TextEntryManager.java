@@ -90,6 +90,7 @@ public class TextEntryManager {
             UserDataManager userDataManager = (UserDataManager) applicationContext;
             this.language = userDataManager.getLanguage();
             blurryInput.initialize(mContext, language);
+            audioManager.setLanguage(language);
             this.sentenceGenerationModel = userDataManager.getSentenceGenerationModel();
             this.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
             if (userDataManager.getTextEntryContext() != null) {
@@ -113,7 +114,11 @@ public class TextEntryManager {
             } else if (mode == 0) { // baseline text-entry, mode 0
                 WordMode(selection);
             } else if (mode == 1){ // baseline text-entry, mode 1
-                letterMode(selection);
+                if ("Hindi".equals(language)) {
+                    hindiMode(selection);
+                } else {
+                    letterMode(selection);
+                }
             }
         }
         updateDisplays();
@@ -155,7 +160,7 @@ public class TextEntryManager {
             case 5 -> current.addBlurryInput("1");
         }
         if (!Objects.equals(current.BlurryInput, "")) { // blurry input not empty
-            List<String> matched = blurryInput.getMatchingWords(current.BlurryInput);
+            List<String> matched = blurryInput.getMatchingWords(current.BlurryInput, current.Words);
             wordPredictions = (matched != null) ? matched : new ArrayList<>();
         } else {
             wordPredictions.clear();
@@ -164,6 +169,102 @@ public class TextEntryManager {
 
     public String getLLMSentence() {
         return current.Sentence;
+    }
+
+    int hindiState = 1;
+    int hindiGroupIdx = 0;
+    int hindiBaseIdx = 0;
+    int hindiMatraIdx = 0;
+    
+    String[][] hindiChars = {
+        {"अ", "आ", "इ", "ई", "उ", "ऊ", "ए", "ऐ", "ओ", "औ"}, // 0
+        {"क", "ख", "ग", "घ", "ङ"}, // 1
+        {"च", "छ", "ज", "झ", "ञ", "ट", "ठ", "ड", "ढ", "ण"}, // 2
+        {"त", "थ", "द", "ध", "न"}, // 3
+        {"प", "फ", "ब", "भ", "म"}, // 4
+        {"य", "र", "ल", "व", "श", "ष", "स", "ह", "SPACE"} // 5
+    };
+    String[] matras = {"", "ा", "ि", "ी", "ु", "ू", "े", "ै", "ो", "ौ", "्", "ं", "ँ", "ृ"};
+    String[] hindiState1UI = {"अ-औ", "क-ङ", "च-ण", "त-न", "प-म", "य-ह"};
+
+    void hindiMode(int selection) {
+        if (hindiState == 1) {
+            hindiGroupIdx = selection;
+            hindiBaseIdx = 0;
+            hindiMatraIdx = 0;
+            hindiState = 2;
+        } else if (hindiState == 2) {
+            switch (selection) {
+                case 0: // Delete / Back
+                    if (current.BlurryInput.length() > 0) {
+                        current.BlurryInput = current.BlurryInput.substring(0, current.BlurryInput.length() - 1);
+                    } else {
+                        current.deleteWord();
+                        sentencePrediction();
+                    }
+                    hindiState = 1;
+                    break;
+                case 1: // Next Matra
+                    hindiMatraIdx = (hindiMatraIdx + 1) % matras.length;
+                    break;
+                case 2: // Next Consonant
+                    hindiBaseIdx = (hindiBaseIdx + 1) % hindiChars[hindiGroupIdx].length;
+                    hindiMatraIdx = 0;
+                    break;
+                case 3: // Confirm Char
+                    String c = hindiChars[hindiGroupIdx][hindiBaseIdx];
+                    if (c.equals("SPACE")) {
+                        if (!current.BlurryInput.isEmpty()) {
+                            current.addWord(current.BlurryInput);
+                            current.clearBlurryInputs();
+                        }
+                        hindiState = 1;
+                        mode = 0;
+                    } else {
+                        if (hindiGroupIdx != 0) c += matras[hindiMatraIdx];
+                        current.addBlurryInput(c);
+                        hindiState = 1;
+                    }
+                    break;
+                case 4: // Word 0
+                    if (wordPredictions.size() > 0) {
+                        current.addWord(wordPredictions.get(0));
+                        current.clearBlurryInputs();
+                        hindiState = 1;
+                        mode = 0;
+                    }
+                    break;
+                case 5: // Word 1
+                    if (wordPredictions.size() > 1) {
+                        current.addWord(wordPredictions.get(1));
+                        current.clearBlurryInputs();
+                        hindiState = 1;
+                        mode = 0;
+                    }
+                    break;
+            }
+        }
+        
+        String prefix = current.BlurryInput;
+        if (hindiState == 2) {
+            String c = hindiChars[hindiGroupIdx][hindiBaseIdx];
+            if (!c.equals("SPACE")) {
+                if (hindiGroupIdx != 0) c += matras[hindiMatraIdx];
+                prefix += c;
+            }
+        }
+        if (!prefix.isEmpty()) {
+            List<String> matched = blurryInput.getExactMatchingWords(prefix, current.Words);
+            wordPredictions = new ArrayList<>();
+            wordPredictions.add(prefix);
+            if (matched != null) {
+                for (String w : matched) {
+                    if (!w.equals(prefix)) wordPredictions.add(w);
+                }
+            }
+        } else {
+            wordPredictions.clear();
+        }
     }
 
     public void updateDisplays() {
@@ -177,10 +278,24 @@ public class TextEntryManager {
             resetOptionWords(letterModeUI, wordIndex2);
         }
 
-        switch (mode) {
-            case 0 -> keyboardData.setOptions(wordModeUI);
-            case 1 -> keyboardData.setOptions(letterModeUI);
+        if ("Hindi".equals(language) && mode == 1) {
+            if (hindiState == 1) {
+                letterModeUI = new String[]{hindiState1UI[0], hindiState1UI[1], hindiState1UI[2], hindiState1UI[3], hindiState1UI[4], hindiState1UI[5], NoMatchString, NoMatchString, NoMatchString, NoMatchString};
+            } else {
+                String currentChar = hindiChars[hindiGroupIdx][hindiBaseIdx];
+                if (!currentChar.equals("SPACE") && hindiGroupIdx != 0) currentChar += matras[hindiMatraIdx];
+                String w0 = wordPredictions.size() > 0 ? wordPredictions.get(0) : NoMatchString;
+                String w1 = wordPredictions.size() > 1 ? wordPredictions.get(1) : NoMatchString;
+                letterModeUI = new String[]{DeleteString, "Next Matra", "Next Char", "Confirm " + currentChar, w0, w1, NoMatchString, NoMatchString, NoMatchString, NoMatchString};
+            }
+            keyboardData.setOptions(letterModeUI);
+        } else {
+            switch (mode) {
+                case 0 -> keyboardData.setOptions(wordModeUI);
+                case 1 -> keyboardData.setOptions(letterModeUI);
+            }
         }
+        
         // creating the text box for final output
         StringBuilder textBox = current.buildText();
         keyboardData.setTextInput(textBox.toString());
@@ -230,23 +345,45 @@ public class TextEntryManager {
     public void nextWordPrediction(int num) { // predicting the next word based on current keywords
         if (!LLMEnabled || Objects.equals(language, "Chinese")) return;
         if (!current.Words.isEmpty() && Objects.equals(current.BlurryInput, "")) { // no blurry input, at least one word
-            AIManager.generateText("NWP",
-                    "Given the word '" + current.Words.get(current.Words.size() - 1) +
-                            "Predict " + num + " " + language + "words that will mostly follow that word in a sentence" +
-                            "Only output in the format: word, word, word.", language
-            );
+            if (sentenceGenerationModel == 1 || com.demo.opencv.BuildConfig.MY_OPENAI_KEY == null || com.demo.opencv.BuildConfig.MY_OPENAI_KEY.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
+                for (int i = 0; i < num && i < fallbackWords.size(); i++) {
+                    sb.append(fallbackWords.get(i)).append(i == Math.min(num, fallbackWords.size()) - 1 ? "" : ", ");
+                }
+                Intent intent = new Intent("textGenerationEvent");
+                intent.putExtra("message", "NWP-" + sb.toString());
+                if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+            } else {
+                AIManager.generateText("NWP",
+                        "Given the word '" + current.Words.get(current.Words.size() - 1) +
+                                "Predict " + num + " " + language + "words that will mostly follow that word in a sentence" +
+                                "Only output in the format: word, word, word.", language
+                );
+            }
         }
     }
 
     public void contextWordPrediction(int number) {
         if (!LLMEnabled || Objects.equals(language, "Chinese")) return;
         if (!Objects.equals(context, "")) { // if there is context
-            AIManager.generateText("CWP",
-                    "You are predicting words for a " + language + " motor neuron disease patient. " +
-                            "Give me " + number + " specific or proper nouns in " + language + " that might be part of a response to the " + language + " phrase:" + context +
-                            "during a conversation. " +
-                            "ONLY output in the format: word, word, word.", language
-            );
+            if (sentenceGenerationModel == 1 || com.demo.opencv.BuildConfig.MY_OPENAI_KEY == null || com.demo.opencv.BuildConfig.MY_OPENAI_KEY.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
+                for (int i = 0; i < number && i < fallbackWords.size(); i++) {
+                    sb.append(fallbackWords.get(i)).append(i == Math.min(number, fallbackWords.size()) - 1 ? "" : ", ");
+                }
+                Intent intent = new Intent("textGenerationEvent");
+                intent.putExtra("message", "CWP-" + sb.toString());
+                if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+            } else {
+                AIManager.generateText("CWP",
+                        "You are predicting words for a " + language + " motor neuron disease patient. " +
+                                "Give me " + number + " specific or proper nouns in " + language + " that might be part of a response to the " + language + " phrase:" + context +
+                                "during a conversation. " +
+                                "ONLY output in the format: word, word, word.", language
+                );
+            }
         }
     }
 

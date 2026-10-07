@@ -157,6 +157,8 @@ public class MainActivity extends AppCompatActivity
             languageCode = "es";
         } else if (Objects.equals(language, "Chinese")) {
             languageCode = "zh";
+        } else if (Objects.equals(language, "Hindi")) {
+            languageCode = "hi";
         } else {
             languageCode = "en-us";
         }

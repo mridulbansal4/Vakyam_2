@@ -52,10 +52,13 @@ class TextInfo {
             stringBuilder.append(' ');
         }
         for (int i = 0; i < BlurryInput.length(); i++) { // appending the current blurry input
-            int input = (int) BlurryInput.charAt(i) - '0';
+            char c = BlurryInput.charAt(i);
+            int input = (int) c - '0';
             if (input >= 0 && input < blurryInputText.length) {
                 stringBuilder.append(blurryInputText[input]);
                 stringBuilder.append(' ');
+            } else {
+                stringBuilder.append(c);
             }
         }
         return stringBuilder;

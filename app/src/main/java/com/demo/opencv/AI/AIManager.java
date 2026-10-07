@@ -108,6 +108,8 @@ public class AIManager { // extends appCompatActivity
             messageStructure2 = new Message("system", "You are an AI assistant for Spanish patients with motor neuron disease to communicate in a conversation. Your goal is to generate a grammatical and coherent Spanish sentence with Spanish keywords they typed that fits the conversation's context.");
         } else if (Objects.equals(language, "Chinese")) { // chinese
             messageStructure2 = new Message("system", "你是一个帮助渐冻症病人沟通的AI助手。你的目的是通过语境和关键词的拼音生成一个完整的句子。");
+        } else if (Objects.equals(language, "Hindi")) { // hindi
+            messageStructure2 = new Message("system", "You are an AI assistant for Hindi patients with motor neuron disease. Generate a grammatical and coherent Hindi sentence in Devanagari script using the keywords they typed, fitting the context.");
         } else { // english system instruction
             messageStructure2 = new Message("system", "You are an AI assistant for patients with motor neuron disease to communicate in a conversation. Your goal is to generate a grammatical and coherent sentence with keywords they typed that fits the conversation's context.");
         }

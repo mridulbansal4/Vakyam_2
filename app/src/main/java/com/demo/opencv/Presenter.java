@@ -14,6 +14,7 @@ import com.demo.opencv.textEntry.KeyboardData;
 import com.demo.opencv.textEntry.KeyboardManager;
 import com.demo.opencv.textEntry.QuickChatManager;
 import com.demo.opencv.textEntry.TextEntryManager;
+import com.demo.opencv.vision.CalibrationStabilityGate;
 import com.demo.opencv.vision.DetectionOutput;
 
 import org.opencv.android.Utils;
@@ -40,6 +41,15 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     AudioManager audioManager = new AudioManager();
     public ClinicalData clinicalData = new ClinicalData();
     ToneGenerator toneGenerator;
+    private final String[] calibrationMessages = {"Look straight", "Look left", "Look right", "Look up", "Look left and up", "Look right and up"};
+    private final CalibrationStabilityGate.Direction[] calibrationDirections = {
+            CalibrationStabilityGate.Direction.STRAIGHT, CalibrationStabilityGate.Direction.LEFT,
+            CalibrationStabilityGate.Direction.RIGHT, CalibrationStabilityGate.Direction.UP,
+            CalibrationStabilityGate.Direction.LEFT_UP, CalibrationStabilityGate.Direction.RIGHT_UP};
+    private final CalibrationStabilityGate calibrationGate = new CalibrationStabilityGate();
+    private static final long CALIBRATION_REPROMPT_MS = 4000L;
+    private long lastCalibrationPromptMs = 0L;
+    private long lastCalibrationLogMs = 0L;
     // instantiating the objects of View and Model Interface
     public Presenter(ContractInterface.View mainView, ContractInterface.Model model) {
         this.mainView = mainView;
@@ -88,19 +98,22 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     }
 
     @Override
-    public void updateCalibration() {
-        String[] calibrationMessages = {"Look straight", "Look left and down", "Look right and down", "Look up", "Look left and up", "Look right and up"};
-
+    public synchronized void updateCalibration() { // called by the start/restart button and by auto-capture
         int calibrationState = userDataManager.getCalibrationState();
+        long now = System.currentTimeMillis();
 
         if (calibrationState == -1) { // begin calibration
             audioManager.speakText(calibrationMessages[0]);
             appliveData.calibrationInstruction = calibrationMessages[0];
             calibrationState = 0;
+            calibrationGate.clearReference();
+            calibrationGate.startStep(now, calibrationDirections[0]);
+            lastCalibrationPromptMs = now;
 
         } else if (calibrationState == userDataManager.calibrationTemplateNum) { // restart calibration
             appliveData.calibrationInstruction = "EYE CALIBRATION";
             calibrationState = -1;
+            calibrationGate.clearReference();
 
         } else if (calibrationState >= 0) { // during calibration
             if (appliveData.DetectionOutput != null && appliveData.DetectionOutput.testingMats != null) {
@@ -109,7 +122,15 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                     Log.d("CalibrationInterface", "Recorded successfully");
                     userDataManager.setLeftCalibrationData(matToBitmap(eyeMats[0]), calibrationState); // collect left frame
                     userDataManager.setRightCalibrationData(matToBitmap(eyeMats[1]), calibrationState); // collect right frame
+                    if (calibrationState == 0) { // later steps must move away from straight in their own direction
+                        if (calibrationGate.getStatus() == CalibrationStabilityGate.Status.CAPTURED) {
+                            calibrationGate.setReference(calibrationGate.getLastMeanX(), calibrationGate.getLastMeanY());
+                        } else if (appliveData.DetectionOutput.leftNIC != null) {
+                            calibrationGate.setReference((float) appliveData.DetectionOutput.leftNIC.x, (float) appliveData.DetectionOutput.leftNIC.y);
+                        }
+                    }
                     calibrationState += 1;
+                    playBeepTone();
 
                     if (calibrationState >= userDataManager.calibrationTemplateNum) { // finished calibration
                         model.updateCalibrationTemplates();
@@ -118,6 +139,8 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                     } else if (calibrationState < calibrationMessages.length) { // continue
                         audioManager.speakText(calibrationMessages[calibrationState]);
                         appliveData.calibrationInstruction = calibrationMessages[calibrationState];
+                        calibrationGate.startStep(now, calibrationDirections[calibrationState]);
+                        lastCalibrationPromptMs = now;
                     }
                 } else {
                     Log.d("Calibration", "Detection failed, please try again");
@@ -128,6 +151,66 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         }
         userDataManager.setCalibrationState(calibrationState);
         appliveData.calibrationState = calibrationState;
+        appliveData.calibrationProgress = 0f;
+        appliveData.calibrationStatusRes = 0;
+    }
+
+    private void autoCaptureCalibration(DetectionOutput detectionOutput) { // captures a calibration step once the gaze is held steady
+        int state = userDataManager.getCalibrationState();
+        if (state < 0 || state >= userDataManager.calibrationTemplateNum || detectionOutput == null) {
+            appliveData.calibrationProgress = 0f;
+            appliveData.calibrationStatusRes = 0;
+            return;
+        }
+        long now = System.currentTimeMillis();
+        Mat[] eyeMats = detectionOutput.testingMats;
+        boolean eyesVisible = eyeMats != null && eyeMats.length > 1
+                && eyeMats[0] != null && !eyeMats[0].empty()
+                && eyeMats[1] != null && !eyeMats[1].empty()
+                && detectionOutput.leftNIC != null;
+        float x = eyesVisible ? (float) detectionOutput.leftNIC.x : Float.NaN;
+        float y = eyesVisible ? (float) detectionOutput.leftNIC.y : Float.NaN;
+
+        boolean capture = calibrationGate.update(x, y, detectionOutput.eyesOpen, !detectionOutput.phoneShaking, eyesVisible, now,
+                detectionOutput.phonePitch, detectionOutput.phoneYaw);
+        appliveData.calibrationProgress = calibrationGate.progress(now);
+        appliveData.calibrationStatusRes = calibrationStatusMessage(calibrationGate.getStatus(), detectionOutput.faceDetected);
+
+        if (now - lastCalibrationLogMs > 500) {
+            Log.i("AutoCalibration", String.format(java.util.Locale.US,
+                    "step=%d status=%s face=%b rot=%d x=%.3f y=%.3f iris=%b open=%b shaking=%b pitch=%.3f yaw=%.3f visible=%b spread=%.3f motionFix=%.3f distFromStraight=%.3f leniency=%d progress=%.2f",
+                    state, calibrationGate.getStatus(), detectionOutput.faceDetected, detectionOutput.frameRotation,
+                    x, y, detectionOutput.irisFound, detectionOutput.eyesOpen, detectionOutput.phoneShaking,
+                    detectionOutput.phonePitch, detectionOutput.phoneYaw, eyesVisible,
+                    calibrationGate.getLastSpread(), calibrationGate.getLastMotionCorrection(),
+                    calibrationGate.getLastDistanceFromReference(), calibrationGate.getLeniency(), appliveData.calibrationProgress));
+            lastCalibrationLogMs = now;
+        }
+
+        if (capture) {
+            Log.i("AutoCalibration", "Captured step " + state + " (leniency " + calibrationGate.getLeniency() + ")");
+            appliveData.setDetectionOutput(detectionOutput);
+            updateCalibration();
+        } else if (now - lastCalibrationPromptMs > CALIBRATION_REPROMPT_MS && state < calibrationMessages.length) {
+            audioManager.speakText(calibrationMessages[state]);
+            calibrationGate.escalate(); // each re-prompt loosens the capture rules so a step can't block forever
+            Log.i("AutoCalibration", "Re-prompted step " + state + ", leniency now " + calibrationGate.getLeniency());
+            lastCalibrationPromptMs = now;
+        }
+    }
+
+    private int calibrationStatusMessage(CalibrationStabilityGate.Status status, boolean faceDetected) {
+        switch (status) {
+            case SETTLING: return R.string.Calibration_StatusListen;
+            case NO_EYES: return faceDetected ? R.string.Calibration_StatusNoEyes : R.string.Calibration_StatusNoFace;
+            case EYES_CLOSED: return R.string.Calibration_StatusEyesClosed;
+            case PHONE_MOVING: return R.string.Calibration_StatusPhoneMoving;
+            case TOO_CLOSE_TO_REFERENCE: return R.string.Calibration_StatusLookFurther;
+            case HOLDING:
+            case CAPTURED: return R.string.Calibration_StatusHolding;
+            case NOT_STEADY:
+            default: return R.string.Calibration_StatusHoldGaze;
+        }
     }
 
     @Override
@@ -239,6 +322,10 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
 
         if (detectionOutput != null && detectionOutput.leftNIC != null) {
             clinicalData.addNICPoint((float) detectionOutput.leftNIC.x, (float) detectionOutput.leftNIC.y);
+        }
+
+        if (Objects.equals(mode, "Calibration")) {
+            autoCaptureCalibration(detectionOutput);
         }
 
         if (detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid

@@ -18,6 +18,7 @@ import com.google.mlkit.vision.face.FaceContour;
 
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -50,10 +51,18 @@ public class Model implements ContractInterface.Model {
 
     // Transit-robust gaze stabilization and gesture detection stack
     private MotionSensorStabilizer motionStabilizer;
+    private PhoneMotionTracker phoneMotion;
     private final NormalizedIrisEstimator irisEstimator = new NormalizedIrisEstimator();
     private final OneEuroFilter filterX = new OneEuroFilter(1.0, 0.5, 1.0);
     private final OneEuroFilter filterY = new OneEuroFilter(1.0, 0.5, 1.0);
     private final BallisticGestureDetector gestureDetector = new BallisticGestureDetector(1.8f, 0.18f, 400L);
+
+    private static final int[] FRAME_ROTATIONS = {0, 90, 270, 180};
+    private static final int ROTATION_SEARCH_AFTER_FRAMES = 15;
+    private static final int CONFIRMED_ROTATION_GRACE_FRAMES = 90; // stay on a working rotation through blinks and brief look-aways
+    private int rotationIndex = 0;
+    private boolean rotationConfirmed = false;
+    private int framesWithoutFace = 0;
 
     @Override
     public void initialize(Context context, Context applicationContext) throws IOException { // initialize models, libraries, and datastore
@@ -80,6 +89,8 @@ public class Model implements ContractInterface.Model {
         motionStabilizer = new MotionSensorStabilizer(mContext, 35.0f, 300L);
         motionStabilizer.start();
 
+        phoneMotion = new PhoneMotionTracker(mContext);
+        phoneMotion.start();
     }
 
     @Override
@@ -252,8 +263,42 @@ public class Model implements ContractInterface.Model {
         return normalized;
     }
 
+    // ML Kit only finds roughly upright faces, so try each frame rotation until a face appears and keep the one that works.
+    private Mat rotateFrame(Mat frame, int degrees) {
+        if (degrees == 0) return frame;
+        Mat rotated = new Mat();
+        int code = degrees == 90 ? Core.ROTATE_90_CLOCKWISE
+                : degrees == 180 ? Core.ROTATE_180
+                : Core.ROTATE_90_COUNTERCLOCKWISE;
+        Core.rotate(frame, rotated, code);
+        return rotated;
+    }
+
     @Override
-    public DetectionOutput classifyGaze(Mat rgbMat) { @OptIn(markerClass = ExperimentalGetImage.class)
+    public DetectionOutput classifyGaze(Mat cameraMat) {
+        int rotation = FRAME_ROTATIONS[rotationIndex];
+        Mat upright = rotateFrame(cameraMat, rotation);
+        try {
+            DetectionOutput output = classifyUprightFrame(upright);
+            output.faceDetected = faceDetector.faceDetected;
+            output.frameRotation = rotation;
+            if (faceDetector.faceDetected) {
+                if (!rotationConfirmed) Log.i("GazeCamera", "Face found at frame rotation " + rotation);
+                rotationConfirmed = true;
+                framesWithoutFace = 0;
+            } else if (++framesWithoutFace >= (rotationConfirmed ? CONFIRMED_ROTATION_GRACE_FRAMES : ROTATION_SEARCH_AFTER_FRAMES)) {
+                framesWithoutFace = 0;
+                rotationConfirmed = false;
+                rotationIndex = (rotationIndex + 1) % FRAME_ROTATIONS.length;
+                Log.i("GazeCamera", "No face found, trying frame rotation " + FRAME_ROTATIONS[rotationIndex]);
+            }
+            return output;
+        } finally {
+            if (upright != cameraMat) upright.release();
+        }
+    }
+
+    private DetectionOutput classifyUprightFrame(Mat rgbMat) { @OptIn(markerClass = ExperimentalGetImage.class)
 
         Mat leftEye = null, rightEye = null;
         Bitmap bmp;
@@ -323,6 +368,13 @@ public class Model implements ContractInterface.Model {
 
         boolean eyesClosedByProb = (faceDetector.leftEyeOpenProb >= 0 && faceDetector.leftEyeOpenProb <= 0.15f)
                 || (faceDetector.rightEyeOpenProb >= 0 && faceDetector.rightEyeOpenProb <= 0.15f);
+        detectionOutput.eyesOpen = !bothEyesClosed; // looking sideways often makes ML Kit score the far eye as closed
+        detectionOutput.motionStable = motionStable;
+        if (phoneMotion != null) {
+            detectionOutput.phoneShaking = phoneMotion.isShaking();
+            detectionOutput.phonePitch = phoneMotion.getPitch();
+            detectionOutput.phoneYaw = phoneMotion.getYaw();
+        }
 
         // Robust eye contour selection: prefer left eye, fallback to right eye if left eye is missing or out of frame
         FaceContour primaryContour = null;
@@ -355,6 +407,7 @@ public class Model implements ContractInterface.Model {
                 float irisY = primaryBound.y + (float) (irisRoi.y * primaryBound.height / (double) IMAGE_HEIGHT);
                 irisPt = new NormalizedIrisEstimator.Point2D(irisX, irisY);
             }
+            detectionOutput.irisFound = irisPt != null && detector.lastIrisFound;
 
             // Rotation-invariant anatomical landmark extraction
             NormalizedIrisEstimator.EyeLandmarks landmarks = irisEstimator.extractLandmarksFromContour(pts, irisPt);

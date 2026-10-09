@@ -28,9 +28,21 @@ public class DetectionOutput {
         this.LeftData = new GazeData();
         this.AnalyzedData = new GazeData();
         testingMats = new Mat[MatNum];
+        eyesOpen = false;
+        motionStable = false;
+        irisFound = false;
+        faceDetected = false;
     }
 
     public int gestureOutput; // an input from the user (not the raw data from the frame)
+    public boolean eyesOpen; // neither eye reported closed by ML Kit in this frame
+    public boolean motionStable; // phone not in a post-shock hold window
+    public boolean irisFound; // leftNIC came from a detected iris, not the eye-centre fallback
+    public boolean faceDetected;
+    public int frameRotation; // degrees the camera frame was rotated before detection
+    public boolean phoneShaking; // gyro/accelerometer report a real shake, not ordinary hand tremor
+    public float phonePitch = Float.NaN; // gyro-integrated phone rotation (radians), NaN without a gyroscope
+    public float phoneYaw = Float.NaN;
 
     public Point leftNIC; // Normalized Iris Center for both eyes
     public Mat[] testingMats; // testing mats to show process of analysis

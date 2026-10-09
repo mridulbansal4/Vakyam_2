@@ -24,6 +24,9 @@ public class EyeDetection {
     Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches the calibration order to the gaze data order
     Mat[] leftTemplates, rightTemplates;
     public float thresholdValue = 18f;
+    public boolean adaptiveThreshold = true;
+    public double irisDarkFraction = 0.18; // share of darkest ROI pixels treated as iris/pupil when adaptive
+    public boolean lastIrisFound = false;
     public float sensitivity = 0.015f;
     static int IMAGE_WIDTH = 40, IMAGE_HEIGHT = 14;
 
@@ -133,6 +136,23 @@ public class EyeDetection {
 
     }
 
+    // Intensity below which the given fraction of pixels fall; keeps the iris blob present in any lighting.
+    private static double darkPercentile(Mat gray, double fraction) {
+        if (gray == null || gray.empty() || gray.channels() != 1) return 18;
+        Mat continuous = gray.isContinuous() ? gray : gray.clone();
+        byte[] pixels = new byte[(int) continuous.total()];
+        continuous.get(0, 0, pixels);
+        int[] counts = new int[256];
+        for (byte b : pixels) counts[b & 0xFF]++;
+        long target = Math.max(1, Math.round(pixels.length * fraction));
+        long cumulative = 0;
+        for (int i = 0; i < 256; i++) {
+            cumulative += counts[i];
+            if (cumulative >= target) return i;
+        }
+        return 255;
+    }
+
     public Point irisDetection(Mat ROI) {
         Mat eroded = new Mat();
         Mat threshold = new Mat();
@@ -148,6 +168,9 @@ public class EyeDetection {
      //   Imgproc.erode(ROI, eroded, erode_kernel);
         Imgproc.blur(ROI, eroded, new Size(3,3));
        // Imgproc.adaptiveThreshold(eroded, threshold, 255, Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 5, 3);
+        if (adaptiveThreshold) {
+            thresholdValue = (float) darkPercentile(eroded, irisDarkFraction);
+        }
         Imgproc.threshold(eroded, threshold, thresholdValue, 255, Imgproc.THRESH_BINARY);
         //Imgproc.morphologyEx(threshold, opening, Imgproc.MORPH_OPEN, opening_kernel);
         Imgproc.blur(threshold, opening, new Size(3,3));
@@ -166,6 +189,7 @@ public class EyeDetection {
         }
         finalMat = new Mat();
         Mat draw;
+        lastIrisFound = maxValIdx != -1;
         if (maxValIdx != -1) {
             MatOfPoint maxContour = contours.get(maxValIdx);
             Moments moments = Imgproc.moments(maxContour);

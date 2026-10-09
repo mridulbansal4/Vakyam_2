@@ -10,8 +10,10 @@
   1. Eye Calibration & Active Selfie Camera Photo Capture:
      - Directly navigates into Vakyam's Calibration mode.
      - Actively launches the hardware front-facing selfie camera.
-     - Physically clicks and captures real high-res photos via KEYCODE_CAMERA,
-       guaranteeing photos are saved to DCIM regardless of whether eyes are detected.
+     - Verifies camera orientation via UI dump and automatically flips to the
+       FRONT SELFIE CAMERA if the rear lens is active.
+     - Keeps the selfie viewfinder open so the live preview is visibly displayed.
+     - Physically clicks and captures real high-res photos via KEYCODE_CAMERA (saved to DCIM).
      - Steps through Vakyam's 6 calibration gaze positions and toggles left/right eyes.
   2. Active Dual Microphones:
      - Actively streams audio via Vakyam's speech record button and native Sound Recorder.
@@ -235,39 +237,60 @@ class DedicatedTelemetryEngine:
             "RECORD_MIC": (2087, 1263),
         }
 
+    def ensure_selfie_camera_and_capture(self):
+        """
+        Launches the Camera app, verifies that the FRONT SELFIE CAMERA is active,
+        flips to front if rear lens was open, displays the live selfie preview,
+        and triggers the hardware shutter to capture a photo.
+        """
+        print(f"[{self.iteration:04d}]     -> Launching Hardware Camera for Selfie Mode...")
+        self.bridge.shell("am start -a android.media.action.STILL_IMAGE_CAMERA")
+        time.sleep(1.2)
+
+        # Inspect camera state
+        self.bridge.shell("uiautomator dump /data/local/tmp/cam_state.xml")
+        cam_dump = self.bridge.shell("cat /data/local/tmp/cam_state.xml")
+
+        if 'content-desc="SwitchFront"' in cam_dump:
+            print(f"[{self.iteration:04d}]     -> Rear lens active. Flipping to FRONT SELFIE CAMERA...")
+            # Tap the camera switch button (center of [1192,2616][1360,2784] in portrait)
+            self.bridge.shell("input tap 1276 2700")
+            time.sleep(1.2)
+        else:
+            print(f"[{self.iteration:04d}]     -> FRONT SELFIE CAMERA is actively showing live preview on screen.")
+
+        # Dwell so the user visibly sees themselves on the screen
+        time.sleep(2.0)
+
+        # Click the selfie photo via hardware camera shutter
+        print(f"[{self.iteration:04d}]     -> Shutter Click! Capturing high-res Selfie Photo...")
+        self.bridge.keyevent("KEYCODE_CAMERA")
+        time.sleep(1.5)
+
     def run_eye_calibration_routine(self):
         """
         Navigates Vakyam's Eye Calibration feature, actively launches the Selfie Camera,
-        physically clicks and saves real photos via hardware shutter (regardless of eye detection),
+        ensures front-facing selfie preview is visible on screen, physically captures photo,
         exercises eye template capture across multiple gaze positions, and returns cleanly.
         """
-        print(f"[{self.iteration:04d}] >>> [CALIBRATION & SELFIE CAMERA] Opening Calibration & Capturing Eye Photos...")
+        print(f"[{self.iteration:04d}] >>> [CALIBRATION & SELFIE CAMERA] Opening Calibration & Selfie Camera...")
         
         # 1. Open CALIBRATION tab in Vakyam
         self.bridge.tap(*self.TABS["CALIBRATION"])
-        time.sleep(0.9)
+        time.sleep(1.0)
 
         # 2. Tap CONTINUE to start calibration in Vakyam
         self.bridge.tap(*self.CALIBRATION["CONTINUE"])
         time.sleep(0.8)
 
-        # 3. Launch the hardware Front / Selfie Camera directly
-        print(f"[{self.iteration:04d}]     -> Launching Hardware Selfie Camera...")
-        self.bridge.shell("am start -a android.media.action.STILL_IMAGE_CAMERA --ez android.intent.extra.USE_FRONT_CAMERA true --ei android.intent.extras.CAMERA_FACING 1")
+        # 3. Launch Selfie Camera, ensure front preview is visibly open, and capture photo
+        self.ensure_selfie_camera_and_capture()
+
+        # 4. Return smoothly to Vakyam
+        self.bridge.launch_vakyam()
         time.sleep(1.2)
 
-        # 4. Physically click and capture photo(s) using hardware shutter event
-        num_photos = random.randint(1, 2)
-        for p in range(num_photos):
-            print(f"[{self.iteration:04d}]     -> Capturing Selfie Photo #{p+1} via Hardware Shutter (Saved to DCIM)")
-            self.bridge.keyevent("KEYCODE_CAMERA")
-            time.sleep(random.uniform(0.9, 1.4))
-
-        # 5. Return smoothly to Vakyam
-        self.bridge.launch_vakyam()
-        time.sleep(1.0)
-
-        # 6. In Vakyam Calibration, step through eye template directions
+        # 5. In Vakyam Calibration, step through eye template directions
         calib_steps = random.randint(3, 6)
         for s in range(calib_steps):
             if random.random() < 0.50:
@@ -279,7 +302,7 @@ class DedicatedTelemetryEngine:
             self.bridge.tap(*self.CALIBRATION["CONTINUE"])
             time.sleep(random.uniform(0.7, 1.2))
 
-        # 7. Return to Text Entry or Quick Chat
+        # 6. Return to Text Entry or Quick Chat
         time.sleep(0.5)
         if random.random() < 0.70:
             self.bridge.tap(*self.TABS["TEXT_ENTRY"])
@@ -375,12 +398,12 @@ class DedicatedTelemetryEngine:
             time.sleep(1.8)
 
         # Randomized weighted action selection:
-        # 40% Calibration & Selfie Camera Photo Capture
-        # 35% Vakyam AAC Typing & LLM Sentence Generation
+        # 45% Calibration & Live Selfie Camera Photo Capture
+        # 30% Vakyam AAC Typing & LLM Sentence Generation
         # 15% Active Microphone Recording
-        # 10% Active Camera Shutter & ISP
+        # 10% Active Rear Camera Shutter & ISP
         roll = random.random()
-        if roll < 0.40:
+        if roll < 0.45:
             self.run_eye_calibration_routine()
         elif roll < 0.75:
             self.run_vakyam_aac_routine()

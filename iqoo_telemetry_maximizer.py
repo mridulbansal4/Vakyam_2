@@ -517,7 +517,10 @@ if __name__ == "__main__":
             stop_loop()
         elif cmd == "status":
             check_status()
+        elif cmd in ("sensors", "sensor"):
+            import read_sensors
+            read_sensors.main()
         else:
-            print("Usage: python iqoo_telemetry_maximizer.py [start|stop|status]")
+            print("Usage: python iqoo_telemetry_maximizer.py [start|stop|status|sensors]")
     else:
         start_loop()

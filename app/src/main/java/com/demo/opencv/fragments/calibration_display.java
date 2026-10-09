@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.demo.opencv.vision.DetectionOutput;
@@ -38,6 +39,8 @@ public class calibration_display extends Fragment {
     Button calibrationButton, switchEyesButton;
     ImageView calibrationImage;
     TextView calibrationDescription;
+    ProgressBar holdProgress;
+    TextView calibrationStatus;
     int calibrationTemplates = 6;
     int[] calibrationMessageID = {R.string.Calibration_LookStraight, R.string.Calibration_LookLeft, R.string.Calibration_LookRight, R.string.Calibration_LookUp,  R.string.Calibration_LookLeftUp, R.string.Calibration_LookRightUp};
 
@@ -62,7 +65,7 @@ public class calibration_display extends Fragment {
             Log.d("Calibration", "button clicked");
             int calibrationState = userDataManager.getCalibrationState();
 
-            if (calibrationState == calibrationTemplates) { // finished calibration, going to reset
+            if (calibrationState == userDataManager.calibrationTemplateNum) { // finished calibration, going to reset
                 toggleInfoPage(true);
                 toggleCalibrationPage(false);
 
@@ -94,6 +97,28 @@ public class calibration_display extends Fragment {
         }
     }
 
+    private void updateButtonAndProgress(int calibrationState, float progress, int statusRes) {
+        boolean calibrating = calibrationState >= 0 && calibrationState < userDataManager.calibrationTemplateNum;
+        if (calibrationButton != null) {
+            if (calibrationState == -1) {
+                calibrationButton.setText(R.string.Calibration_Start);
+            } else if (calibrating) {
+                calibrationButton.setText(R.string.Calibration_CaptureNow); // manual fallback for carers
+            } else {
+                calibrationButton.setText(R.string.Calibration_Restart);
+            }
+        }
+        if (holdProgress != null) {
+            holdProgress.setVisibility(calibrating ? View.VISIBLE : View.INVISIBLE);
+            holdProgress.setProgress(Math.round(progress * 100));
+        }
+        if (calibrationStatus != null) {
+            boolean show = calibrating && statusRes != 0;
+            calibrationStatus.setVisibility(show ? View.VISIBLE : View.INVISIBLE);
+            if (show) calibrationStatus.setText(statusRes);
+        }
+    }
+
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
@@ -121,6 +146,9 @@ public class calibration_display extends Fragment {
 
         calibrationButton = view.findViewById(R.id.calibrationButton);
         switchEyesButton = view.findViewById(R.id.switchEyesButton);
+        holdProgress = view.findViewById(R.id.calibrationHoldProgress);
+        calibrationStatus = view.findViewById(R.id.calibrationStatus);
+        updateButtonAndProgress(userDataManager.getCalibrationState(), 0f, 0);
         Log.d("Calibration", "here");
         calibrationButton.setOnClickListener(v -> onCalibrationButtonClick());
         switchEyesButton.setOnClickListener(v -> leftEyesDisplayed = !leftEyesDisplayed);
@@ -139,6 +167,7 @@ public class calibration_display extends Fragment {
             DetectionOutput detection = item.DetectionOutput;
             int calibrationState = item.calibrationState;
             Log.d("CalibrationInterface", "Current State: " + calibrationState);
+            updateButtonAndProgress(calibrationState, item.calibrationProgress, item.calibrationStatusRes);
             if (calibrationState == -1) { // pre-calibration page
                 instruction.setText(R.string.Calibration_Title);
             } else { // calibration page
@@ -161,7 +190,7 @@ public class calibration_display extends Fragment {
                             calibrationTemplateViews[i].setImageBitmap(images[i]);
                         }
                     }
-                    if (calibrationState == 6) {
+                    if (calibrationState == userDataManager.calibrationTemplateNum) {
                         instruction.setText(R.string.Calibration_Finished);
                     } else if (calibrationState >= 0 && calibrationState < calibrationMessageID.length) {
                         instruction.setText(calibrationMessageID[calibrationState]);

@@ -29,14 +29,25 @@
     <!-- Calibration UI Strings -->
     <string name="Calibration_TopBarTitle">CALIBRATION</string>
     <string name="Calibration_Title">EYE CALIBRATION</string>
-    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see picture below). Press continue to start.</string>
+    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see picture below). Press start, then hold your gaze in each direction until you hear a beep. Each direction is captured automatically.</string>
     <string name="Calibration_Continue">CONTINUE</string>
+    <string name="Calibration_Start">START</string>
+    <string name="Calibration_Restart">RESTART</string>
+    <string name="Calibration_CaptureNow">CAPTURE NOW</string>
+    <string name="Calibration_StatusListen">Listen to the instruction…</string>
+    <string name="Calibration_StatusNoFace">Face not found. Keep your face in front of the camera.</string>
+    <string name="Calibration_StatusNoEyes">Eyes not visible. Move your face into view.</string>
+    <string name="Calibration_StatusEyesClosed">Keep your eyes open.</string>
+    <string name="Calibration_StatusPhoneMoving">Hold the phone still.</string>
+    <string name="Calibration_StatusHoldGaze">Hold your gaze steady.</string>
+    <string name="Calibration_StatusLookFurther">Move your eyes further in that direction.</string>
+    <string name="Calibration_StatusHolding">Hold… capturing</string>
     <string name="Calibration_LookStraight">Look straight</string>
     <string name="Calibration_LookLeft">Look left</string>
     <string name="Calibration_LookRight">Look right</string>
     <string name="Calibration_LookUp">Look up</string>
     <string name="Calibration_LookLeftUp">Look left and up</string>
-    <string name="Calibration_LookRightUp">Look Right and up</string>
+    <string name="Calibration_LookRightUp">Look right and up</string>
     <string name="Calibration_SwitchEyes">Switch Eyes</string>
     <string name="Calibration_Finished">Calibration Finished!</string>
 

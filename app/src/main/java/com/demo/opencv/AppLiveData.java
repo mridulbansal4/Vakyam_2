@@ -15,6 +15,8 @@ public class AppLiveData {
     public Bitmap[] leftTemplates;
     public Bitmap[] rightTemplates;
     public int calibrationState = -1;
+    public float calibrationProgress; // 0..1 hold progress towards the next automatic capture
+    public int calibrationStatusRes; // string resource explaining what auto-capture is waiting for, 0 if none
     String calibrationInstruction;
     public boolean isRecording;
     void setQuickChatData(QuickChatData quickChatData) {this.quickChatData = quickChatData; }

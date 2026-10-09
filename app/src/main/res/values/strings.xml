@@ -52,19 +52,7 @@
     <string name="TextEntry_EnableLLM">Enable LLM to generate</string>
     <string name="TextEntry_Generating">Generating</string>
     <string name="TextEntry_Back">BACK</string>
-    <string name="textEntry_Upload">UPLOAD</string>
     <string name="TextEntry_Speak">SPEAK</string>
-
-    <!-- Social Media Strings -->
-    <string name="SocialMedia_Title">TWEET POST</string>
-    <string name="SocialMedia_BackButton">BACK</string>
-    <string name="SocialMedia_UploadButton">UPLOAD</string>
-    <string name="SocialMedia_LoggedIn">Authenticated</string>
-    <string name="SocialMedia_ClickAuthenticate">Click to authenticate</string>
-    <string name="SocialMedia_TakePhoto">TAKE PHOTO</string>
-    <string name="SocialMedia_DeleteText">DELETE TEXT</string>
-    <string name="SocialMedia_CancelPhoto">CANCEL PHOTO</string>
-    <string name="SocialMedia_TakingPhoto">TAKING PHOTO</string>
 
     <!-- Quick Chat Strings -->
 
@@ -113,6 +101,5 @@
     <string name="Settings_Error">Gaze Error</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="SocialMedia_RetakePhoto">RETAKE PHOTO</string>
 
 </resources>

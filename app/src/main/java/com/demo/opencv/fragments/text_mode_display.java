@@ -40,6 +40,7 @@ public class text_mode_display extends Fragment {
     Runnable updateUI;
     TextView textInput, sentenceBox;
     TextView contextBox;
+    TextView finishBox;
     ImageButton recordButton;
     final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
     List<TextView> keyboardOptions = new ArrayList<>();
@@ -114,17 +115,16 @@ public class text_mode_display extends Fragment {
     }
 
     private void toggleFinishedScreen(boolean state) {
-        int visibility;
-        if (state) {
-            visibility = View.VISIBLE;
-        } else {
-            visibility = View.INVISIBLE;
-        }
+        int visibility = state ? View.VISIBLE : View.INVISIBLE;
         for (TextView text: finishedScreenTexts) {
-            text.setVisibility(visibility);
+            if (text != null) {
+                text.setVisibility(visibility);
+            }
         }
         for (ImageView image: finishedScreenImages) {
-            image.setVisibility(visibility);
+            if (image != null) {
+                image.setVisibility(visibility);
+            }
         }
     }
 
@@ -150,15 +150,19 @@ public class text_mode_display extends Fragment {
         finishedScreenImages.clear();
         keyboardOptions.clear();
 
-        finishedScreenTexts.add(view.findViewById(R.id.speakButton));
-        finishedScreenTexts.add(view.findViewById(R.id.uploadButton));
-        finishedScreenTexts.add(view.findViewById(R.id.backButton));
-        finishedScreenTexts.add(view.findViewById(R.id.finishBox));
-        finishedScreenTexts.add(view.findViewById(R.id.darkenLayer));
+        TextView speakBtn = view.findViewById(R.id.speakButton);
+        if (speakBtn != null) finishedScreenTexts.add(speakBtn);
+        TextView backBtn = view.findViewById(R.id.backButton);
+        if (backBtn != null) finishedScreenTexts.add(backBtn);
+        finishBox = view.findViewById(R.id.finishBox);
+        if (finishBox != null) finishedScreenTexts.add(finishBox);
+        TextView darkenLayer = view.findViewById(R.id.darkenLayer);
+        if (darkenLayer != null) finishedScreenTexts.add(darkenLayer);
 
-        finishedScreenImages.add(view.findViewById(R.id.speakButtonImage));
-        finishedScreenImages.add(view.findViewById(R.id.uploadButtonImage));
-        finishedScreenImages.add(view.findViewById(R.id.backButtonImage));
+        ImageView speakImg = view.findViewById(R.id.speakButtonImage);
+        if (speakImg != null) finishedScreenImages.add(speakImg);
+        ImageView backImg = view.findViewById(R.id.backButtonImage);
+        if (backImg != null) finishedScreenImages.add(backImg);
         toggleFinishedScreen(false); // closed finished screen
 
         if (useFirstLayout) {
@@ -192,14 +196,8 @@ public class text_mode_display extends Fragment {
         }
 
         // add click listeners for finished screen
-        if (finishedScreenTexts.size() >= 3) {
-            TextView speakBtn = finishedScreenTexts.get(0);
-            if (speakBtn != null) speakBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(1));
-            TextView uploadBtn = finishedScreenTexts.get(1);
-            if (uploadBtn != null) uploadBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(2));
-            TextView backBtn = finishedScreenTexts.get(2);
-            if (backBtn != null) backBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(5));
-        }
+        if (speakBtn != null) speakBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(1));
+        if (backBtn != null) backBtn.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(5));
 
         for (int i = 0; i < Math.min(6, keyboardOptions.size()); i++) { // add click listeners for the eye gesture buttons
             int finalI = i;
@@ -226,11 +224,11 @@ public class text_mode_display extends Fragment {
 
             if (keyboardData != null) {
                 if (finishedScreenDisplayed != keyboardData.finished) { // check if finished screen should be displayed
-                    if (finishedScreenTexts.size() > 3) {
-                        setText(finishedScreenTexts.get(3), keyboardData.sentence);
-                    }
                     finishedScreenDisplayed = keyboardData.finished;
                     toggleFinishedScreen(keyboardData.finished);
+                }
+                if (finishedScreenDisplayed && finishBox != null) {
+                    setText(finishBox, keyboardData.sentence);
                 }
                 for (int i = 0; i < keyboardOptions.size(); i++) {
                     if (keyboardData.Options != null && keyboardData.Options.length > i) {

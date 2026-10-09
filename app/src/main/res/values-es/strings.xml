@@ -43,7 +43,6 @@
     <string name="TextEntry_EnableLLM">Habilitar LLM para generar</string>
     <string name="TextEntry_Generating">Generando</string>
     <string name="TextEntry_Back">REGRESAR</string>
-    <string name="textEntry_Upload">SUBIR</string>
     <string name="TextEntry_Speak">HABLAR</string>
     <string name="QuickChat_TopBarTitle">RÁPIDO</string>
     <string name="QuickChat_BackMenuButton">Volver a la página de inicio</string>
@@ -79,15 +78,5 @@
     <string name="QuickChat_Category5_4">Necesito ir al hospital.</string>
     <string name="QuickChat_Category5_5">me siento bien</string>
     <string name="Settings_Language">Idioma</string>
-    <string name="SocialMedia_BackButton">ATRÁS</string>
-    <string name="SocialMedia_UploadButton">SUBIR</string>
-    <string name="SocialMedia_LoggedIn">Autenticado</string>
-    <string name="SocialMedia_ClickAuthenticate">Haga clic para autenticar</string>
-    <string name="SocialMedia_TakePhoto">TOMAR FOTO</string>
-    <string name="SocialMedia_DeleteText">BORRAR TEXTO</string>
-    <string name="SocialMedia_RetakePhoto">VOLVER A TOMAR</string>
-    <string name="SocialMedia_Title">GORJEO</string>
-    <string name="SocialMedia_CancelPhoto">CANCELAR FOTO</string>
-    <string name="SocialMedia_TakingPhoto">TOMANDO FOTO</string>
     <string name="Settings_SentenceGenerationModel">Modelo de Generación</string>
 </resources>

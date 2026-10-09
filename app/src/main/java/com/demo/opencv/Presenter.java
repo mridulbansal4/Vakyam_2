@@ -8,8 +8,6 @@ import android.util.Log;
 
 import com.demo.opencv.other.AudioManager;
 import com.demo.opencv.other.ClinicalData;
-import com.demo.opencv.socialMedia.SocialMediaData;
-import com.demo.opencv.socialMedia.SocialMediaManager;
 import com.demo.opencv.textEntry.KeyboardData;
 import com.demo.opencv.textEntry.KeyboardManager;
 import com.demo.opencv.textEntry.QuickChatManager;
@@ -28,13 +26,12 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     Context applicationContext;
     UserDataManager userDataManager;
     public boolean presenterBusy = false;
-    public String mode = ""; // Calibration, Text, Dev, Clinician, Social Media
+    public String mode = ""; // Calibration, Text, Dev, Clinician, QuickChat
     boolean recording = false;
     private final ContractInterface.View mainView; // creating object of View Interface
     private final ContractInterface.Model model; // creating object of Model Interface
     private final KeyboardManager keyboardManager = new KeyboardManager();
     private final TextEntryManager textEntryManager = new TextEntryManager();
-    private final SocialMediaManager socialMediaManager = new SocialMediaManager();
     private final QuickChatManager quickChatManager = new QuickChatManager();
     AppLiveData appliveData = new AppLiveData();
     AudioManager audioManager = new AudioManager();
@@ -68,7 +65,6 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
 
         textEntryManager.initialize(mContext); // text prediction initialization with language setting
         textEntryManager.updateSettings(applicationContext); // update settings for text entry
-        socialMediaManager.initialize(mContext, applicationContext); // social media initialization
         quickChatManager.initialize(mContext);
 
         clinicalData = new ClinicalData();
@@ -170,7 +166,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     }
 
     @Override
-    public void onGazeButtonClicked(int input) { // when the user clicks a gaze button (for both social media and text mode)
+    public void onGazeButtonClicked(int input) { // when the user clicks a gaze button (for text mode and quick chat)
         playBeepTone();
         if (Objects.equals(mode, "Text")) {
             if (userDataManager.getTextEntryMode() == 0) {
@@ -180,8 +176,6 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             } else {
                 textEntryManager.manageUserInput(input, false);
             }
-        } else if (Objects.equals(mode, "Social Media")) {
-            socialMediaManager.manageUserInput(input, false);
         } else if (Objects.equals(mode, "QuickChat")) {
             Log.d("QuickChatFragment", "Button Pressed: " + input);
             quickChatManager.manageUserInput(input, false);
@@ -242,7 +236,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         }
 
         if (detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid
-            if (Objects.equals(mode, "Text") || Objects.equals(mode, "Dev") || Objects.equals(mode, "Social Media") || Objects.equals(mode, "QuickChat")) { // not calibrating or in clinician mode, process the input
+            if (Objects.equals(mode, "Text") || Objects.equals(mode, "Dev") || Objects.equals(mode, "QuickChat")) { // not calibrating or in clinician mode, process the input
                 int gazeType = detectionOutput.gestureOutput;
 
                 if (gazeType != 0) { // gaze input is meaningful
@@ -261,22 +255,11 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                             textEntryManager.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
                             textEntryManager.manageUserInput(gazeType, true);
                         }
-                    } else if (Objects.equals(mode, "Social Media")) { // social media mode
-                        socialMediaManager.manageUserInput(gazeType, true);
                     } else if (Objects.equals(mode, "QuickChat")) { // quick chat mode
                         quickChatManager.manageUserInput(gazeType, true);
                     }
                 }
             }
-        }
-        if (textEntryManager.openSocialMedia) { // action to open social media interface
-            textEntryManager.openSocialMedia = false;
-            socialMediaManager.addSentence(textEntryManager.getLLMSentence()); // add the sentence from the text entry manager
-            mainView.openSocialMedia();
-        }
-        if (socialMediaManager.closeSocialMedia) { // action to close social media interface
-            socialMediaManager.closeSocialMedia = false;
-            mainView.openTextEntry();
         }
 
         // setting the app live data for the fragment displays
@@ -294,12 +277,6 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             KeyboardData keyboardData = textEntryManager.getDisplays();
             appliveData.setKeyboardDisplays(keyboardData); // update text entry information
         }
-
-        // social media manager
-        socialMediaManager.updateCameraFrame(rgbMat); // update camera
-        socialMediaManager.updateDisplays();
-        SocialMediaData socialMediaData = socialMediaManager.getDisplays();
-        appliveData.setSocialMediaData(socialMediaData); // update social media information
 
         // quick chat manager
         quickChatManager.updateDisplays();

@@ -509,49 +509,6 @@
         app:layout_constraintVertical_bias="0.81" />
 
     <TextView
-        android:id="@+id/uploadButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_2"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="7dp"
-        android:text="@string/textEntry_Upload"
-        android:textAlignment="textStart"
-        android:textAllCaps="true"
-        android:textColor="@color/black"
-        android:textSize="25sp"
-        android:textStyle="bold"
-        android:translationZ="22dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.15"
-        app:layout_constraintHorizontal_bias="0.777"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.802"
-        app:layout_constraintWidth_percent="0.28" />
-
-    <ImageView
-        android:id="@+id/uploadButtonImage"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/rightgaze"
-        android:translationZ="25dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.805"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.81" />
-
-    <TextView
         android:id="@+id/backButton"
         android:layout_width="0dp"
         android:layout_height="0dp"

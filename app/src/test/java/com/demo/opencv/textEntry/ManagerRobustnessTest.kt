@@ -1,7 +1,7 @@
 package com.demo.opencv.textEntry
 
-import com.demo.opencv.socialMedia.SocialMediaManager
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -124,13 +124,54 @@ class ManagerRobustnessTest {
     }
 
     @Test
-    fun testSocialMediaManagerBoundsCheck() {
-        val sm = SocialMediaManager()
-        // Invalid selections should be discarded without throwing ArrayIndexOutOfBoundsException
-        sm.manageUserInput(-1, true)
-        sm.manageUserInput(20, true)
-        sm.manageUserInput(-1, false)
-        sm.manageUserInput(20, false)
-        assertTrue(true) // Reaching here means no crash
+    fun testTextEntryManagerFinishedModeGazeActionsAndTransitions() {
+        val manager = TextEntryManager()
+        val keyboardData = manager.displays
+        assertNotNull(keyboardData)
+
+        // Enter finished mode directly by setting finished flag
+        keyboardData.finished = true
+        assertTrue(keyboardData.finished)
+
+        // In finished mode: Selection 2 (Right Gaze / former upload action)
+        // Must be a safe no-op: does not throw, does not exit finished mode, does not alter state
+        manager.manageUserInput(2, false) // direct input 2
+        assertTrue(keyboardData.finished)
+
+        manager.manageUserInput(2, true) // gaze index 2 -> translates to selection 2
+        assertTrue(keyboardData.finished)
+
+        // Invalid / out-of-bounds inputs in finished mode are also safe no-ops
+        manager.manageUserInput(-1, false)
+        assertTrue(keyboardData.finished)
+        manager.manageUserInput(0, false)
+        assertTrue(keyboardData.finished)
+        manager.manageUserInput(3, false)
+        assertTrue(keyboardData.finished)
+        manager.manageUserInput(4, false)
+        assertTrue(keyboardData.finished)
+        manager.manageUserInput(100, false)
+        assertTrue(keyboardData.finished)
+
+        // Selection 1 (SPEAK button / Left Gaze) in finished mode speaks text and keeps finished mode active
+        manager.manageUserInput(1, false) // direct input 1
+        assertTrue(keyboardData.finished)
+        manager.manageUserInput(1, true) // gaze index 1 -> translates to selection 1
+        assertTrue(keyboardData.finished)
+
+        // Selection 5 (BACK button / Right-Up Gaze) in finished mode returns to keyboard mode
+        manager.manageUserInput(5, false) // direct input 5
+        assertFalse(keyboardData.finished)
+
+        // Re-enter finished mode via WordMode gaze input:
+        // First switch to WordMode (mode = 0) via selection 3 in LetterMode
+        manager.manageUserInput(3, false)
+        // Now in WordMode: Gaze index 3 (Up Gaze) maps to selection 0 in keyboardInputMat -> triggers finished mode
+        manager.manageUserInput(3, true)
+        assertTrue(keyboardData.finished)
+
+        // Exit finished mode via Right-Up Gaze (gaze index 7 -> maps to selection 5)
+        manager.manageUserInput(7, true)
+        assertFalse(keyboardData.finished)
     }
 }

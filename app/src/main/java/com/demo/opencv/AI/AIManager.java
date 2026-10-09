@@ -164,33 +164,43 @@ public class AIManager { // extends appCompatActivity
     }
 
     public void speechGenerationService(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return;
+        }
         if (OPENAI_API_KEY == null || OPENAI_API_KEY.trim().isEmpty()) {
             Log.d("SpeechGeneration", "OpenAI key is not configured; using offline Android TTS");
             return;
         }
 
-        JSONObject json = new JSONObject();
+        String jsonStr = null;
         try {
+            JSONObject json = new JSONObject();
             json.put("voice", "onyx");
             json.put("input", text);
             json.put("model", "tts-1");
             json.put("speed", 0.9);
-        } catch (JSONException e) {
-            e.printStackTrace();
+            jsonStr = json.toString();
+        } catch (Exception e) {
+            Log.w("SpeechGeneration", "JSON serialization error: " + e.getMessage());
         }
 
-        OkHttpClient client = new OkHttpClient();
-        MediaType mediaType = MediaType.parse("application/json");
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
+            return;
+        }
 
-        RequestBody body = RequestBody.create(json.toString(), mediaType);
-        Request request = new Request.Builder()
-                .url("https://api.openai.com/v1/audio/speech")
-                .post(body)
-                .addHeader("Authorization", "Bearer " + OPENAI_API_KEY)
-                .addHeader("Content-Type", "application/json")
-                .build();
+        try {
+            OkHttpClient client = new OkHttpClient();
+            MediaType mediaType = MediaType.parse("application/json");
 
-        executorService.submit(() -> {
+            RequestBody body = RequestBody.create(jsonStr, mediaType);
+            Request request = new Request.Builder()
+                    .url("https://api.openai.com/v1/audio/speech")
+                    .post(body)
+                    .addHeader("Authorization", "Bearer " + OPENAI_API_KEY)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+
+            executorService.submit(() -> {
             try (okhttp3.Response response = client.newCall(request).execute()) {
                 if (!response.isSuccessful()) {
                     Log.d("SpeechGeneration", "Failed " + response);
@@ -223,7 +233,10 @@ public class AIManager { // extends appCompatActivity
                 }
             }
         });
+    } catch (Exception e) {
+        Log.w("SpeechGeneration", "Failed to initiate OpenAI TTS request: " + e.getMessage());
     }
+}
 
     // Retrofit service interface for OpenAI
     public interface OpenAIService {

@@ -46,15 +46,10 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="gazelink"
-                    android:host="oauth-callback" />
-                <data android:scheme="vakyam"
-                    android:host="oauth-callback" />
-            </intent-filter>
         </activity>
+        <activity
+            android:name="com.demo.opencv.features.blinkkeyboard.BlinkKeyboardActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
     </application>
 </manifest>

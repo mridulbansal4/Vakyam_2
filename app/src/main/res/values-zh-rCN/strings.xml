@@ -43,7 +43,6 @@
     <string name="Clinician_GazeInputLog">眼球动态记录表</string>
     <string name="Settings_Error">眼球动态差错</string>
     <string name="TextEntry_Back">上一页</string>
-    <string name="textEntry_Upload">上传</string>
     <string name="TextEntry_Speak">语音</string>
     <string name="QuickChat_TopBarTitle">快捷输入</string>
     <string name="QuickChat_BackMenuButton">回到主页</string>
@@ -79,15 +78,5 @@
     <string name="QuickChat_Category5_4">我需要去医院。</string>
     <string name="QuickChat_Category5_5">我感觉不错。</string>
     <string name="Settings_Language">语言</string>
-    <string name="SocialMedia_BackButton">返回</string>
-    <string name="SocialMedia_UploadButton">上传</string>
-    <string name="SocialMedia_LoggedIn">已验证</string>
-    <string name="SocialMedia_ClickAuthenticate">点击认证</string>
-    <string name="SocialMedia_TakePhoto">拍照</string>
-    <string name="SocialMedia_DeleteText">删除文字</string>
-    <string name="SocialMedia_RetakePhoto">重新拍照</string>
-    <string name="SocialMedia_Title">社交媒体</string>
-    <string name="SocialMedia_CancelPhoto">删除照片</string>
-    <string name="SocialMedia_TakingPhoto">拍照中</string>
     <string name="Settings_SentenceGenerationModel">句子生成模型</string>
 </resources>

@@ -17,15 +17,9 @@
         android:background="@color/vk_chrome"
         android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:paddingStart="4dp"
         android:paddingEnd="4dp"
         android:visibility="visible">
-
-        <ImageView
-            android:id="@+id/imageView16"
-            android:layout_width="40dp"
-            android:layout_height="match_parent"
-            android:scaleType="center"
-            android:src="@drawable/baseline_home_24" />
 
         <Button
             android:id="@+id/devModeButton"

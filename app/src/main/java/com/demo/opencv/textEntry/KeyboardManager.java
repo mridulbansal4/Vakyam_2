@@ -1,5 +1,8 @@
 package com.demo.opencv.textEntry;
 
+import com.demo.opencv.metrics.TypingTest;
+import com.demo.opencv.personal.PersonalLexicon;
+
 public class KeyboardManager {
 
     String textInput = ""; // stores the final text input
@@ -7,6 +10,20 @@ public class KeyboardManager {
     String[] layer2Options = {"abcdef", "ghijkl", "mnopqr", "stuvwx", "yz,.!?", " *#"};
     int layer = 1;
     int page = 0;
+    private PersonalLexicon personalLexicon; // the patient's own words, null until set
+
+    public void setPersonalLexicon(PersonalLexicon personalLexicon) {
+        this.personalLexicon = personalLexicon;
+    }
+
+    // This keyboard is the only way to spell a word no dictionary has, so finished words are learned for the other modes.
+    private void learnLastWord() {
+        if (personalLexicon == null) return;
+        String[] words = textInput.trim().split("\s+");
+        String last = words[words.length - 1];
+        if (last.isEmpty()) return;
+        personalLexicon.recordWord(last, words.length > 1 ? words[words.length - 2] : null);
+    }
 
     public KeyboardData getDisplays() {
         KeyboardData keyboardData = new KeyboardData();
@@ -52,14 +69,20 @@ public class KeyboardManager {
             if (page >= 0 && page < layer2Options.length && selection >= 0 && selection < layer2Options[page].length()){
                 char operation = layer2Options[page].charAt(selection);
                 if (operation == '*') {
+                    TypingTest.onCorrection();
                     if (textInput.length() > 0) {
                         textInput = textInput.substring(0, textInput.length() - 1); // delete operation
                     }
                 } else if (operation == '#') {
+                    TypingTest.onCorrection();
                     textInput = "";
                 } else {
+                    if (!Character.isLetter(operation) && !textInput.isEmpty() && Character.isLetter(textInput.charAt(textInput.length() - 1))) {
+                        learnLastWord(); // a space or punctuation mark ends the word
+                    }
                     textInput += operation; // add the letter/space
                 }
+                TypingTest.onTextChanged(textInput, TypingTest.MODE_GAZE_LETTER);
             }
             layer = 1;
         }

@@ -3,6 +3,8 @@ package com.demo.opencv.vision;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+
+import com.demo.opencv.features.blinkkeyboard.EyeAspectRatioAnalyzer;
 import android.util.Log;
 
 import androidx.annotation.OptIn;
@@ -27,6 +29,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -75,6 +78,16 @@ public class Model implements ContractInterface.Model {
     public void setFaceRoiDetection(boolean enabled) { faceRoiDetection = enabled; }
 
     public void setWarmLightIrisGrayscale(boolean enabled) { warmLightIrisGray = enabled; }
+
+    private float moreOpenEyeAspectRatio() { // NaN when neither eye contour is available
+        float ear = Float.NaN;
+        for (List<PointF> points : Arrays.asList(faceDetector.leftEyePoints, faceDetector.rightEyePoints)) {
+            if (points == null) continue;
+            float eye = EyeAspectRatioAnalyzer.computeEAR(points);
+            if (!Float.isNaN(eye) && (Float.isNaN(ear) || eye > ear)) ear = eye;
+        }
+        return ear;
+    }
 
     private Rect detectionRoi(Mat frame) { // null = scan the full frame
         android.graphics.Rect face = faceDetector.faceBound;
@@ -355,6 +368,8 @@ public class Model implements ContractInterface.Model {
         // initialization
         detectionOutput.initialize(4);
         detectionOutput.gestureOutput = 0;
+        detectionOutput.eyeOpenProbability = Math.max(faceDetector.leftEyeOpenProb, faceDetector.rightEyeOpenProb);
+        detectionOutput.eyeAspectRatio = moreOpenEyeAspectRatio();
 
         if (!faceDetector.faceDetected && faceDetector.leftEyeContour == null && faceDetector.rightEyeContour == null) { // no face/eye detection
             return detectionOutput;

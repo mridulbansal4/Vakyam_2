@@ -15,6 +15,8 @@ import androidx.datastore.preferences.core.PreferencesKeys;
 import androidx.datastore.preferences.rxjava2.RxPreferenceDataStoreBuilder;
 import androidx.datastore.rxjava2.RxDataStore;
 
+import com.demo.opencv.metrics.TypingTest;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,6 +40,7 @@ public class UserDataManager extends Application {
     private int sentenceGenerationModel = 1; // Default to Gemma 4 E2B (Local LLM)
     private int sensitivity = 20;
     private String language = "English";
+    private String caregiverPhone = ""; // receives a text message when the patient calls for help
 
     private Bitmap[] leftCalibrationData;
     private Bitmap[] rightCalibrationData;
@@ -56,6 +59,9 @@ public class UserDataManager extends Application {
         defaultSettings.put("TextEntryMode", "2");
         defaultSettings.put("Sensitivity", "20");
         defaultSettings.put("SentenceGenerationModel", "1");
+        defaultSettings.put("CaregiverPhone", "");
+
+        TypingTest.attach(this);
     }
 
 
@@ -75,6 +81,7 @@ public class UserDataManager extends Application {
         textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
         sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);
         sentenceGenerationModel = parseIntOrDefault(getString("SentenceGenerationModel"), 1);
+        caregiverPhone = getString("CaregiverPhone");
 
         // get calibration files
         if (getCalibrationFiles(mContext, leftEyeFileNames) != null) {
@@ -203,6 +210,12 @@ public class UserDataManager extends Application {
     public void setLanguage(String language) {
         this.language = language;
         setString("Language", language);
+    }
+
+    public String getCaregiverPhone() {return caregiverPhone; }
+    public void setCaregiverPhone(String caregiverPhone) {
+        this.caregiverPhone = (caregiverPhone != null) ? caregiverPhone.trim() : "";
+        setString("CaregiverPhone", this.caregiverPhone);
     }
 
     public int getCalibrationState() {

@@ -104,6 +104,62 @@
             android:typeface="normal"
             tools:ignore="HardcodedText" />
 
+        <Button
+            android:id="@+id/sosButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/emergency_red"
+            android:contentDescription="@string/Emergency_Title"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="@string/Emergency_SosButton"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:typeface="normal" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/typingTestBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/purple_500"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/typingTestText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="TYPING TEST: i am thirsty" />
+
+        <Button
+            android:id="@+id/typingTestDone"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/TypingTest_Done"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/typingTestClose"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/TypingTest_Close"
+            android:textColor="@color/white"
+            android:textStyle="bold" />
+
     </LinearLayout>
 
     <TextView

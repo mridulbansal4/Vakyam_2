@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hindi so far covers only the emergency alarm and the learned-phrases page; everything else falls back to English. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="QuickChat_MyPhrases">मेरे वाक्य</string>
+    <string name="Emergency_Title">मदद चाहिए</string>
+    <string name="Emergency_Subtitle">मरीज़ मदद के लिए बुला रहा है</string>
+    <string name="Emergency_Dismiss">मैं आ गया — अलार्म बंद करें</string>
+    <string name="Emergency_Spoken">मदद! मुझे मदद चाहिए। कृपया तुरंत आइए।</string>
+    <string name="Emergency_SmsText">आपातकाल: मुझे अभी मदद चाहिए। कृपया आइए या फ़ोन कीजिए। Vakyam द्वारा अपने आप भेजा गया।</string>
+    <string name="Emergency_Holding">आँखें बंद %1$.1f से</string>
+    <string name="Emergency_Progress">मदद का संकेत %1$d / %2$d — लंबी पलकें झपकाते रहें</string>
+    <string name="Emergency_NotVisible">कैमरे को आपकी आँखें नहीं दिख रहीं — कृपया फ़ोन ठीक करें</string>
+</resources>

@@ -10,6 +10,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.demo.opencv.AI.GeminiManager;
 import com.demo.opencv.UserDataManager;
+import com.demo.opencv.metrics.TypingTest;
+import com.demo.opencv.personal.PersonalLexicon;
 import com.demo.opencv.other.AudioManager;
 import com.demo.opencv.AI.AIManager;
 import com.demo.opencv.R;
@@ -37,6 +39,9 @@ public class TextEntryManager {
     AudioManager audioManager = new AudioManager(); // text-to-speech
     BlurryInput blurryInput = new BlurryInput();
     TextInfo current = new TextInfo();
+    PersonalLexicon personalLexicon; // the patient's own words and sentences, null without a context
+    private String lastLearned = ""; // what was last taught to the lexicon, so repeating a sentence aloud is not counted twice
+    static final String GENERATING = "Generating...";
 
     String NoMatchString = "NO MATCH";
     String NextPageString = "NEXT PAGE";
@@ -73,6 +78,10 @@ public class TextEntryManager {
             }
         }
         initUIStrings();
+        if (mContext != null) {
+            personalLexicon = PersonalLexicon.get(mContext);
+            blurryInput.setPersonalLexicon(personalLexicon);
+        }
 
         AIManager.initialize(mContext);
         audioManager.initialize(mContext);
@@ -145,6 +154,7 @@ public class TextEntryManager {
     void letterMode(int selection) {
         switch (selection) {
             case 0 -> { // delete blurry input or word
+                TypingTest.onCorrection();
                 if (Objects.equals(current.BlurryInput, "")) {
                     current.deleteWord();
                     sentencePrediction();
@@ -195,6 +205,7 @@ public class TextEntryManager {
         } else if (hindiState == 2) {
             switch (selection) {
                 case 0: // Delete / Back
+                    TypingTest.onCorrection();
                     if (current.BlurryInput.length() > 0) {
                         current.BlurryInput = current.BlurryInput.substring(0, current.BlurryInput.length() - 1);
                     } else {
@@ -338,7 +349,7 @@ public class TextEntryManager {
         } else { // Gemma 4 E2B on-device model
             geminiManager.generate(finalString, context, language);
         }
-        current.Sentence = "Generating...";
+        current.Sentence = GENERATING;
     }
 
     public void nextWordPrediction(int num) { // predicting the next word based on current keywords
@@ -471,6 +482,32 @@ public class TextEntryManager {
             audioManager.speakText(text); // on-device speech
         }
         AIManager.speechGenerationService(text); // optional secondary
+        learnUtterance(text);
+        TypingTest.onSpoken(text, LLMEnabled ? TypingTest.MODE_GAZE_LLM : TypingTest.MODE_GAZE_AMBIGUOUS);
+    }
+
+    // Speaking is the confirmation that the words were right, so that is when they are learned.
+    private void learnUtterance(String spoken) {
+        if (personalLexicon == null || current.Words.isEmpty() || spoken == null || GENERATING.equals(spoken)) return;
+        String signature = current.getWords() + "|" + spoken;
+        if (signature.equals(lastLearned)) return;
+        lastLearned = signature;
+        personalLexicon.recordUtterance(new ArrayList<>(current.Words), spoken);
+    }
+
+    public void clearText() {
+        current.clearAll();
+        wordPredictions.clear();
+        keyboardData.finished = false;
+        mode = 1;
+        currentPage = 1;
+        hindiState = 1;
+        updateDisplays();
+    }
+
+    public void finishTypingTest() {
+        TypingTest.onSpoken(LLMEnabled ? current.Sentence : current.getWords(),
+                LLMEnabled ? TypingTest.MODE_GAZE_LLM : TypingTest.MODE_GAZE_AMBIGUOUS);
     }
 
     public TextInfo getCurrent() {

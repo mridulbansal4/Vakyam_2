@@ -18,13 +18,15 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.demo.opencv.metrics.TypingTest
+import com.demo.opencv.personal.PersonalLexicon
 import java.util.Locale
 import kotlin.math.min
 
 /**
  * High-contrast eye-blink scanning keyboard. Feed camera results through [onEyeSample] or use
  * [triggerManualSelect] (screen tap / Space) as a switch; spelled text is spoken through
- * [speaker], saved to [CustomVocabularyService] and reported via [Listener.onWordCompleted].
+ * [speaker], learned by the shared [PersonalLexicon] and reported via [Listener.onWordCompleted].
  */
 @SuppressLint("ViewConstructor", "SetTextI18n")
 class BlinkKeyboardOverlay @JvmOverloads constructor(
@@ -36,6 +38,8 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     interface Listener {
         fun onWordCompleted(word: String)
         fun onClose()
+        /** The patient picked the HELP key. */
+        fun onHelpRequested()
     }
 
     fun interface Speaker {
@@ -46,8 +50,8 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     var speaker: Speaker? = null
 
     private val audio = AudioFeedbackService()
-    private val vocabulary = CustomVocabularyService(context)
-    private val predictor = WordPredictionService(context, vocabulary)
+    private val lexicon = PersonalLexicon.get(context)
+    private val predictor = WordPredictionService(context, lexicon)
     private val buffer = StringBuilder()
     private var lastSelectionMs = 0L
 
@@ -67,6 +71,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             KeyItem("space", "␣ SPACE", KeyType.ACTION, KeyActions.SPACE),
             KeyItem("speak", "🔊 SPEAK & SAVE", KeyType.ACTION, KeyActions.SPEAK_AND_SAVE),
             KeyItem("cancel", "✖ CANCEL", KeyType.ACTION, KeyActions.CANCEL),
+            KeyItem("help", "🆘 HELP", KeyType.ACTION, KeyActions.HELP),
         ),
         style = RowStyle.ACTIONS,
     )
@@ -111,7 +116,10 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         }
     })
 
+    private val typingTestListener = TypingTest.Listener { post { renderTypingTest() } }
+
     private val statusView: TextView
+    private val typingTestView: TextView
     private val cameraStatusView: TextView
     private val bufferView: TextView
     private val gaugeView: DwellGaugeView
@@ -154,6 +162,15 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         header.addView(closeButton, LinearLayout.LayoutParams(dp(44), dp(40)).apply { marginStart = dp(12) })
         root.addView(header, matchWrap())
 
+        typingTestView = text("", 16f, Color.WHITE, bold = true).apply {
+            gravity = Gravity.CENTER
+            setPadding(dp(12), dp(4), dp(12), dp(4))
+            background = rounded(0xFF4F6367.toInt(), dp(8).toFloat())
+            maxLines = 1
+            visibility = GONE
+        }
+        root.addView(typingTestView, matchWrap().apply { topMargin = dp(4) })
+
         bufferView = text("", 30f, Color.WHITE, bold = true).apply {
             typeface = Typeface.MONOSPACE
             gravity = Gravity.CENTER_VERTICAL
@@ -176,7 +193,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         root.addView(gaugeRow, matchWrap().apply { topMargin = dp(6) })
 
         infoView = text(
-            "Natural blinks are ignored. Close eyes ½–1 s to select, over 2 s to rest. Tap screen or press Space as a switch.",
+            "Natural blinks are ignored. Close eyes ½–1 s to select, over 2 s to rest, 2 s three times to call for help. Tap or Space is a switch.",
             13f, MUTED,
         ).apply { maxLines = 1 }
         root.addView(infoView, matchWrap().apply { topMargin = dp(2) })
@@ -203,9 +220,12 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
 
     fun start() {
         engine.start()
+        TypingTest.addListener(typingTestListener)
+        renderTypingTest()
     }
 
     fun stop() {
+        TypingTest.removeListener(typingTestListener)
         engine.stop()
         detector.reset()
     }
@@ -228,6 +248,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             return false
         }
         lastSelectionMs = now
+        TypingTest.onSelection()
         engine.handleSelection()
         return true
     }
@@ -263,7 +284,10 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                 return
             }
             KeyType.ACTION -> when (item.value) {
-                KeyActions.BACKSPACE -> if (buffer.isNotEmpty()) buffer.setLength(buffer.length - 1)
+                KeyActions.BACKSPACE -> {
+                    TypingTest.onCorrection()
+                    if (buffer.isNotEmpty()) buffer.setLength(buffer.length - 1)
+                }
                 KeyActions.SPACE -> if (buffer.isNotEmpty() && buffer.last() != ' ') buffer.append(' ')
                 KeyActions.SPEAK_AND_SAVE -> {
                     commit()
@@ -271,6 +295,10 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                 }
                 KeyActions.CANCEL -> {
                     listener?.onClose()
+                    return
+                }
+                KeyActions.HELP -> {
+                    listener?.onHelpRequested()
                     return
                 }
             }
@@ -287,7 +315,8 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         }
         val text = words.joinToString(" ")
         speaker?.speak(text)
-        words.forEach(vocabulary::saveWord)
+        lexicon.recordUtterance(words, text)
+        TypingTest.onSpoken(text, TypingTest.MODE_BLINK)
         audio.playWordSaved()
         infoView.text = "🔊 Spoke and saved “$text”"
         buffer.setLength(0)
@@ -304,7 +333,8 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
 
     private fun onBufferChanged() {
         val prefix = buffer.substring(buffer.lastIndexOf(" ") + 1)
-        matrix = buildMatrix(predictor.predict(prefix, 3))
+        val previousWord = buffer.trim().split(' ').dropLast(if (prefix.isEmpty()) 0 else 1).lastOrNull()
+        matrix = buildMatrix(predictor.predict(prefix, previousWord))
         rebuildRowViews(0)
         bufferView.text = if (buffer.isEmpty()) "Start spelling…▌" else buffer.toString().uppercase() + "▌"
         bufferView.setTextColor(if (buffer.isEmpty()) MUTED else Color.WHITE)
@@ -379,13 +409,24 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                     when {
                         isActiveKey -> Color.WHITE
                         row.style == RowStyle.SUGGESTIONS -> 0xFFF3E8FF.toInt()
-                        item.value == KeyActions.CANCEL -> 0xFFFCA5A5.toInt()
+                        item.value == KeyActions.CANCEL || item.value == KeyActions.HELP -> 0xFFFCA5A5.toInt()
                         row.style == RowStyle.ACTIONS -> 0xFFFDE68A.toInt()
                         else -> 0xFFF8FAFC.toInt()
                     }
                 )
             }
         }
+    }
+
+    private fun renderTypingTest() {
+        val trial = TypingTest.trial
+        val result = TypingTest.lastResult
+        typingTestView.text = when {
+            trial != null -> "TYPING TEST · spell this, then SPEAK & SAVE: ${trial.target}"
+            result != null -> "TEST DONE · ${result.summary()}"
+            else -> ""
+        }
+        typingTestView.visibility = if (trial == null && result == null) GONE else VISIBLE
     }
 
     private fun gaugeText(durationMs: Long): String = when {

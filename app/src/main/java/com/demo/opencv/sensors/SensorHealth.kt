@@ -38,16 +38,28 @@ data class SensorHealthSnapshot(
     val roomLux: Float = Float.NaN,
     val ringContributionLux: Float = 0f,
     val ringLight: Boolean = false,
-    val simulations: Set<SensorSimulation> = emptySet()
+    val simulations: Set<SensorSimulation> = emptySet(),
+    val uptimeMin: Float = 0f,
+    /** Minutes of use before real heat first slowed the camera down; NaN while that has not happened. */
+    val firstSlowdownMin: Float = Float.NaN
 ) {
     fun toDebugText(): String = buildString {
         appendLine("Thermal   : ${thermalStatusName(thermalStatus)}  headroom=${fmt(thermalHeadroom, 2)}")
         appendLine("Battery   : ${fmt(batteryTempC)} °C  plugged=$plugged  heat=$chargingHeat")
         appendLine("Tier      : $tier  target=${tier.targetFps} fps  measured=${fmt(measuredFps)} fps  frame=${fmt(frameMs)} ms")
         appendLine("Light     : CCT=${fmt(cctKelvin, 0)} K  lux=${fmt(ambientLux, 0)}  tint=${fmt(warmTintAlpha, 2)}")
-        append("Low light : front=${fmt(frontLux, 0)} lux  room≈${fmt(roomLux, 0)} lux  ring=${if (ringLight) "ON" else "off"}  self=${fmt(ringContributionLux, 0)} lux")
+        appendLine("Low light : front=${fmt(frontLux, 0)} lux  room≈${fmt(roomLux, 0)} lux  ring=${if (ringLight) "ON" else "off"}  self=${fmt(ringContributionLux, 0)} lux")
+        append(
+            if (firstSlowdownMin.isNaN()) "Endurance : no heat slow-down in ${fmt(uptimeMin)} min of use"
+            else "Endurance : first heat slow-down after ${fmt(firstSlowdownMin)} min of use"
+        )
         if (simulations.isNotEmpty()) append("\nSIMULATED : ${simulations.joinToString()}")
     }
+
+    /** One line for a typing-test result, so runs under different conditions can be told apart. */
+    fun toConditionText(): String =
+        "tier=$tier fps=${fmt(measuredFps, 0)} lux=${fmt(roomLux, 0)} ring=${if (ringLight) "on" else "off"}" +
+            " battery=${fmt(batteryTempC)}C" + if (simulations.isEmpty()) "" else " simulated=${simulations.joinToString("+")}"
 
     private fun fmt(v: Float, decimals: Int = 1): String =
         if (v.isNaN()) "--" else String.format(Locale.US, "%.${decimals}f", v)

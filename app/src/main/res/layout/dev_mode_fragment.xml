@@ -288,6 +288,59 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="5dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.3"
+                android:paddingTop="10dp"
+                android:text="@string/Settings_CaregiverPhone"
+                android:textAlignment="center"
+                android:textColor="@color/metal_green"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/caregiverPhoneInput"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="0.35"
+                android:autofillHints="phone"
+                android:background="@drawable/text_rounded_light_green"
+                android:hint="@string/Settings_CaregiverPhoneHint"
+                android:imeOptions="actionDone"
+                android:inputType="phone"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/metal_green"
+                android:textSize="18sp" />
+
+            <Button
+                android:id="@+id/caregiverPhoneSave"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="0.15"
+                android:text="@string/Settings_Save"
+                android:textColor="@color/white"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:text="@string/Settings_HelpSignalHint"
+            android:textColor="#4A4A4A"
+            android:textSize="16sp" />
+
     </LinearLayout>
 
 

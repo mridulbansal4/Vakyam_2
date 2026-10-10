@@ -41,6 +41,7 @@ class SensorHealthController(
     private var shownBanner: SensorBanner? = null
     private var snapshot = SensorHealthSnapshot()
     private var started = false
+    private val createdAtMs = SystemClock.elapsedRealtime()
 
     val frameGovernor = FrameRateGovernor()
 
@@ -105,7 +106,7 @@ class SensorHealthController(
             val elapsed = if (lastTickMs == 0L) TICK_MS else (now - lastTickMs).coerceAtLeast(1L)
             lastTickMs = now
             val fps = processedFrames.getAndSet(0) * 1000f / elapsed
-            publish { it.copy(measuredFps = fps, frameMs = lastFrameMs) }
+            publish { it.copy(measuredFps = fps, frameMs = lastFrameMs, uptimeMin = minutesSinceStart(now)) }
             main.postDelayed(this, TICK_MS)
         }
     }
@@ -238,7 +239,15 @@ class SensorHealthController(
         setBanner(SensorBanner.THERMAL_CRITICAL, tier == PerformanceTier.POWER_SAVER)
         Log.i(TAG, "performance tier -> $tier")
         publish { it.copy(tier = tier) }
+        val simulatedHeat = SensorSimulation.HOT_PHONE in simulations || SensorSimulation.CHARGING_HOT in simulations
+        if (tier != PerformanceTier.FULL && !simulatedHeat && snapshot.firstSlowdownMin.isNaN()) {
+            val minutes = minutesSinceStart(SystemClock.elapsedRealtime())
+            Log.i(TAG, "first heat slow-down after $minutes min")
+            publish { it.copy(firstSlowdownMin = minutes) }
+        }
     }
+
+    private fun minutesSinceStart(nowMs: Long) = (nowMs - createdAtMs) / 60_000f
 
     // ---------------------------------------------------------------- 03
     private fun onBatteryReading(tempC: Float, plugged: Boolean) {

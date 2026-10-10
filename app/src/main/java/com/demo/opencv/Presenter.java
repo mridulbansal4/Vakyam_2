@@ -7,7 +7,9 @@ import android.media.ToneGenerator;
 import android.util.Log;
 
 import com.demo.opencv.other.AudioManager;
+import com.demo.opencv.metrics.TypingTest;
 import com.demo.opencv.other.ClinicalData;
+import com.demo.opencv.personal.PersonalLexicon;
 import com.demo.opencv.textEntry.KeyboardData;
 import com.demo.opencv.textEntry.KeyboardManager;
 import com.demo.opencv.textEntry.QuickChatManager;
@@ -72,6 +74,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         model.initialize(mContext, applicationContext); // MVP model initialization
 
         keyboardManager.initialize(); // keyboard initialization
+        keyboardManager.setPersonalLexicon(PersonalLexicon.get(applicationContext));
 
         textEntryManager.initialize(mContext); // text prediction initialization with language setting
         textEntryManager.updateSettings(applicationContext); // update settings for text entry
@@ -252,6 +255,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public void onGazeButtonClicked(int input) { // when the user clicks a gaze button (for text mode and quick chat)
         playBeepTone();
         if (Objects.equals(mode, "Text")) {
+            TypingTest.onSelection();
             if (userDataManager.getTextEntryMode() == 0) {
                 keyboardManager.processInput(input, false);
                 KeyboardData keyboardData = keyboardManager.getDisplays();
@@ -313,6 +317,21 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public void speakCaregiverMessage(String text) { audioManager.speakText(text); }
 
     @Override
+    public void clearText() {
+        keyboardManager.reset();
+        textEntryManager.clearText();
+    }
+
+    @Override
+    public void finishTypingTest() { // the caregiver ends the test with whatever has been typed so far
+        if (userDataManager.getTextEntryMode() == 0) {
+            TypingTest.onSpoken(keyboardManager.getTextInput(), TypingTest.MODE_GAZE_LETTER);
+        } else {
+            textEntryManager.finishTypingTest();
+        }
+    }
+
+    @Override
     public void onFrame(Mat rgbMat) {
         presenterBusy = true;
         prevMat = rgbMat;
@@ -339,6 +358,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                     if (Objects.equals(mode, "Text")) { // only do text input in text mode
                         String gazeLogInput = Calendar.getInstance().getTime() + ": " + userDataManager.gazeIndexToString(gazeType);
                         clinicalData.addGazeLog(gazeLogInput);
+                        TypingTest.onSelection();
 
                         if (userDataManager.getTextEntryMode() == 0) { // letter-by-letter mode
                             keyboardManager.processInput(gazeType);

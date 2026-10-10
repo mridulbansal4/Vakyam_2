@@ -40,5 +40,7 @@ public interface ContractInterface {
         void onRecordButtonClicked();
         void setFaceRoiDetection(boolean enabled);
         void speakCaregiverMessage(String text);
+        void finishTypingTest();
+        void clearText(); // empty the text box of every gaze text-entry mode
     }
 }

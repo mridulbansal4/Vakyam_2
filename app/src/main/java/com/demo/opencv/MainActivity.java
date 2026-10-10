@@ -37,17 +37,23 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.demo.opencv.emergency.EmergencyController;
 import com.demo.opencv.features.blinkkeyboard.BlinkKeyboard;
+import com.demo.opencv.features.blinkkeyboard.EyeClosureEstimator;
 import com.demo.opencv.fragments.calibration_display;
 import com.demo.opencv.fragments.clinician_mode_display;
 import com.demo.opencv.fragments.dev_mode_display;
 import com.demo.opencv.fragments.quick_chat_display;
 import com.demo.opencv.fragments.text_mode_display;
+import com.demo.opencv.metrics.TrialResult;
+import com.demo.opencv.metrics.TypingTest;
+import com.demo.opencv.metrics.TypingTrial;
 import com.demo.opencv.other.ClinicalData;
 import com.demo.opencv.sensors.SensorBanner;
 import com.demo.opencv.sensors.SensorHealthController;
 import com.demo.opencv.sensors.SensorHealthSnapshot;
 import com.demo.opencv.sensors.SensorSimulation;
+import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -91,6 +97,19 @@ public class MainActivity extends AppCompatActivity
     private ImageAnalysis boundAnalysis;
     private boolean lowLightCamera = false;
 
+    private volatile EmergencyController emergency;
+    private final EyeClosureEstimator eyeClosure = new EyeClosureEstimator(); // camera thread only
+    private View typingTestBar;
+    private TextView typingTestText;
+    private Button typingTestDone;
+    private TypingTrial preparedTrial; // the test the text boxes were last emptied for
+    private final TypingTest.Listener typingTestListener = () -> mainHandler.post(this::renderTypingTest);
+    private final Runnable typingTestClock = new Runnable() {
+        @Override public void run() {
+            renderTypingTest();
+        }
+    };
+
     private final SensorHealthController.Listener sensorListener = new SensorHealthController.Listener() {
         @Override public void onBannerChanged(@Nullable SensorBanner banner) {
             if (banner == null) { sensorBanner.setVisibility(View.GONE); return; }
@@ -106,6 +125,7 @@ public class MainActivity extends AppCompatActivity
         }
         @Override public void onSnapshot(@NonNull SensorHealthSnapshot snapshot) {
             if (viewModel != null) viewModel.postSensorHealth(snapshot);
+            if (TypingTest.isActive()) TypingTest.setConditions(snapshot.toConditionText());
         }
     };
 
@@ -116,6 +136,8 @@ public class MainActivity extends AppCompatActivity
         userDataManager.getSettings();
         setLocale(userDataManager.getLanguage());
         setContentView(R.layout.activity_main);
+        // The screen timing out would pause the camera, and with it every eye input including the help signal.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // instantiating object of Presenter Interface
         presenter = new Presenter(this, new Model());
 
@@ -136,6 +158,16 @@ public class MainActivity extends AppCompatActivity
         warmTintOverlay = findViewById(R.id.warmTintOverlay);
         ringLightOverlay = findViewById(R.id.ringLightOverlay);
         sensorController = new SensorHealthController(this, presenter, sensorListener);
+
+        emergency = new EmergencyController(this);
+        findViewById(R.id.sosButton).setOnClickListener(v -> emergency.trigger("SOS button"));
+
+        typingTestBar = findViewById(R.id.typingTestBar);
+        typingTestText = findViewById(R.id.typingTestText);
+        typingTestDone = findViewById(R.id.typingTestDone);
+        typingTestDone.setOnClickListener(v -> presenter.finishTypingTest());
+        findViewById(R.id.typingTestClose).setOnClickListener(v -> TypingTest.clear());
+        TypingTest.addListener(typingTestListener);
 
         // home page set up
         Button devButton, textButton, calibrateButton, clinicianButton, quickChatButton;
@@ -215,6 +247,14 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void updateLiveData(AppLiveData appLiveData) {
+        EmergencyController help = emergency;
+        if (help != null) {
+            DetectionOutput detection = appLiveData.DetectionOutput;
+            boolean faceVisible = detection != null && detection.faceDetected;
+            // detection.eyesOpen is too strict for this: it needs both eyes scored nearly shut in every single frame.
+            boolean eyesClosed = faceVisible && eyeClosure.update(detection.eyeAspectRatio, detection.eyeOpenProbability);
+            help.onEyeSample(faceVisible, eyesClosed);
+        }
         Runnable myRunnable = () -> viewModel.selectItem(appLiveData);
         mainHandler.post(myRunnable);
     }
@@ -295,11 +335,37 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         if (sensorController != null) sensorController.start();
+        if (emergency != null) emergency.start();
+        renderTypingTest(); // a test may have been armed or finished while the blink keyboard was open
+    }
+
+    private void renderTypingTest() {
+        if (typingTestBar == null) return;
+        mainHandler.removeCallbacks(typingTestClock);
+        TypingTrial trial = TypingTest.getTrial();
+        TrialResult result = TypingTest.getLastResult();
+        typingTestBar.setVisibility(trial == null && result == null ? View.GONE : View.VISIBLE);
+        typingTestDone.setVisibility(trial != null && trial.isRunning() ? View.VISIBLE : View.GONE);
+        if (trial != null) {
+            if (trial != preparedTrial) { // every test starts from an empty text box, or leftovers would count as errors
+                preparedTrial = trial;
+                presenter.clearText();
+            }
+            String progress = trial.isRunning()
+                    ? getString(R.string.TypingTest_Running, TypingTest.elapsedMs() / 1000, trial.getSelections())
+                    : getString(R.string.TypingTest_Waiting);
+            typingTestText.setText(getString(R.string.TypingTest_Banner, trial.getTarget(), progress));
+            mainHandler.postDelayed(typingTestClock, 1000); // keeps the timer on the banner moving
+        } else if (result != null) {
+            typingTestText.setText(getString(R.string.TypingTest_Finished, result.getTyped(), result.summary()));
+        }
     }
 
     @Override
     protected void onPause() {
         if (sensorController != null) sensorController.stop();
+        if (emergency != null) emergency.stop();
+        mainHandler.removeCallbacks(typingTestClock);
         super.onPause();
     }
 
@@ -307,6 +373,9 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         if (sensorController != null) sensorController.release();
+        if (emergency != null) emergency.release();
+        TypingTest.removeListener(typingTestListener);
+        mainHandler.removeCallbacks(typingTestClock);
         if (presenter != null) {
             presenter.onDestroy();
         }

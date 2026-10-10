@@ -4,6 +4,10 @@ import android.text.TextUtils;
 
 import com.demo.opencv.R;
 import com.demo.opencv.AI.AIManager;
+import com.demo.opencv.personal.PersonalLexicon;
+
+import java.util.Collections;
+import java.util.List;
 
 public class QuickChatManager {
 
@@ -13,16 +17,24 @@ public class QuickChatManager {
     Context mContext;
     int mode = 0; // 0 = home page, 1-5 = the 5 different categories
     int MAX_MODES = 5;
+    static final int MY_PHRASES_MODE = 6; // the sentences this patient speaks most, learned from the typing modes
+    private PersonalLexicon personalLexicon; // null without a context
+    private String[] myPhrases = new String[0]; // fixed while the page is open so entries do not move under the user's gaze
     String[] modeStrings = {
-            String.valueOf(R.string.QuickChat_BackMenuButton),
+            String.valueOf(R.string.QuickChat_MyPhrases),
             String.valueOf(R.string.QuickChat_Category1),
             String.valueOf(R.string.QuickChat_Category2),
             String.valueOf(R.string.QuickChat_Category3),
             String.valueOf(R.string.QuickChat_Category4),
             String.valueOf(R.string.QuickChat_Category5)
     }; // the title of each category
+    public void setPersonalLexicon(PersonalLexicon personalLexicon) {
+        this.personalLexicon = personalLexicon;
+    }
+
     public void initialize(Context mContext) {
         this.mContext = mContext;
+        if (mContext != null) personalLexicon = PersonalLexicon.get(mContext);
         AIManager.initialize(mContext);
         audioManager.initialize(mContext);
         if (quickChatData == null) {
@@ -45,6 +57,8 @@ public class QuickChatManager {
             if (selection == 0) { // back button
                 if (mode != 0) {
                     mode = 0; // back to main page from the categories
+                } else {
+                    openMyPhrases();
                 }
             } else if (selection >= 1 && selection <= MAX_MODES) { // only valid 1..5
                 if (mode == 0) {
@@ -68,10 +82,28 @@ public class QuickChatManager {
             newText[0] = String.valueOf(R.string.QuickChat_BackButton);
             System.arraycopy(quickChatStrings[mode - 1], 0, newText, 1, MAX_MODES);
             quickChatData.texts = newText;
+        } else if (mode == MY_PHRASES_MODE) {
+            String[] newText = {String.valueOf(R.string.QuickChat_BackButton), "", "", "", "", ""};
+            System.arraycopy(myPhrases, 0, newText, 1, myPhrases.length);
+            if (myPhrases.length == 0) newText[1] = String.valueOf(R.string.QuickChat_MyPhrasesEmpty);
+            quickChatData.texts = newText;
         }
     }
 
+    private void openMyPhrases() {
+        List<String> phrases = personalLexicon != null ? personalLexicon.phrases(MAX_MODES) : Collections.emptyList();
+        myPhrases = phrases.toArray(new String[0]);
+        mode = MY_PHRASES_MODE;
+    }
+
     public void speakText(int number) {
+        if (mode == MY_PHRASES_MODE) {
+            if (number < 1 || number > myPhrases.length) return;
+            String phrase = myPhrases[number - 1];
+            if (audioManager != null) audioManager.speakText(phrase);
+            if (personalLexicon != null) personalLexicon.recordPhrase(phrase); // keeps the sentences still in use on this page
+            return;
+        }
         if (mode < 1 || mode > quickChatStrings.length) return;
         if (number < 1 || number > quickChatStrings[mode - 1].length) return;
         String data = quickChatStrings[mode - 1][number - 1];

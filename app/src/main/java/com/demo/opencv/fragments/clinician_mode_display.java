@@ -1,6 +1,8 @@
 package com.demo.opencv.fragments;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -12,9 +14,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.demo.opencv.UserDataManager;
+import com.demo.opencv.metrics.TrialReport;
+import com.demo.opencv.metrics.TypingTest;
+import com.demo.opencv.metrics.TypingTestPhrases;
 import com.demo.opencv.other.ClinicalData;
 import com.demo.opencv.R;
+import com.demo.opencv.personal.PersonalLexicon;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -35,6 +43,12 @@ public class clinician_mode_display extends Fragment {
 
     Activity mActivity;
     LineChart mChart;
+    private TextView typingTestResults, vocabularySummary;
+    private final TypingTest.Listener typingTestListener = () -> {
+        if (mActivity != null) mActivity.runOnUiThread(this::showTypingResults);
+    };
+    private static final int WORDS_SHOWN = 25;
+    private static final int PHRASES_SHOWN = 8;
     public clinician_mode_display() {
         // Required empty public constructor
     }
@@ -119,10 +133,99 @@ public class clinician_mode_display extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        TypingTest.removeListener(typingTestListener);
+        typingTestResults = null;
+        vocabularySummary = null;
+    }
+
+    private void setUpTypingTest(View view) {
+        typingTestResults = view.findViewById(R.id.typingTestResults);
+        view.findViewById(R.id.typingTestStartButton).setOnClickListener(v -> {
+            String language = ((UserDataManager) requireActivity().getApplication()).getLanguage();
+            String[] phrases = TypingTestPhrases.forLanguage(language);
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.TypingTest_ChoosePhrase)
+                    .setItems(phrases, (dialog, which) -> {
+                        TypingTest.arm(phrases[which], language);
+                        Toast.makeText(requireContext(), R.string.TypingTest_Armed, Toast.LENGTH_LONG).show();
+                    })
+                    .show();
+        });
+        view.findViewById(R.id.typingTestShareButton).setOnClickListener(v -> {
+            String csv = TypingTest.resultsCsv();
+            if (csv.isEmpty()) {
+                Toast.makeText(requireContext(), R.string.TypingTest_NoResults, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain")
+                    .putExtra(Intent.EXTRA_SUBJECT, "Vakyam typing tests")
+                    .putExtra(Intent.EXTRA_TEXT, csv);
+            startActivity(Intent.createChooser(send, getString(R.string.TypingTest_Share)));
+        });
+        TypingTest.addListener(typingTestListener);
+        showTypingResults();
+    }
+
+    private void showTypingResults() {
+        if (typingTestResults == null || !isAdded()) return;
+        typingTestResults.setText(TrialReport.format(TypingTest.results(), getString(R.string.TypingTest_NoResults)));
+    }
+
+    private void setUpVocabulary(View view) {
+        vocabularySummary = view.findViewById(R.id.vocabularySummary);
+        PersonalLexicon lexicon = PersonalLexicon.get(requireContext());
+        view.findViewById(R.id.vocabularyForgetButton).setOnClickListener(v -> {
+            List<PersonalLexicon.Entry> words = lexicon.wordEntries();
+            List<PersonalLexicon.Entry> phrases = lexicon.phraseEntries();
+            String[] labels = new String[words.size() + phrases.size()];
+            for (int i = 0; i < words.size(); i++) labels[i] = label(words.get(i), false);
+            for (int i = 0; i < phrases.size(); i++) labels[words.size() + i] = label(phrases.get(i), true);
+            boolean[] chosen = new boolean[labels.length];
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.Vocabulary_ForgetTitle)
+                    .setMultiChoiceItems(labels, chosen, (dialog, which, isChecked) -> chosen[which] = isChecked)
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .setPositiveButton(R.string.Vocabulary_Forget, (dialog, which) -> {
+                        for (int i = 0; i < chosen.length; i++) {
+                            if (!chosen[i]) continue;
+                            if (i < words.size()) lexicon.forgetWord(words.get(i).getText());
+                            else lexicon.forgetPhrase(phrases.get(i - words.size()).getText());
+                        }
+                        showVocabulary(lexicon);
+                    })
+                    .show();
+        });
+        showVocabulary(lexicon);
+    }
+
+    private static String label(PersonalLexicon.Entry entry, boolean phrase) {
+        return (phrase ? "\u201C" + entry.getText() + "\u201D" : entry.getText()) + " \u00D7" + entry.getCount();
+    }
+
+    private void showVocabulary(PersonalLexicon lexicon) {
+        if (vocabularySummary == null) return;
+        List<PersonalLexicon.Entry> words = lexicon.wordEntries();
+        List<PersonalLexicon.Entry> phrases = lexicon.phraseEntries();
+        if (words.isEmpty() && phrases.isEmpty()) {
+            vocabularySummary.setText(R.string.Vocabulary_Empty);
+            return;
+        }
+        StringBuilder text = new StringBuilder(getString(R.string.Vocabulary_Words, words.size()));
+        for (int i = 0; i < words.size() && i < WORDS_SHOWN; i++) {
+            text.append(i == 0 ? "\n" : ", ").append(label(words.get(i), false));
+        }
+        text.append("\n\n").append(getString(R.string.Vocabulary_Phrases, phrases.size()));
+        for (int i = 0; i < phrases.size() && i < PHRASES_SHOWN; i++) {
+            text.append("\n").append(label(phrases.get(i), true));
+        }
+        vocabularySummary.setText(text.toString());
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+
+        setUpTypingTest(view);
+        setUpVocabulary(view);
 
         mChart = view.findViewById(R.id.chart); // create chart
         if (mChart != null) {

@@ -42,4 +42,5 @@ object KeyActions {
     const val SPACE = "SPACE"
     const val SPEAK_AND_SAVE = "SPEAK_AND_SAVE"
     const val CANCEL = "CANCEL"
+    const val HELP = "HELP"
 }

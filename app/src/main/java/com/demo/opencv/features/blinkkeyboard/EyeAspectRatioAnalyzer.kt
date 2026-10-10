@@ -12,15 +12,11 @@ import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlin.math.hypot
-import kotlin.math.max
 
 /**
  * CameraX analyzer that runs ML Kit face contours on each frame and reports the Eye Aspect Ratio
- * (the more-open of the two eyes). Results are delivered on the main thread.
- *
- * ML Kit's contour EAR for an open eye varies by face, so the closed-eye threshold adapts to the
- * user's open-eye baseline (never below [BlinkConfig.earThreshold]). ML Kit's eye-open probability
- * is fused in as a second closure signal.
+ * (the more-open of the two eyes). Results are delivered on the main thread. Open or closed is
+ * decided by [EyeClosureEstimator].
  */
 class EyeAspectRatioAnalyzer(
     private val config: BlinkConfig,
@@ -44,8 +40,7 @@ class EyeAspectRatioAnalyzer(
             .build()
     )
 
-    private var openEyeBaseline = 0f
-    private var eyesClosed = false
+    private val closure = EyeClosureEstimator(config)
 
     @OptIn(markerClass = [ExperimentalGetImage::class])
     override fun analyze(image: ImageProxy) {
@@ -78,34 +73,22 @@ class EyeAspectRatioAnalyzer(
         val probs = listOfNotNull(face.leftEyeOpenProbability, face.rightEyeOpenProbability)
         val openProb = probs.maxOrNull() ?: 1f
 
-        if (!ear.isNaN() && openProb > 0.8f) {
-            openEyeBaseline = if (openEyeBaseline == 0f) ear else openEyeBaseline * 0.95f + ear * 0.05f
-        }
-        val threshold = if (openEyeBaseline > 0f) max(config.earThreshold, openEyeBaseline * 0.6f) else config.earThreshold
-
-        // Hysteresis: reopening needs a clearly open eye, so jitter around the threshold can't
-        // split one deliberate closure into several short ones.
-        val looksClosed = (!ear.isNaN() && ear < threshold) || openProb < config.eyeOpenProbabilityThreshold
-        val looksOpen = (ear.isNaN() || ear > threshold * REOPEN_EAR_FACTOR) &&
-            openProb > config.eyeOpenProbabilityThreshold + REOPEN_PROBABILITY_MARGIN
-        eyesClosed = if (eyesClosed) !looksOpen else looksClosed
-        return EyeSample(true, ear, threshold, openProb, eyesClosed, timestamp)
+        val eyesClosed = closure.update(ear, openProb)
+        return EyeSample(true, ear, closure.threshold, openProb, eyesClosed, timestamp)
     }
 
     private fun noFace(timestamp: Long): EyeSample {
-        eyesClosed = false
+        closure.onFaceLost()
         return EyeSample(false, Float.NaN, config.earThreshold, 1f, false, timestamp)
     }
 
     companion object {
-        private const val REOPEN_EAR_FACTOR = 1.15f
-        private const val REOPEN_PROBABILITY_MARGIN = 0.15f
-
         /**
          * EAR = (|p2 - p6| + |p3 - p5|) / (2 |p1 - p4|) over ML Kit's 16-point eye contour, which
          * starts at one corner (index 0), runs along the upper lid to the other corner (index 8)
          * and back along the lower lid, so the lower-lid point under upper index k is 16 - k.
          */
+        @JvmStatic
         fun computeEAR(points: List<PointF>): Float {
             if (points.size < 16) return Float.NaN
             val width = dist(points[0], points[8])

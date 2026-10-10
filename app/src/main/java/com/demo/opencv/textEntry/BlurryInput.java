@@ -3,6 +3,8 @@ package com.demo.opencv.textEntry;
 import android.content.Context;
 import android.util.Log;
 
+import com.demo.opencv.personal.PersonalLexicon;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,7 +19,8 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
     private final List<String> wordList = new ArrayList<>(); // top words frequency list
     private final List<String> blurryInputProcessed = new ArrayList<>(); // processed string with 1, 2, 3, and 4 for blurry input
     List<String> extendedWordList = new ArrayList<>(); // extra words provided by OpenAI for context-based prediction
-
+    private PersonalLexicon personalLexicon; // the patient's own words, null until set
+    private PersonalLexicon.Script script = PersonalLexicon.Script.LATIN;
 
     private static class BigramEntry {
         String word;
@@ -33,6 +36,7 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         wordList.clear();
         blurryInputProcessed.clear();
         bigramMap.clear();
+        script = PersonalLexicon.Script.forLanguage(language);
         if (mContext == null) return;
         try {
             InputStream inputStream = mContext.getAssets().open(language + "Words.txt"); // set the correct language
@@ -69,6 +73,36 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         }
     }
 
+    public void setPersonalLexicon(PersonalLexicon personalLexicon) {
+        this.personalLexicon = personalLexicon;
+    }
+
+    // Words the patient has typed straight after the last word, then nothing else: their own habits outrank the generic bigrams.
+    private List<String> personalFollowers(List<String> currentWords) {
+        if (personalLexicon == null || currentWords == null || currentWords.isEmpty()) return new ArrayList<>();
+        return personalLexicon.followers(currentWords.get(currentWords.size() - 1), script);
+    }
+
+    private List<String> personalWords() {
+        return personalLexicon == null ? new ArrayList<>() : personalLexicon.words(script);
+    }
+
+    private void addCodeMatches(List<String> candidates, String codeA, List<String> wordPredictions) {
+        for (String word : candidates) {
+            if (processWord(word).startsWith(codeA) && !wordPredictions.contains(word)) {
+                wordPredictions.add(word);
+            }
+        }
+    }
+
+    private void addPrefixMatches(List<String> candidates, String prefix, List<String> wordPredictions) {
+        for (String word : candidates) {
+            if (word.startsWith(prefix) && !wordPredictions.contains(word)) {
+                wordPredictions.add(word);
+            }
+        }
+    }
+
     public String processWord(String word) { // converts original word to processed word for blurry input
         if (word == null) return "";
         StringBuilder processed = new StringBuilder();
@@ -93,6 +127,8 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
             return wordPredictions;
         }
 
+        addCodeMatches(personalFollowers(currentWords), codeA, wordPredictions);
+
         // bigram map prediction based on context
         if (currentWords != null && !currentWords.isEmpty()) {
             String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
@@ -114,6 +150,8 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
                 }
             }
         }
+
+        addCodeMatches(personalWords(), codeA, wordPredictions);
 
         // extended word bank prediction (smaller, maybe around 500 words max)
         for (int i = 0; i < extendedWordList.size(); i++) {
@@ -151,6 +189,8 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
         List<String> wordPredictions = new ArrayList<>();
         if (prefix == null) return wordPredictions;
 
+        addPrefixMatches(personalFollowers(currentWords), prefix, wordPredictions);
+
         if (currentWords != null && !currentWords.isEmpty()) {
             String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
             List<BigramEntry> nextWords = bigramMap.get(lastWord);
@@ -165,7 +205,7 @@ public class BlurryInput { // supports languages with alphabet characters: Engli
             }
         }
 
-        if (prefix == null) return wordPredictions;
+        addPrefixMatches(personalWords(), prefix, wordPredictions);
         for (String word : extendedWordList) {
             if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
                 wordPredictions.add(word);

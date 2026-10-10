@@ -13,4 +13,5 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="metal_green">#32403e</color>
+    <color name="emergency_red">#C62828</color>
 </resources>

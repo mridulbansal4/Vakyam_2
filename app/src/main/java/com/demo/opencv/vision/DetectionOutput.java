@@ -32,6 +32,8 @@ public class DetectionOutput {
         motionStable = false;
         irisFound = false;
         faceDetected = false;
+        eyeOpenProbability = 1f;
+        eyeAspectRatio = Float.NaN;
     }
 
     public int gestureOutput; // an input from the user (not the raw data from the frame)
@@ -39,6 +41,8 @@ public class DetectionOutput {
     public boolean motionStable; // phone not in a post-shock hold window
     public boolean irisFound; // leftNIC came from a detected iris, not the eye-centre fallback
     public boolean faceDetected;
+    public float eyeOpenProbability = 1f; // ML Kit's score for the more-open eye, 1 when unknown
+    public float eyeAspectRatio = Float.NaN; // lid opening over eye width for the more-open eye, NaN without contours
     public int frameRotation; // degrees the camera frame was rotated before detection
     public boolean phoneShaking; // gyro/accelerometer report a real shake, not ordinary hand tremor
     public float phonePitch = Float.NaN; // gyro-integrated phone rotation (radians), NaN without a gyroscope

@@ -1,13 +1,11 @@
 package com.demo.opencv;
 
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CaptureRequest;
 import android.media.Image;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -38,17 +36,16 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.demo.opencv.features.blinkkeyboard.BlinkKeyboard;
 import com.demo.opencv.fragments.calibration_display;
 import com.demo.opencv.fragments.clinician_mode_display;
 import com.demo.opencv.fragments.dev_mode_display;
 import com.demo.opencv.fragments.quick_chat_display;
-import com.demo.opencv.fragments.social_media_display;
 import com.demo.opencv.fragments.text_mode_display;
 import com.demo.opencv.other.ClinicalData;
 import com.demo.opencv.sensors.SensorBanner;
 import com.demo.opencv.sensors.SensorHealthController;
 import com.demo.opencv.sensors.SensorHealthSnapshot;
-import com.demo.opencv.socialMedia.TwitterAuthenticator;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -65,14 +62,13 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity
         implements ContractInterface.View, calibration_display.OnButtonClickListener,
-        text_mode_display.TextModeListener, social_media_display.SocialMediaModeListener,
+        text_mode_display.TextModeListener,
         quick_chat_display.QuickChatListener
 
 {
 
     // creating object of Presenter interface in Contract
     ContractInterface.Presenter presenter;
-    TwitterAuthenticator twitterAuthenticator;
 
     public ImageView[] images = new ImageView[4];
     private final int REQUEST_CODE_PERMISSIONS = 1001;
@@ -130,12 +126,6 @@ public class MainActivity extends AppCompatActivity
         warmTintOverlay = findViewById(R.id.warmTintOverlay);
         sensorController = new SensorHealthController(this, presenter, sensorListener);
 
-        //twitter authenticator
-        twitterAuthenticator = new TwitterAuthenticator(getApplication());
-        Intent intent = getIntent();
-        Uri uri = intent.getData();
-        twitterAuthenticator.handleCallback(uri, getApplication()); // when redirected back, get access token
-
         // home page set up
         Button devButton, textButton, calibrateButton, clinicianButton, quickChatButton;
         devButton = findViewById(R.id.devModeButton);
@@ -178,6 +168,8 @@ public class MainActivity extends AppCompatActivity
                 openQuickChat();
             }
         });
+        findViewById(R.id.blinkKeyboardButton).setOnClickListener(v -> BlinkKeyboard.open(this,
+                word -> Toast.makeText(getApplicationContext(), "Spelled: " + word, Toast.LENGTH_LONG).show()));
     }
 
     private void setLocale(String language) {
@@ -216,18 +208,6 @@ public class MainActivity extends AppCompatActivity
         mainHandler.post(myRunnable);
     }
 
-    @Override
-    public void openSocialMedia() {
-        runOnUiThread(() -> {
-            if (isFinishing() || isDestroyed()) return;
-            presenter.setMode("Social Media");
-            fragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainerView, social_media_display.class, null)
-                    .setReorderingAllowed(true)
-                    .addToBackStack("SocialMediaFragment")
-                    .commitAllowingStateLoss();
-        });
-    }
 
     @Override
     public void openTextEntry() {
@@ -427,14 +407,6 @@ public class MainActivity extends AppCompatActivity
         presenter.onRecordButtonClicked();
     }
 
-    @Override
-    public void onSocialMediaButtonClicked(int input) { presenter.onGazeButtonClicked(input); }
-
-    @Override
-    public void AuthenticationButtonClicked() { // update twitter authentication
-        twitterAuthenticator = new TwitterAuthenticator(this);
-        twitterAuthenticator.startAuthentication(getApplication());
-    }
 
     @Override
     public void onQuickChatButtonClicked(int input) {

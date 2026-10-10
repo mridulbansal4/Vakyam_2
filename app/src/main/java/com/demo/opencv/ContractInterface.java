@@ -12,7 +12,6 @@ import java.io.IOException;
 public interface ContractInterface {
     interface View {
         void updateLiveData(AppLiveData appLiveData);
-        void openSocialMedia();
         void openTextEntry();
         void openSettings();
         void openClinician();

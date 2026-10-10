@@ -38,10 +38,6 @@ public class UserDataManager extends Application {
     private int sentenceGenerationModel = 1; // Default to Gemma 4 E2B (Local LLM)
     private int sensitivity = 20;
     private String language = "English";
-    private String requestToken = "";
-    private String requestTokenSecret = "";
-    private String accessToken = "";
-    private String accessTokenSecret = "";
 
     private Bitmap[] leftCalibrationData;
     private Bitmap[] rightCalibrationData;
@@ -59,10 +55,6 @@ public class UserDataManager extends Application {
         defaultSettings.put("LightingThreshold", "0");
         defaultSettings.put("TextEntryMode", "2");
         defaultSettings.put("Sensitivity", "20");
-        defaultSettings.put("AccessToken", "");
-        defaultSettings.put("AccessTokenSecret", "");
-        defaultSettings.put("RequestToken", "");
-        defaultSettings.put("RequestTokenSecret", "");
         defaultSettings.put("SentenceGenerationModel", "1");
     }
 
@@ -82,10 +74,6 @@ public class UserDataManager extends Application {
         lightingThreshold = parseIntOrDefault(getString("LightingThreshold"), 0);
         textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
         sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);
-        accessToken = getString("AccessToken");
-        accessTokenSecret = getString("AccessTokenSecret");
-        requestToken = getString("RequestToken");
-        requestTokenSecret = getString("RequestTokenSecret");
         sentenceGenerationModel = parseIntOrDefault(getString("SentenceGenerationModel"), 1);
 
         // get calibration files
@@ -223,38 +211,6 @@ public class UserDataManager extends Application {
 
     public void setCalibrationState(int calibrationState) {
         this.calibrationState = calibrationState;
-    }
-
-    public void setAccessToken(String accessToken) {
-        this.accessToken = accessToken;
-        setString("AccessToken", accessToken);
-    }
-    public String getAccessToken() {
-        return accessToken;
-    }
-
-    public void setAccessTokenSecret(String accessTokenSecret) {
-        this.accessTokenSecret = accessTokenSecret;
-        setString("AccessTokenSecret", accessTokenSecret);
-    }
-    public String getAccessTokenSecret() {
-        return accessTokenSecret;
-    }
-
-    public void setRequestToken(String requestToken) {
-        this.requestToken = requestToken;
-        setString("RequestToken", requestToken);
-    }
-    public String getRequestToken() {
-        return requestToken;
-    }
-
-    public void setRequestTokenSecret(String requestTokenSecret) {
-        this.requestTokenSecret = requestTokenSecret;
-        setString("RequestTokenSecret", requestTokenSecret);
-    }
-    public String getRequestTokenSecret() {
-        return requestTokenSecret;
     }
 
     public String getTextEntryContext() {

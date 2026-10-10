@@ -89,6 +89,21 @@
             android:textStyle="bold"
             android:typeface="normal" />
 
+        <Button
+            android:id="@+id/blinkKeyboardButton"
+            style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="Spell with Eyes"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="👁 Spell"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:typeface="normal"
+            tools:ignore="HardcodedText" />
+
     </LinearLayout>
 
     <TextView

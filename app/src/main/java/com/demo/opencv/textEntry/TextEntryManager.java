@@ -22,7 +22,6 @@ import java.util.Objects;
 
 public class TextEntryManager {
     public boolean LLMEnabled = true;
-    public boolean openSocialMedia = false;
     List<String> wordPredictions = new ArrayList<>(); // the word predictions shown in word mode
     int wordsPerPage = 3;
     int NWPWords = 6;
@@ -138,8 +137,8 @@ public class TextEntryManager {
     void finishedMode(int selection) { // when the user finished text entry
         switch (selection) {
             case 1 -> utterText(); // speak text
-            case 2 -> {openSocialMedia = true; keyboardData.finished = false;} // open social media page
-            case 5 -> keyboardData.finished = false;
+            case 5 -> keyboardData.finished = false; // return to typing
+            default -> {} // selection 2 (formerly upload) and other inputs are safe no-ops
         }
     }
 

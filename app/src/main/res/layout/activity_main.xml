@@ -10,114 +10,159 @@
     android:orientation="vertical"
     tools:context="com.demo.opencv.MainActivity">
 
+    <!-- One row: widths are shared by label length and the text shrinks to fit, so no label wraps -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/metal_green"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
+        android:paddingEnd="4dp"
         android:visibility="visible">
 
         <ImageView
             android:id="@+id/imageView16"
-            android:layout_width="wrap_content"
+            android:layout_width="40dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:scaleType="center"
             android:src="@drawable/baseline_home_24" />
 
         <Button
             android:id="@+id/devModeButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.2"
             android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/Settings_Title"
             android:textColor="@color/white"
-            android:textSize="20sp"
             android:textStyle="bold"
-            android:typeface="normal" />
+            android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform" />
 
         <Button
             android:id="@+id/quickChatButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="0.9"
             android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/QuickChat_TopBarTitle"
             android:textColor="@color/white"
-            android:textSize="20sp"
             android:textStyle="bold"
-            android:typeface="normal" />
+            android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform" />
 
         <Button
             android:id="@+id/textModeButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.4"
             android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/TextEntry_TopBarTitle"
             android:textColor="@color/white"
-            android:textSize="20sp"
             android:textStyle="bold"
-            android:typeface="normal" />
+            android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform" />
 
         <Button
             android:id="@+id/calibrateButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.6"
             android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/Calibration_TopBarTitle"
             android:textColor="@color/white"
-            android:textSize="20sp"
             android:textStyle="bold"
-            android:typeface="normal" />
+            android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform" />
 
         <Button
             android:id="@+id/clinicianModeButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="0.8"
             android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/Clinician_TopBarTitle"
             android:textColor="@color/white"
-            android:textSize="20sp"
             android:textStyle="bold"
-            android:typeface="normal" />
+            android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform" />
 
         <Button
             android:id="@+id/blinkKeyboardButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1.1"
             android:contentDescription="Spell with Eyes"
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="👁 Spell"
             android:textColor="@color/white"
-            android:textSize="18sp"
             android:textStyle="bold"
             android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform"
             tools:ignore="HardcodedText" />
 
         <Button
             android:id="@+id/sosButton"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="0.8"
             android:backgroundTint="@color/emergency_red"
             android:contentDescription="@string/Emergency_Title"
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
+            android:minWidth="0dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
             android:text="@string/Emergency_SosButton"
             android:textColor="@color/white"
-            android:textSize="18sp"
             android:textStyle="bold"
-            android:typeface="normal" />
+            android:typeface="normal"
+            app:autoSizeMaxTextSize="18sp"
+            app:autoSizeMinTextSize="10sp"
+            app:autoSizeTextType="uniform" />
 
     </LinearLayout>
 

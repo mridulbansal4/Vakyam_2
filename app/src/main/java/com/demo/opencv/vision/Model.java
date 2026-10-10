@@ -42,8 +42,9 @@ public class Model implements ContractInterface.Model {
     DetectionOutput detectionOutput = new DetectionOutput();
     private ArrayList<String> prevInputs = new ArrayList<>();
     int gazeNum = 8; // number of types of gaze inputs
-    int currentGaze = -1;
-    int length = 0;
+    // A gaze must be held this long to count as a selection; closed eyes longer, so a natural blink is never entered
+    static final long GAZE_DWELL_MS = 300L, CLOSED_DWELL_MS = 450L;
+    final GazeDwellSelector dwellSelector = new GazeDwellSelector(GAZE_DWELL_MS, CLOSED_DWELL_MS);
     int[] gazeCount;
     static int IMAGE_WIDTH = 44, IMAGE_HEIGHT = 18;
     Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches calibration template index to gaze tag
@@ -159,7 +160,12 @@ public class Model implements ContractInterface.Model {
     }
 
     @Override
-    public void analyzeGazeOutput() { // determine whether input is valid or not based on raw data of both eyes
+    public void analyzeGazeOutput() {
+        analyzeGazeOutput(System.currentTimeMillis(), true);
+    }
+
+    // steady = false while the phone is being shaken or bumped: the eye crops cannot be trusted then
+    void analyzeGazeOutput(long nowMs, boolean steady) { // determine whether input is valid or not based on raw data of both eyes
 
         if (!detectionOutput.LeftData.Success && !detectionOutput.RightData.Success) { // both eyes not available
             detectionOutput.AnalyzedData = detectionOutput.LeftData;
@@ -190,7 +196,7 @@ public class Model implements ContractInterface.Model {
 
             } else { // combine the two losses
                 int index = -1;
-                double minError = 1000000f;
+                double minError = 1000000f, secondError = 1000000f;
                 if (leftTemplateError != null && rightTemplateError != null) {
                     int maxTemplates = (userDataManager != null) ? userDataManager.calibrationTemplateNum : 6;
                     maxTemplates = Math.min(maxTemplates, Math.min(leftTemplateError.length, rightTemplateError.length));
@@ -198,12 +204,16 @@ public class Model implements ContractInterface.Model {
                         double error = leftTemplateError[i] + rightTemplateError[i];
                         if (error < minError) {
                             index = i;
+                            secondError = minError;
                             minError = error;
+                        } else if (error < secondError) {
+                            secondError = error;
                         }
                     }
                 }
-                double combinedSensitivity = (detector != null ? detector.sensitivity : 0.015f) * 2.0;
-                boolean success = (index >= 0) && (minError <= combinedSensitivity);
+                double combinedSensitivity = detector.effectiveSensitivity() * 2.0;
+                boolean success = (index >= 0) && (minError <= combinedSensitivity)
+                        && EyeDetection.isClearMatch(minError, secondError);
                 int selectedGaze = (index >= 0 && index < tags.length) ? tags[index] : 0;
                 detectionOutput.setEyeData(2, success, selectedGaze, 1, (float)minError);
             }
@@ -211,28 +221,20 @@ public class Model implements ContractInterface.Model {
         }
 
         detectionOutput.gestureOutput = 0;
-        if (detectionOutput.AnalyzedData.Success) { // add the analyzed data into queue
-            int type = detectionOutput.AnalyzedData.GazeType;
-            if (type == currentGaze) {
-                length += 1;
-                if (length == 3) { // detected
-                    String gazeType = detectionOutput.AnalyzedData.getTypeString(currentGaze);
-                    if (prevInputs.size() > 25) {
-                        prevInputs.clear();
-                    }
-                    if (!Objects.equals(gazeType, "Straight")) {
-                        prevInputs.add(gazeType);
-                    }
-                    detectionOutput.prevInputs = prevInputs;
-                    detectionOutput.gestureOutput = type;
-                }
-            } else {
-                currentGaze = type;
-                length = 1;
+        int observedGaze = GazeDwellSelector.UNRELIABLE;
+        if (!steady) {
+            dwellSelector.cancel();
+        } else if (detectionOutput.AnalyzedData.Success) {
+            observedGaze = detectionOutput.AnalyzedData.GazeType;
+        }
+        int selectedGaze = dwellSelector.update(observedGaze, nowMs);
+        if (selectedGaze != 0) { // the gaze was held long enough to be a deliberate input
+            if (prevInputs.size() > 25) {
+                prevInputs.clear();
             }
-        } else {
-            currentGaze = -1;
-            length = 0;
+            prevInputs.add(detectionOutput.AnalyzedData.getTypeString(selectedGaze));
+            detectionOutput.prevInputs = prevInputs;
+            detectionOutput.gestureOutput = selectedGaze;
         }
     }
 
@@ -419,11 +421,15 @@ public class Model implements ContractInterface.Model {
         // testing data
         detectionOutput.testingMats[0] = leftEye;
         detectionOutput.testingMats[1] = rightEye;
-        analyzeGazeOutput(); // analyze the output before returning to the presenter
-
-        // Transit-robust Normalized Iris Estimation and Ballistic Gesture Detection
         long nowMs = System.currentTimeMillis();
         boolean motionStable = (motionStabilizer == null) || motionStabilizer.isMotionStable();
+        boolean phoneShaking = phoneMotion != null && phoneMotion.isShaking();
+        analyzeGazeOutput(nowMs, motionStable && !phoneShaking); // analyze the output before returning to the presenter
+
+        // Transit-robust Normalized Iris Estimation and Ballistic Gesture Detection
+        // A flick can only say left/right/up, so once the six calibrated templates exist it must not override them:
+        // a look to an upper corner would otherwise be entered as plain left/right before the template is recognised.
+        boolean calibrated = userDataManager != null && userDataManager.checkCalibrationFiles();
 
         boolean eyesClosedByProb = (faceDetector.leftEyeOpenProb >= 0 && faceDetector.leftEyeOpenProb <= 0.15f)
                 || (faceDetector.rightEyeOpenProb >= 0 && faceDetector.rightEyeOpenProb <= 0.15f);
@@ -512,6 +518,10 @@ public class Model implements ContractInterface.Model {
                         gestureCode = 0;
                         break;
                 }
+                // Closed eyes are entered by the dwell selector only; a blink reported here as well would be entered twice
+                if (calibrated || gestureCode == 5) {
+                    gestureCode = 0;
+                }
 
                 if (gestureCode != 0) {
                     detectionOutput.gestureOutput = gestureCode;
@@ -532,26 +542,9 @@ public class Model implements ContractInterface.Model {
                 gestureDetector.reset();
                 Log.d("MotionStabilizer", "Gesture suppressed due to vehicle shock/motion");
             }
-        } else if (motionStable) {
-            float eyeOpenRatio = eyesClosedByProb ? 0.05f : 0.5f;
-            BallisticGestureDetector.Gesture gesture = gestureDetector.process(0.5f, 0.5f, eyeOpenRatio, nowMs);
-            int gestureCode = (gesture == BallisticGestureDetector.Gesture.BLINK_CONFIRM) ? 5 : 0;
-            if (gestureCode != 0) {
-                detectionOutput.gestureOutput = gestureCode;
-                detectionOutput.AnalyzedData.Success = true;
-                detectionOutput.AnalyzedData.GazeType = gestureCode;
-                String typeStr = detectionOutput.AnalyzedData.getTypeString(gestureCode);
-                if (prevInputs.size() > 25) {
-                    prevInputs.clear();
-                }
-                prevInputs.add(typeStr);
-                detectionOutput.prevInputs = prevInputs;
-            } else if (detectionOutput.gestureOutput != 0) {
-                gestureDetector.reset();
-            }
         } else {
-            detectionOutput.gestureOutput = 0;
-            gestureDetector.reset();
+            if (!motionStable) detectionOutput.gestureOutput = 0;
+            gestureDetector.reset(); // no eye contour, so no flick can be measured
         }
 
         if (leftEyeIris != null) leftEyeIris.release();

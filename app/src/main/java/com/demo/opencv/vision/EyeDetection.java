@@ -70,12 +70,14 @@ public class EyeDetection {
             return 1000000.0;
         }
         double sum;
-        Mat difMat = new Mat(h, w, CvType.CV_8UC4);
-        Imgproc.cvtColor(difMat, difMat, Imgproc.COLOR_BGR2GRAY);
+        Mat difMat = new Mat();
         Mat norA = new Mat();
         Mat norB = new Mat();
         a.convertTo(norA, CvType.CV_32F, 1.0/255, 0);
         b.convertTo(norB, CvType.CV_32F, 1.0/255, 0);
+        // Compare the eye's shape, not its brightness: exposure and screen glow drift after calibration
+        Core.subtract(norA, Core.mean(norA), norA);
+        Core.subtract(norB, Core.mean(norB), norB);
         Core.subtract(norA, norB, difMat);
         Mat destSquared = difMat.mul(difMat);
         Scalar s = Core.sumElems(destSquared);
@@ -88,6 +90,19 @@ public class EyeDetection {
         destSquared.release();
         return sum;
     }
+    static final double CLEAR_MATCH_RATIO = 0.9;
+
+    // The best template must beat the runner-up by a margin; a gaze halfway between two templates is not an input
+    static boolean isClearMatch(double bestError, double secondError) {
+        return bestError <= secondError * CLEAR_MATCH_RATIO;
+    }
+
+    float effectiveSensitivity() { // the setting can change in dev mode after the templates were loaded
+        return (userDataManager != null && userDataManager.getSensitivity() > 0)
+                ? (userDataManager.getSensitivity() / 1000.0f)
+                : sensitivity;
+    }
+
     public double[] runEyeModel(DetectionOutput detectionOutput, Mat eyeROI, int type) {
         Log.d("GestureDetection", "Here!");
         Mat[] compareTemplates;
@@ -109,7 +124,7 @@ public class EyeDetection {
             detectionOutput.testingMats[1] = tensorMat;
         }
         // MSE
-        double minError = 10000000;
+        double minError = 10000000, secondError = 10000000;
         int index = 0;
         int numTemplates = (userDataManager != null) ? userDataManager.calibrationTemplateNum : 6;
         for (int i = 0; i < numTemplates; i++) {
@@ -119,15 +134,16 @@ public class EyeDetection {
             }
             templateError[i] = sum;
             if (sum < minError) {
+                secondError = minError;
                 minError = sum;
                 index = i;
+            } else if (sum < secondError) {
+                secondError = sum;
             }
         }
-        float effectiveSensitivity = (userDataManager != null && userDataManager.getSensitivity() > 0)
-                ? (userDataManager.getSensitivity() / 1000.0f)
-                : sensitivity;
+        float effectiveSensitivity = effectiveSensitivity();
         Log.d("GestureDetection", "Sensitivity = " + effectiveSensitivity);
-        Boolean success = minError <= effectiveSensitivity; // get threshold for the specific type
+        Boolean success = minError <= effectiveSensitivity && isClearMatch(minError, secondError); // get threshold for the specific type
         Log.d("GestureDetection", "The gaze for ");
         int gazeTag = (index >= 0 && index < tags.length) ? tags[index] : 0;
         detectionOutput.setEyeData(type, success, gazeTag, 1, (float)minError);

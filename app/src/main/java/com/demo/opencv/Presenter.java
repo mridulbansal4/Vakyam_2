@@ -15,6 +15,7 @@ import com.demo.opencv.textEntry.KeyboardManager;
 import com.demo.opencv.textEntry.QuickChatManager;
 import com.demo.opencv.textEntry.TextEntryManager;
 import com.demo.opencv.vision.CalibrationStabilityGate;
+import com.demo.opencv.vision.CalibrationTemplateCheck;
 import com.demo.opencv.vision.DetectionOutput;
 
 import org.opencv.android.Utils;
@@ -40,7 +41,9 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     AudioManager audioManager = new AudioManager();
     public ClinicalData clinicalData = new ClinicalData();
     ToneGenerator toneGenerator;
-    private final String[] calibrationMessages = {"Look straight", "Look left", "Look right", "Look up", "Look left and up", "Look right and up"};
+    // Left and right are calibrated looking down: those options sit in the bottom corners of the text entry screen
+    private final String[] calibrationMessages = {"Look straight", "Look left and down", "Look right and down", "Look up", "Look left and up", "Look right and up"};
+    // The gate only checks the sideways movement for the two down steps; the vertical ratio barely moves when looking down
     private final CalibrationStabilityGate.Direction[] calibrationDirections = {
             CalibrationStabilityGate.Direction.STRAIGHT, CalibrationStabilityGate.Direction.LEFT,
             CalibrationStabilityGate.Direction.RIGHT, CalibrationStabilityGate.Direction.UP,
@@ -49,12 +52,24 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     private static final long CALIBRATION_REPROMPT_MS = 4000L;
     private long lastCalibrationPromptMs = 0L;
     private long lastCalibrationLogMs = 0L;
+    // Eye images of the steps captured in this calibration run, to reject a step that looks like an earlier one
+    private final float[][] capturedLeftEyes = new float[6][], capturedRightEyes = new float[6][];
+    private float[] previousLeftEye, previousRightEye;
     // instantiating the objects of View and Model Interface
     public Presenter(ContractInterface.View mainView, ContractInterface.Model model) {
         this.mainView = mainView;
         this.model = model;
     }
     Mat prevMat;
+
+    private static float[] grayPixels(Mat gray) { // 0..1, null when the mat is not a usable grey image
+        if (gray == null || gray.empty() || gray.channels() != 1) return null;
+        byte[] raw = new byte[(int) gray.total()];
+        gray.get(0, 0, raw);
+        float[] pixels = new float[raw.length];
+        for (int i = 0; i < raw.length; i++) pixels[i] = (raw[i] & 0xFF) / 255f;
+        return pixels;
+    }
 
     private Bitmap matToBitmap(Mat mat) {
         Bitmap bm = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
@@ -105,6 +120,8 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             audioManager.speakText(calibrationMessages[0]);
             appliveData.calibrationInstruction = calibrationMessages[0];
             calibrationState = 0;
+            java.util.Arrays.fill(capturedLeftEyes, null);
+            java.util.Arrays.fill(capturedRightEyes, null);
             calibrationGate.clearReference();
             calibrationGate.startStep(now, calibrationDirections[0]);
             lastCalibrationPromptMs = now;
@@ -121,6 +138,10 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                     Log.d("CalibrationInterface", "Recorded successfully");
                     userDataManager.setLeftCalibrationData(matToBitmap(eyeMats[0]), calibrationState); // collect left frame
                     userDataManager.setRightCalibrationData(matToBitmap(eyeMats[1]), calibrationState); // collect right frame
+                    if (calibrationState < capturedLeftEyes.length) {
+                        capturedLeftEyes[calibrationState] = grayPixels(eyeMats[0]);
+                        capturedRightEyes[calibrationState] = grayPixels(eyeMats[1]);
+                    }
                     if (calibrationState == 0) { // later steps must move away from straight in their own direction
                         if (calibrationGate.getStatus() == CalibrationStabilityGate.Status.CAPTURED) {
                             calibrationGate.setReference(calibrationGate.getLastMeanX(), calibrationGate.getLastMeanY());
@@ -185,6 +206,23 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                     calibrationGate.getLastDistanceFromReference(), calibrationGate.getLeniency(), appliveData.calibrationProgress));
             lastCalibrationLogMs = now;
         }
+
+        float[] leftEye = eyesVisible ? grayPixels(eyeMats[0]) : null;
+        float[] rightEye = eyesVisible ? grayPixels(eyeMats[1]) : null;
+        if (capture) {
+            // The gate only sees the iris position, which is unreliable looking up or into a corner and is not
+            // checked at all once it has been re-prompted twice. Judge the eye image itself before storing it.
+            int sameAs = CalibrationTemplateCheck.indistinctFrom(leftEye, rightEye, capturedLeftEyes, capturedRightEyes, state);
+            boolean settled = CalibrationTemplateCheck.isSettled(leftEye, rightEye, previousLeftEye, previousRightEye);
+            if (sameAs >= 0 || !settled) {
+                Log.i("AutoCalibration", "Rejected step " + state + (sameAs >= 0 ? ": looks like step " + sameAs : ": eye image not settled"));
+                appliveData.calibrationProgress = 0f;
+                appliveData.calibrationStatusRes = sameAs >= 0 ? R.string.Calibration_StatusLookFurther : R.string.Calibration_StatusHoldGaze;
+                capture = false;
+            }
+        }
+        previousLeftEye = leftEye;
+        previousRightEye = rightEye;
 
         if (capture) {
             Log.i("AutoCalibration", "Captured step " + state + " (leniency " + calibrationGate.getLeniency() + ")");

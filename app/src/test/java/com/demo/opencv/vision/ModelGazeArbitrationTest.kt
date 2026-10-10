@@ -9,94 +9,85 @@ import org.junit.Test
 /**
  * Unit tests for Model gaze arbitration and dwell analysis:
  * 1. Verifies calibrated gaze detection across all directions (Left=1, Right=2, Up=3, Closed=5, etc.)
- * 2. Verifies that 3 consecutive frames are required for dwell triggering
- * 3. Verifies that sustained gaze (frame 4+) does not repeatedly fire
+ * 2. Verifies that a gaze must be held for the dwell time before it triggers
+ * 3. Verifies that sustained gaze does not repeatedly fire
  * 4. Verifies arbitration between calibration template matching and ballistic transit gestures
  * 5. Verifies motion shock suppression (circuit breaker)
  */
 class ModelGazeArbitrationTest {
 
     private lateinit var model: Model
+    private var t = 0L
 
     @Before
     fun setUp() {
         model = Model()
+        model.detectionOutput.initialize(4)
+        t = 1_000L
     }
 
+    /** One 30 fps frame with both eyes reporting the given gaze; returns the selection made on that frame. */
+    private fun frame(left: Int, right: Int = left, steady: Boolean = true): Int {
+        t += 33L
+        model.detectionOutput.setEyeData(0, true, left, 1, 0.005f)
+        model.detectionOutput.setEyeData(1, true, right, 1, 0.005f)
+        model.analyzeGazeOutput(t, steady)
+        return model.detectionOutput.gestureOutput
+    }
+
+    private fun hold(gaze: Int, ms: Long, steady: Boolean = true): List<Int> =
+        (1..(ms / 33L)).map { frame(gaze, steady = steady) }.filter { it != 0 }
+
     @Test
-    fun testCalibratedGazeDwellTriggersOnThirdFrame() {
-        // Feed Left gaze (1) for frame 1
-        model.detectionOutput.initialize(4)
-        model.detectionOutput.setEyeData(0, true, 1, 1, 0.005f)
-        model.detectionOutput.setEyeData(1, true, 1, 1, 0.005f)
-        model.analyzeGazeOutput()
-        assertEquals(0, model.detectionOutput.gestureOutput)
-
-        // Feed Left gaze (1) for frame 2
-        model.detectionOutput.setEyeData(0, true, 1, 1, 0.005f)
-        model.detectionOutput.setEyeData(1, true, 1, 1, 0.005f)
-        model.analyzeGazeOutput()
-        assertEquals(0, model.detectionOutput.gestureOutput)
-
-        // Feed Left gaze (1) for frame 3 -> should trigger gestureOutput = 1
-        model.detectionOutput.setEyeData(0, true, 1, 1, 0.005f)
-        model.detectionOutput.setEyeData(1, true, 1, 1, 0.005f)
-        model.analyzeGazeOutput()
-        assertEquals(1, model.detectionOutput.gestureOutput)
-
-        // Feed Left gaze (1) for frame 4 -> dwell fires once, does not bounce/repeat
-        model.detectionOutput.setEyeData(0, true, 1, 1, 0.005f)
-        model.detectionOutput.setEyeData(1, true, 1, 1, 0.005f)
-        model.analyzeGazeOutput()
-        assertEquals(0, model.detectionOutput.gestureOutput)
+    fun testCalibratedGazeDwellTriggersOnceAfterHold() {
+        // Three frames used to be enough; a glance that short must no longer be entered
+        assertEquals(emptyList<Int>(), hold(1, Model.GAZE_DWELL_MS - 66L))
+        assertEquals(listOf(1), hold(1, 200L))
+        // Sustained gaze fires once, does not bounce/repeat
+        assertEquals(emptyList<Int>(), hold(1, 2_000L))
     }
 
     @Test
     fun testUpGazeAgreementDetection() {
-        // Verify Up gaze (3) triggers when both eyes agree
-        model.detectionOutput.initialize(4)
-        for (i in 0..2) {
-            model.detectionOutput.setEyeData(0, true, 3, 1, 0.004f)
-            model.detectionOutput.setEyeData(1, true, 3, 1, 0.004f)
-            model.analyzeGazeOutput()
-        }
-        assertEquals(3, model.detectionOutput.gestureOutput)
+        assertEquals(listOf(3), hold(3, 600L))
     }
 
     @Test
     fun testRightGazeAgreementDetection() {
-        // Verify Right gaze (2) triggers when both eyes agree
-        model.detectionOutput.initialize(4)
-        for (i in 0..2) {
-            model.detectionOutput.setEyeData(0, true, 2, 1, 0.003f)
-            model.detectionOutput.setEyeData(1, true, 2, 1, 0.003f)
-            model.analyzeGazeOutput()
-        }
-        assertEquals(2, model.detectionOutput.gestureOutput)
+        assertEquals(listOf(2), hold(2, 600L))
     }
 
     @Test
-    fun testClosedEyesBlinkDetection() {
-        // Verify Closed eyes (5) triggers when both eyes are closed
-        model.detectionOutput.initialize(4)
-        for (i in 0..2) {
-            model.detectionOutput.setEyeData(0, true, 5, 1, 0.02f)
-            model.detectionOutput.setEyeData(1, true, 5, 1, 0.02f)
-            model.analyzeGazeOutput()
-        }
-        assertEquals(5, model.detectionOutput.gestureOutput)
+    fun testClosedEyesHeldIsDetected() {
+        assertEquals(listOf(5), hold(5, 900L))
+    }
+
+    @Test
+    fun testNaturalBlinkIsNotEntered() {
+        hold(0, 300L)
+        assertEquals(emptyList<Int>(), hold(5, 250L) + hold(0, 500L))
+    }
+
+    @Test
+    fun testPhoneShakeDropsTheHeldGaze() {
+        assertEquals(emptyList<Int>(), hold(1, 250L) + hold(1, 100L, steady = false) + hold(1, 250L))
+        assertEquals(listOf(1), hold(1, 200L))
+    }
+
+    @Test
+    fun testAmbiguousCombinedMatchIsRejected() {
+        // Eyes disagree and the two best templates are nearly tied: not a clear enough match to enter
+        model.leftTemplateError = doubleArrayOf(0.05, 0.0050, 0.05, 0.0052, 0.05, 0.05)
+        model.rightTemplateError = doubleArrayOf(0.05, 0.0050, 0.05, 0.0052, 0.05, 0.05)
+        val fired = (1..30).map { frame(1, 3) }.filter { it != 0 }
+        assertEquals(emptyList<Int>(), fired)
+        assertFalse(model.detectionOutput.AnalyzedData.Success)
     }
 
     @Test
     fun testLookingStraightDoesNotFireKeystroke() {
         // Straight gaze (0) should never trigger a non-zero gestureOutput
-        model.detectionOutput.initialize(4)
-        for (i in 0..5) {
-            model.detectionOutput.setEyeData(0, true, 0, 1, 0.001f)
-            model.detectionOutput.setEyeData(1, true, 0, 1, 0.001f)
-            model.analyzeGazeOutput()
-            assertEquals(0, model.detectionOutput.gestureOutput)
-        }
+        assertEquals(emptyList<Int>(), hold(0, 2_000L))
     }
 
     @Test
@@ -111,21 +102,15 @@ class ModelGazeArbitrationTest {
 
     @Test
     fun testCombinedLossFallbackWithSensitivityThreshold() {
-        model.detectionOutput.initialize(4)
-        // Disagreeing eye gazes: Left says 1 (loss 0.02), Right says 2 (loss 0.02)
-        model.detectionOutput.setEyeData(0, true, 1, 1, 0.02f)
-        model.detectionOutput.setEyeData(1, true, 2, 1, 0.02f)
-
         // Template errors: index 3 (Up) has lowest combined error 0.010 (< sensitivity * 2 = 0.030)
         model.leftTemplateError = doubleArrayOf(0.05, 0.05, 0.05, 0.005, 0.05, 0.05)
         model.rightTemplateError = doubleArrayOf(0.05, 0.05, 0.05, 0.005, 0.05, 0.05)
 
-        for (i in 0..2) {
-            model.analyzeGazeOutput()
-        }
+        // Disagreeing eye gazes: Left says 1, Right says 2
+        val fired = (1..20).map { frame(1, 2) }.filter { it != 0 }
 
         // Index 3 maps to tag 3 (Up)
-        assertEquals(3, model.detectionOutput.gestureOutput)
+        assertEquals(listOf(3), fired)
     }
 
     @Test

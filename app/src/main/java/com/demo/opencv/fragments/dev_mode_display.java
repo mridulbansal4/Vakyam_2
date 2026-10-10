@@ -278,7 +278,7 @@ public class dev_mode_display extends Fragment {
 
     private void styleSimButton(Button button, boolean on) {
         if (button == null) return;
-        int color = on ? SIM_ON_COLOR : ContextCompat.getColor(button.getContext(), R.color.metal_green);
+        int color = on ? SIM_ON_COLOR : ContextCompat.getColor(button.getContext(), R.color.vk_accent);
         button.setBackgroundTintList(ColorStateList.valueOf(color));
     }
 

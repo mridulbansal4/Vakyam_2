@@ -5,7 +5,7 @@
     android:id="@+id/textModeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:backgroundTint="@color/columbia_blue"
+    android:background="@color/vk_canvas"
     android:orientation="horizontal"
     tools:context=".fragments.text_mode_display">
 
@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="0.8"
-        android:background="@color/metal_green"
+        android:background="@color/vk_surface"
         android:orientation="vertical"
         android:padding="5dp">
 
@@ -27,7 +27,7 @@
             android:gravity="start|top"
             android:inputType="textMultiLine"
             android:padding="6dp"
-            android:textColor="@color/ghost_blue"
+            android:textColor="@color/vk_ink"
             android:textSize="18sp"
             tools:text="This is the text inputted by the user" />
 
@@ -37,7 +37,7 @@
             android:layout_height="113dp"
             android:background="@drawable/text_rounded_green"
             android:padding="5sp"
-            android:textColor="@color/ghost_blue"
+            android:textColor="@color/vk_ink"
             android:textSize="18sp"
             android:textStyle="bold"
             tools:text="This is the sentence generated" />
@@ -48,7 +48,7 @@
             android:layout_height="match_parent"
             android:padding="6dp"
             android:textAlignment="viewStart"
-            android:textColor="@color/ghost_blue"
+            android:textColor="@color/vk_ink"
             android:textSize="18sp"
             tools:text="This is the context for the user" />
     </LinearLayout>
@@ -57,7 +57,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="0.45"
-        android:background="@color/ghost_blue"
+        android:background="@color/vk_canvas"
         android:orientation="vertical"
         android:padding="5dp">
 
@@ -82,7 +82,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:padding="6dp"
-                android:textColor="@color/metal_green"
+                android:textColor="@color/vk_ink"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Current text" />
@@ -110,7 +110,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:padding="6dp"
-                android:textColor="@color/metal_green"
+                android:textColor="@color/vk_ink"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Current text" />
@@ -138,7 +138,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:padding="6dp"
-                android:textColor="@color/metal_green"
+                android:textColor="@color/vk_ink"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Current text" />
@@ -166,7 +166,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:padding="6dp"
-                android:textColor="@color/metal_green"
+                android:textColor="@color/vk_ink"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Current text" />
@@ -194,7 +194,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:padding="6dp"
-                android:textColor="@color/metal_green"
+                android:textColor="@color/vk_ink"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Current text" />
@@ -222,7 +222,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:padding="6dp"
-                android:textColor="@color/metal_green"
+                android:textColor="@color/vk_ink"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 tools:text="Current text" />

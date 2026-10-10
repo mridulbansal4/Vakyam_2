@@ -258,8 +258,8 @@ public class clinician_mode_display extends Fragment {
                 ArrayList<Entry> dataset2 = setChartData(leftNICY, gazeInputLog);
 
                 LineDataSet set1, set2; // define data sets
-                set1 = initLineDataSet(dataset1, "NIC left x-coordinate", Color.BLUE);
-                set2 = initLineDataSet(dataset2, "NIC left y-coordinate", Color.RED);
+                set1 = initLineDataSet(dataset1, "NIC left x-coordinate", 0xFF2F6F6A);
+                set2 = initLineDataSet(dataset2, "NIC left y-coordinate", 0xFFB5563F);
 
                 ArrayList<ILineDataSet> dataSets = new ArrayList<>(); // combine the data sets
                 dataSets.add(set1);

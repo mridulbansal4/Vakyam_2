@@ -51,15 +51,20 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     var listener: Listener? = null
     var speaker: Speaker? = null
 
-    private val slate = color(R.color.purple_500)
-    private val sage = color(R.color.purple_200)
-    private val dark = color(R.color.metal_green)
-    private val paleBlue = color(R.color.columbia_blue)
-    private val ghost = color(R.color.ghost_blue)
-    private val highlight = color(R.color.bright_yellow_green)
-    private val teal = color(R.color.teal_700)
-    private val warning = color(R.color.sunset_orange)
-    private val emergencyRed = color(R.color.emergency_red)
+    private val canvas = color(R.color.vk_canvas)
+    private val surfaceTint = color(R.color.vk_surface_tint)
+    private val track = color(R.color.vk_track)
+    private val chrome = color(R.color.vk_chrome)
+    private val onChrome = color(R.color.vk_on_chrome)
+    private val accent = color(R.color.vk_accent)
+    private val ink = color(R.color.vk_ink)
+    private val inkSoft = color(R.color.vk_ink_soft)
+    private val inkMuted = color(R.color.vk_ink_muted)
+    private val keyAlt = color(R.color.vk_key_alt)
+    private val selecting = color(R.color.vk_key_selecting)
+    private val outline = color(R.color.vk_outline)
+    private val warning = color(R.color.vk_warning)
+    private val emergencyRed = color(R.color.vk_emergency)
 
     private val audio = AudioFeedbackService()
     private val lexicon = PersonalLexicon.get(context)
@@ -141,7 +146,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     private val keyViews = mutableListOf<List<TextView>>()
 
     init {
-        setBackgroundColor(slate)
+        setBackgroundColor(canvas)
         isSoundEffectsEnabled = false
         setOnClickListener { triggerManualSelect() }
 
@@ -152,11 +157,11 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         val header = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setBackgroundColor(dark)
+            setBackgroundColor(chrome)
             setPadding(dp(12), dp(4), dp(4), dp(4))
         }
-        header.addView(text("SPELL WITH EYES", 20f, Color.WHITE, bold = true), wrap())
-        statusView = text("", 16f, Color.BLACK, bold = true).apply {
+        header.addView(text("SPELL WITH EYES", 20f, onChrome, bold = true), wrap())
+        statusView = text("", 16f, ink, bold = true).apply {
             gravity = Gravity.CENTER
             maxLines = 1
             setPadding(dp(14), dp(4), dp(14), dp(4))
@@ -164,15 +169,16 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         header.addView(statusView, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
             marginStart = dp(16); marginEnd = dp(16)
         })
-        cameraStatusView = text("Starting camera…", 13f, paleBlue)
+        cameraStatusView = text("Starting camera…", 13f, onChrome)
         header.addView(cameraStatusView, wrap())
         val closeButton = ImageView(context).apply {
             setImageResource(R.drawable.baseline_close_24)
-            setBackgroundColor(paleBlue)
+            setBackgroundResource(R.drawable.gaze_option_bg_2)
+            setPadding(dp(8), dp(8), dp(8), dp(8))
             contentDescription = "Close keyboard"
             setOnClickListener { listener?.onClose() }
         }
-        header.addView(closeButton, LinearLayout.LayoutParams(dp(44), dp(44)).apply { marginStart = dp(12) })
+        header.addView(closeButton, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginStart = dp(12) })
         root.addView(header, matchWrap())
 
         val body = LinearLayout(context).apply {
@@ -181,16 +187,16 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         }
         root.addView(body, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
 
-        typingTestView = text("", 16f, Color.WHITE, bold = true).apply {
+        typingTestView = text("", 16f, onChrome, bold = true).apply {
             gravity = Gravity.CENTER
             setPadding(dp(12), dp(4), dp(12), dp(4))
-            background = rounded(teal, dp(5).toFloat())
+            background = rounded(accent, dp(12).toFloat())
             maxLines = 1
             visibility = GONE
         }
         body.addView(typingTestView, matchWrap().apply { bottomMargin = dp(6) })
 
-        bufferView = text("", 26f, paleBlue).apply {
+        bufferView = text("", 26f, ink).apply {
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundResource(R.drawable.text_rounded_dark)
             setPadding(dp(14), dp(6), dp(14), dp(6))
@@ -204,7 +210,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         }
         gaugeView = DwellGaugeView(context)
         gaugeRow.addView(gaugeView, LinearLayout.LayoutParams(0, dp(12), 1f))
-        gaugeLabel = text(gaugeText(0), 14f, ghost, bold = true)
+        gaugeLabel = text(gaugeText(0), 14f, inkSoft, bold = true)
         gaugeRow.addView(gaugeLabel, LinearLayout.LayoutParams(dp(250), LayoutParams.WRAP_CONTENT).apply {
             marginStart = dp(12)
         })
@@ -212,7 +218,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
 
         infoView = text(
             "Natural blinks are ignored. Close eyes ½–1 s to select, over 2 s to rest, 2 s three times to call for help. Tap or Space is a switch.",
-            13f, ghost,
+            13f, inkSoft,
         ).apply { maxLines = 1 }
         body.addView(infoView, matchWrap().apply { topMargin = dp(2) })
 
@@ -276,7 +282,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         if (!sample.faceFound) {
             detector.reset()
             cameraStatusView.text = "No face. Tap or press Space"
-            cameraStatusView.setTextColor(warning)
+            cameraStatusView.alpha = 1f
             return
         }
         detector.processEyeState(sample.eyesClosed, sample.timestampMs)
@@ -284,12 +290,12 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         cameraStatusView.text = String.format(
             Locale.US, "Face ✓  EAR %s / %.2f  open %.2f", ear, sample.earThreshold, sample.eyeOpenProbability,
         )
-        cameraStatusView.setTextColor(if (sample.eyesClosed) highlight else paleBlue)
+        cameraStatusView.alpha = if (sample.eyesClosed) 1f else QUIET_ALPHA
     }
 
     fun setCameraStatus(message: String) {
         cameraStatusView.text = message
-        cameraStatusView.setTextColor(warning)
+        cameraStatusView.alpha = 1f
     }
 
     private fun activate(item: KeyItem) {
@@ -355,7 +361,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         matrix = buildMatrix(predictor.predict(prefix, previousWord))
         rebuildRowViews(0)
         bufferView.text = if (buffer.isEmpty()) "Start spelling…▌" else buffer.toString().uppercase() + "▌"
-        bufferView.setTextColor(if (buffer.isEmpty()) sage else paleBlue)
+        bufferView.setTextColor(if (buffer.isEmpty()) inkMuted else ink)
         render()
     }
 
@@ -375,7 +381,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         rowView.removeAllViews()
         if (row.items.isEmpty() && row.style == RowStyle.SUGGESTIONS) {
             rowView.addView(
-                text("Predictions appear here as you type", 16f, ghost).apply { gravity = Gravity.CENTER },
+                text("Predictions appear here as you type", 16f, inkSoft).apply { gravity = Gravity.CENTER },
                 LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f),
             )
         }
@@ -385,7 +391,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                 RowStyle.SUGGESTIONS -> 20f
                 RowStyle.ACTIONS -> 18f
             }
-            text(item.label, size, Color.BLACK, bold = true).apply {
+            text(item.label, size, ink, bold = true).apply {
                 gravity = Gravity.CENTER
                 maxLines = 1
             }.also {
@@ -404,19 +410,19 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         }
         statusView.background = rounded(
             when (engine.tier) {
-                ScanTier.ROW -> ghost
-                ScanTier.COLUMN -> highlight
-                ScanTier.PAUSED -> warning
+                ScanTier.ROW -> keyAlt
+                ScanTier.COLUMN -> selecting
+                ScanTier.PAUSED -> surfaceTint
             },
-            dp(10).toFloat(),
+            dp(12).toFloat(),
         )
-        val radius = dp(10).toFloat()
+        val radius = dp(14).toFloat()
         matrix.forEachIndexed { r, row ->
             val isActiveRow = r == engine.activeRowIdx
             rowViews[r].background = when {
-                isActiveRow && engine.tier == ScanTier.ROW -> rounded(highlight, radius, dark, dp(3))
-                isActiveRow && engine.tier == ScanTier.COLUMN -> rounded(Color.TRANSPARENT, radius, highlight, dp(3))
-                row.style == RowStyle.SUGGESTIONS -> rounded(teal, dp(5).toFloat())
+                isActiveRow && engine.tier == ScanTier.ROW -> rounded(selecting, radius, ink, dp(3))
+                isActiveRow && engine.tier == ScanTier.COLUMN -> rounded(Color.TRANSPARENT, radius, accent, dp(2))
+                row.style == RowStyle.SUGGESTIONS -> rounded(surfaceTint, dp(12).toFloat())
                 else -> null
             }
             keyViews[r].forEachIndexed { c, key ->
@@ -424,11 +430,11 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                 val isHelp = row.items[c].value == KeyActions.HELP
                 key.background = when {
                     isActiveKey -> keyDrawable(R.drawable.gaze_option_bg_selecting)
-                    isHelp -> rounded(emergencyRed, radius, dark, dp(3))
+                    isHelp -> rounded(emergencyRed, radius, outline, dp(2))
                     row.style == RowStyle.LETTERS -> keyDrawable(R.drawable.gaze_option_bg_1)
                     else -> keyDrawable(R.drawable.gaze_option_bg_2)
                 }
-                key.setTextColor(if (isHelp && !isActiveKey) Color.WHITE else Color.BLACK)
+                key.setTextColor(if (isHelp && !isActiveKey) onChrome else ink)
             }
         }
     }
@@ -453,7 +459,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         else -> "Resting, scanning paused"
     }
 
-    /** The shared key shapes (beige / pale blue / yellow-green with the dark outline) used by text entry. */
+    /** The shared key shapes (sage / sand / amber with the soft outline) used by text entry. */
     private fun keyDrawable(id: Int): Drawable? = ContextCompat.getDrawable(context, id)
 
     private fun color(id: Int) = ContextCompat.getColor(context, id)
@@ -487,21 +493,26 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             }
 
         override fun onDraw(canvas: Canvas) {
-            val radius = dp(5).toFloat()
+            val radius = height / 2f
             rect.set(0f, 0f, width.toFloat(), height.toFloat())
-            paint.color = dark
+            paint.color = track
             canvas.drawRoundRect(rect, radius, radius, paint)
             if (durationMs <= 0) return
             val fraction = min(1f, durationMs.toFloat() / config.minBlinkDurationMs)
             paint.color = when {
-                durationMs < config.involuntaryBlinkMaxMs -> sage
-                durationMs < config.minBlinkDurationMs -> paleBlue
-                durationMs <= config.maxBlinkDurationMs -> highlight
+                durationMs < config.involuntaryBlinkMaxMs -> outline
+                durationMs < config.minBlinkDurationMs -> accent
+                durationMs <= config.maxBlinkDurationMs -> selecting
                 durationMs < config.restClosureMs -> warning
-                else -> teal
+                else -> inkMuted
             }
             rect.right = width * fraction
             canvas.drawRoundRect(rect, radius, radius, paint)
         }
+    }
+
+    private companion object {
+        /** Opacity of the camera read-out while nothing needs attention. */
+        const val QUIET_ALPHA = 0.7f
     }
 }

@@ -1,17 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Low-strain palette. The screen is read for hours by someone who cannot look away from it, so:
+    - dark text on a light ground (small pupil, sharper focus), but warm paper instead of white to cut glare
+    - ink is a deep green-grey, never pure black, to avoid halation at the edges of bold letters
+    - hues sit in the green-yellow band the eye focuses with least effort; no saturated blue or violet
+    - every screen has the same overall brightness so the pupil is not re-adapting on each page change
+    - amber marks what is being selected, soft green what was selected, red is kept for emergencies only
+    Dim-room counterparts live in values-night/colors.xml.
+-->
 <resources>
-    <color name="purple_200">#7A9E9F</color>
-    <color name="purple_500">#4F6367</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="beige">#DDE6C5</color>
-    <color name="columbia_blue">#B8D8D8</color>
-    <color name="teal_200">#B8D8D8</color>
-    <color name="bright_yellow_green">#EAF5A2</color>
-    <color name="ghost_blue">#cce0e0</color>
-    <color name="sunset_orange">#FE5F55</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="metal_green">#32403e</color>
-    <color name="emergency_red">#C62828</color>
+    <!-- Grounds -->
+    <color name="vk_canvas">#F1EEE4</color>
+    <color name="vk_surface">#FAF8F1</color>
+    <color name="vk_surface_tint">#D5E4DB</color>
+    <color name="vk_track">#DDD9CB</color>
+    <color name="vk_scrim">#A626342F</color>
+
+    <!-- Gaze tiles and keys -->
+    <color name="vk_key">#DAE5D1</color>
+    <color name="vk_key_alt">#E8DEC8</color>
+    <color name="vk_key_selecting">#EDC565</color>
+    <color name="vk_key_selected">#B9DAAE</color>
+    <color name="vk_outline">#768675</color>
+
+    <!-- Text -->
+    <color name="vk_ink">#26342F</color>
+    <color name="vk_ink_soft">#4C5D56</color>
+    <color name="vk_ink_muted">#5C6E66</color>
+
+    <!-- Navigation bar and buttons -->
+    <color name="vk_chrome">#34463F</color>
+    <color name="vk_accent">#48615A</color>
+    <color name="vk_on_chrome">#F4F1E8</color>
+
+    <!-- Status -->
+    <color name="vk_warning">#D2694F</color>
+    <color name="vk_emergency">#C62828</color>
 </resources>

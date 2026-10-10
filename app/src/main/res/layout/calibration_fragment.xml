@@ -5,7 +5,7 @@
     android:id="@+id/calibrationModeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ghost_blue"
+    android:background="@color/vk_canvas"
     tools:context="com.demo.opencv.calibration_display">
 
     <ImageView
@@ -89,7 +89,8 @@
         android:id="@+id/calibrationButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#DF4242"
+        android:backgroundTint="@color/vk_accent"
+        android:textColor="@color/vk_on_chrome"
         android:text="@string/Calibration_Start"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -103,7 +104,8 @@
         android:id="@+id/switchEyesButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#FFFFFF"
+        android:backgroundTint="@color/vk_key_alt"
+        android:textColor="@color/vk_ink"
         android:text="@string/Calibration_SwitchEyes"
         android:textStyle="bold"
         android:visibility="visible"
@@ -118,20 +120,19 @@
         android:id="@+id/CalibrationDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="15dp"
-        android:layout_marginEnd="30dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="16dp"
         android:fontFamily="sans-serif"
+        android:lineSpacingMultiplier="1.15"
         android:text="@string/Calibration_Description"
         android:textAlignment="textStart"
-        android:textColor="@color/purple_500"
-        android:textSize="16sp"
+        android:textColor="@color/vk_ink_soft"
+        android:textSize="18sp"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintBottom_toBottomOf="@+id/CalibrationImage"
+        app:layout_constraintEnd_toStartOf="@+id/calibrationSplit"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.242" />
+        app:layout_constraintTop_toTopOf="@+id/CalibrationImage" />
 
     <ImageView
         android:id="@+id/imageView14"
@@ -150,12 +151,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/Calibration_Title"
-        android:textColor="@color/metal_green"
+        android:textColor="@color/vk_ink"
         android:textSize="35sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.227"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.038" />
@@ -170,7 +170,7 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.227"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.15" />
@@ -179,13 +179,13 @@
         android:id="@+id/calibrationStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/purple_500"
+        android:textColor="@color/vk_ink_soft"
         android:textSize="18sp"
         android:textStyle="bold"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.1"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.21" />
@@ -194,7 +194,7 @@
         android:id="@+id/imageView15"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:background="@color/columbia_blue"
+        android:background="@drawable/gaze_option_bg_2"
         android:src="@drawable/baseline_close_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -203,16 +203,26 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.026" />
 
+    <!-- Intro page: instructions on the left half, picture on the right half, above the start button -->
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/calibrationSplit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.5" />
+
     <ImageView
         android:id="@+id/CalibrationImage"
-        android:layout_width="386dp"
-        android:layout_height="174dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="12dp"
         android:src="@drawable/calibration_image"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/calibrationButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.888" />
+        app:layout_constraintStart_toEndOf="@+id/calibrationSplit"
+        app:layout_constraintTop_toBottomOf="@id/calibrationInstruction" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

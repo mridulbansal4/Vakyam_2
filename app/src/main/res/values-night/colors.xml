@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Dim-room palette, used when the phone is in dark mode. A bright page in a dark room is the main
+    source of glare, so the ground drops to a warm charcoal (not black) and the ink to a warm off-white
+    (not white), keeping contrast near 10:1 without halation.
+-->
+<resources>
+    <color name="vk_canvas">#232A27</color>
+    <color name="vk_surface">#2C3531</color>
+    <color name="vk_surface_tint">#2F423B</color>
+    <color name="vk_track">#3A433F</color>
+    <color name="vk_scrim">#B3101413</color>
+
+    <color name="vk_key">#37443C</color>
+    <color name="vk_key_alt">#453F33</color>
+    <color name="vk_key_selecting">#7A6224</color>
+    <color name="vk_key_selected">#3F6B45</color>
+    <color name="vk_outline">#6E7C72</color>
+
+    <color name="vk_ink">#DDD9CC</color>
+    <color name="vk_ink_soft">#B4B8AB</color>
+    <color name="vk_ink_muted">#98A096</color>
+
+    <color name="vk_chrome">#1B211F</color>
+    <color name="vk_accent">#4F6A61</color>
+    <color name="vk_on_chrome">#E6E2D6</color>
+
+    <color name="vk_warning">#C96A52</color>
+    <color name="vk_emergency">#C62828</color>
+</resources>

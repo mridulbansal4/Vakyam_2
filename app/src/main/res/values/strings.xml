@@ -28,7 +28,7 @@
     <!-- Calibration UI Strings -->
     <string name="Calibration_TopBarTitle">CALIBRATION</string>
     <string name="Calibration_Title">EYE CALIBRATION</string>
-    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see picture below). Press start, then hold your gaze in each direction until you hear a beep. Each direction is captured automatically.</string>
+    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see the picture). Press start, then hold your gaze in each direction until you hear a beep. Each direction is captured automatically.</string>
     <string name="Calibration_Continue">CONTINUE</string>
     <string name="Calibration_Start">START</string>
     <string name="Calibration_Restart">RESTART</string>

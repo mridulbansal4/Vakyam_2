@@ -101,4 +101,9 @@
     <string name="SocialMedia_CancelPhoto">删除照片</string>
     <string name="SocialMedia_TakingPhoto">拍照中</string>
     <string name="Settings_SentenceGenerationModel">句子生成模型</string>
+    <string name="Sensor_ThermalCritical">设备发热 — 正在降温，键盘保持可用</string>
+    <string name="Sensor_ChargingWarm">充电时手机发热 — 请检查充电器周围的通风</string>
+    <string name="Sensor_ChargingHot">手机过热 — 请拔下充电器并改善通风</string>
+    <string name="Sensor_ChargingHotSpoken">护理人员，手机过热。请拔下充电器。</string>
+    <string name="Sensor_HealthWaiting">传感器状态：等待中…</string>
 </resources>

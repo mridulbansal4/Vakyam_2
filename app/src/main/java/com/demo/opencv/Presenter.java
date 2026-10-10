@@ -313,6 +313,12 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     }
 
     @Override
+    public void setFaceRoiDetection(boolean enabled) { model.setFaceRoiDetection(enabled); }
+
+    @Override
+    public void speakCaregiverMessage(String text) { audioManager.speakText(text); }
+
+    @Override
     public void onFrame(Mat rgbMat) {
         presenterBusy = true;
         prevMat = rgbMat;

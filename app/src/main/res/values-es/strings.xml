@@ -101,4 +101,9 @@
     <string name="SocialMedia_CancelPhoto">CANCELAR FOTO</string>
     <string name="SocialMedia_TakingPhoto">TOMANDO FOTO</string>
     <string name="Settings_SentenceGenerationModel">Modelo de Generación</string>
+    <string name="Sensor_ThermalCritical">Dispositivo caliente — enfriando sin desactivar el teclado</string>
+    <string name="Sensor_ChargingWarm">El teléfono se calienta al cargar — revise la ventilación del cargador</string>
+    <string name="Sensor_ChargingHot">El teléfono se está sobrecalentando — desconecte el cargador y mejore la ventilación</string>
+    <string name="Sensor_ChargingHotSpoken">Cuidador, el teléfono se está sobrecalentando. Por favor, desconecte el cargador.</string>
+    <string name="Sensor_HealthWaiting">Estado de sensores: esperando…</string>
 </resources>

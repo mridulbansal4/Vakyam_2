@@ -104,6 +104,16 @@
             android:textSize="16sp"
             tools:text="-------------" />
 
+        <TextView
+            android:id="@+id/sensorHealthText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="monospace"
+            android:padding="8dp"
+            android:text="@string/Sensor_HealthWaiting"
+            android:textColor="#4A4A4A"
+            android:textSize="14sp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"

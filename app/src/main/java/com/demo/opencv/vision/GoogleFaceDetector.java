@@ -21,6 +21,7 @@ import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 import com.google.mlkit.vision.face.FaceLandmark;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,9 @@ public class GoogleFaceDetector {
     public FaceContour leftEyeContour, rightEyeContour;
     public PointF leftEyePos, rightEyePos;
     public float rightEyeOpenProb = 1.0f, leftEyeOpenProb = 1.0f, rotY, rotZ;
-    public Rect faceBound;
+    public Rect faceBound; // full-frame coordinates
+    public List<PointF> leftEyePoints, rightEyePoints; // full-frame coordinates
+    private int offsetX = 0, offsetY = 0; // origin of the crop passed to detect()
 
     public void initialize() {
 
@@ -53,6 +56,8 @@ public class GoogleFaceDetector {
             faceDetected = false;
             leftEyeContour = null;
             rightEyeContour = null;
+            leftEyePoints = null;
+            rightEyePoints = null;
             faceBound = null;
             leftEyeOpenProb = 1.0f;
             rightEyeOpenProb = 1.0f;
@@ -70,9 +75,12 @@ public class GoogleFaceDetector {
 
         if (largestFace != null) {
             faceDetected = true;
-            faceBound = largestFace.getBoundingBox();
+            faceBound = new Rect(largestFace.getBoundingBox());
+            faceBound.offset(offsetX, offsetY);
             leftEyeContour = largestFace.getContour(FaceContour.LEFT_EYE);
             rightEyeContour = largestFace.getContour(FaceContour.RIGHT_EYE);
+            leftEyePoints = shifted(leftEyeContour);
+            rightEyePoints = shifted(rightEyeContour);
 
             // If classification was enabled:
             if (largestFace.getLeftEyeOpenProbability() != null) {
@@ -83,8 +91,21 @@ public class GoogleFaceDetector {
             }
         }
     }
+
+    private List<PointF> shifted(FaceContour contour) {
+        if (contour == null) return null;
+        List<PointF> src = contour.getPoints();
+        List<PointF> out = new ArrayList<>(src.size());
+        for (PointF p : src) out.add(new PointF(p.x + offsetX, p.y + offsetY));
+        return out;
+    }
+
+    public void detect(Bitmap bm) { detect(bm, 0, 0); }
+
     @OptIn(markerClass = ExperimentalGetImage.class)
-    public void detect(Bitmap bm) {
+    public void detect(Bitmap bm, int offsetX, int offsetY) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
 
         InputImage newImage = InputImage.fromBitmap(bm, 0);
         Log.d("googleFaceDetector", "detect begins");

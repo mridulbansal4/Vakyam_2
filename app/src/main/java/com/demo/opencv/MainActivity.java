@@ -11,13 +11,17 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.util.Range;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.camera2.interop.Camera2Interop;
@@ -29,6 +33,7 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.ColorUtils;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -40,6 +45,9 @@ import com.demo.opencv.fragments.quick_chat_display;
 import com.demo.opencv.fragments.social_media_display;
 import com.demo.opencv.fragments.text_mode_display;
 import com.demo.opencv.other.ClinicalData;
+import com.demo.opencv.sensors.SensorBanner;
+import com.demo.opencv.sensors.SensorHealthController;
+import com.demo.opencv.sensors.SensorHealthSnapshot;
 import com.demo.opencv.socialMedia.TwitterAuthenticator;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
@@ -74,6 +82,27 @@ public class MainActivity extends AppCompatActivity
     private UIViewModel viewModel;
     FragmentManager fragmentManager;
     Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    private volatile SensorHealthController sensorController;
+    private TextView sensorBanner;
+    private View warmTintOverlay;
+    private static final int WARM_TINT_RGB = 0xFFFF9329;
+
+    private final SensorHealthController.Listener sensorListener = new SensorHealthController.Listener() {
+        @Override public void onBannerChanged(@Nullable SensorBanner banner) {
+            if (banner == null) { sensorBanner.setVisibility(View.GONE); return; }
+            sensorBanner.setText(banner.getMessageRes());
+            sensorBanner.setBackgroundColor(banner.getColorArgb());
+            sensorBanner.setVisibility(View.VISIBLE);
+        }
+        @Override public void onWarmTintChanged(float alpha) {
+            warmTintOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(WARM_TINT_RGB, Math.round(alpha * 255)));
+        }
+        @Override public void onSnapshot(@NonNull SensorHealthSnapshot snapshot) {
+            if (viewModel != null) viewModel.postSensorHealth(snapshot);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,6 +126,9 @@ public class MainActivity extends AppCompatActivity
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
         }
         viewModel = new ViewModelProvider(this).get(UIViewModel.class);
+        sensorBanner = findViewById(R.id.sensorBanner);
+        warmTintOverlay = findViewById(R.id.warmTintOverlay);
+        sensorController = new SensorHealthController(this, presenter, sensorListener);
 
         //twitter authenticator
         twitterAuthenticator = new TwitterAuthenticator(getApplication());
@@ -269,8 +301,21 @@ public class MainActivity extends AppCompatActivity
 
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (sensorController != null) sensorController.start();
+    }
+
+    @Override
+    protected void onPause() {
+        if (sensorController != null) sensorController.stop();
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (sensorController != null) sensorController.release();
         if (presenter != null) {
             presenter.onDestroy();
         }
@@ -315,33 +360,33 @@ public class MainActivity extends AppCompatActivity
             @Override
             @OptIn(markerClass = ExperimentalGetImage.class)
             public void analyze(@NonNull ImageProxy image) {
-
-                if (presenter.getPresenterState()) {
+                long now = SystemClock.elapsedRealtime();
+                SensorHealthController sensors = sensorController;
+                if (presenter.getPresenterState()
+                        || (sensors != null && !sensors.getFrameGovernor().shouldProcess(now))) {
                     image.close();
-                } else {
-                    if (image.getFormat() == ImageFormat.YUV_420_888 && image.getPlanes().length == 3) {
-                        Image newImage = image.getImage();
-                        Mat rgbaMat = null;
-                        try {
-                            if (newImage != null) {
-                                rgbaMat = ImageFormatUtils.rgb(newImage);
-                                presenter.onFrame(rgbaMat);
-                            }
-                        } catch (Exception e) {
-                            Log.e("MVPView", "Error analyzing frame", e);
-                        } finally {
-                            if (newImage != null) {
-                                newImage.close();
-                            }
-                            if (rgbaMat != null) {
-                                rgbaMat.release();
-                            }
-                        }
-                    } else {
-                        Log.d("MVPView", "Image format not correct");
-                    }
-                    image.close();
+                    return;
                 }
+                if (image.getFormat() == ImageFormat.YUV_420_888 && image.getPlanes().length == 3) {
+                    Image newImage = image.getImage();
+                    Mat rgbaMat = null;
+                    try {
+                        if (newImage != null) {
+                            rgbaMat = ImageFormatUtils.rgb(newImage);
+                            long t0 = SystemClock.elapsedRealtime();
+                            presenter.onFrame(rgbaMat);
+                            if (sensors != null) sensors.onFrameProcessed(SystemClock.elapsedRealtime() - t0);
+                        }
+                    } catch (Exception e) {
+                        Log.e("MVPView", "Error analyzing frame", e);
+                    } finally {
+                        if (newImage != null) newImage.close();
+                        if (rgbaMat != null) rgbaMat.release();
+                    }
+                } else {
+                    Log.d("MVPView", "Image format not correct");
+                }
+                image.close();
             }
         });
         cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis);

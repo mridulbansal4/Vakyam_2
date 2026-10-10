@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Environment
 import android.util.Log
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.demo.opencv.sensors.PerformanceTier
 import com.google.ai.edge.litertlm.Backend
 import com.google.ai.edge.litertlm.Content
 import com.google.ai.edge.litertlm.Contents
@@ -33,6 +34,17 @@ class GemmaManager {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var mContext: Context? = null
     private var activeLanguage = "English"
+    @Volatile private var tierOutputTokens = MAX_OUTPUT_TOKENS
+    @Volatile private var llmDeferred = false
+
+    fun setPerformanceTier(tier: PerformanceTier) {
+        tierOutputTokens = if (tier == PerformanceTier.FULL) MAX_OUTPUT_TOKENS else REDUCED_OUTPUT_TOKENS
+        llmDeferred = tier == PerformanceTier.POWER_SAVER
+        Log.i(TAG, "performance tier $tier: maxTokens=$tierOutputTokens deferred=$llmDeferred")
+    }
+
+    private fun outputTokenBudget(language: String): Int =
+        if (language == "Hindi") maxOf(tierOutputTokens, 32) else tierOutputTokens // Devanagari tokenizes longer
 
     fun init(context: Context) {
         mContext = context.applicationContext
@@ -190,6 +202,12 @@ class GemmaManager {
             return
         }
 
+        if (llmDeferred) {
+            Log.i(TAG, "Thermal POWER_SAVER: skipping Gemma, using fallback sentence")
+            sendMessage(fallbackSentence(kw))
+            return
+        }
+
         scope.launch {
             try {
                 if (sharedEngine == null) {
@@ -264,7 +282,7 @@ class GemmaManager {
                     listOf(Message.user(user), Message.model(model))
                 },
                 samplerConfig = SamplerConfig(topK = 20, topP = 0.9, temperature = 0.3),
-                maxOutputToken = MAX_OUTPUT_TOKENS
+                maxOutputToken = outputTokenBudget(language)
             )
         )
     }
@@ -323,6 +341,7 @@ class GemmaManager {
         const val MODEL_FILE_NAME = "gemma-4-E2B-it.litertlm"
         private const val MAX_CONTEXT_TOKENS = 1024
         private const val MAX_OUTPUT_TOKENS = 64
+        private const val REDUCED_OUTPUT_TOKENS = 20
         private const val GENERATION_TIMEOUT_MS = 25_000L
 
         private val engineMutex = Mutex()

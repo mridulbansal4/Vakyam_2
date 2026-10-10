@@ -125,5 +125,10 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="SocialMedia_RetakePhoto">RETAKE PHOTO</string>
+    <string name="Sensor_ThermalCritical">Device warm — cooling down while keeping the keyboard active</string>
+    <string name="Sensor_ChargingWarm">Phone is warm while charging — check airflow around the charger</string>
+    <string name="Sensor_ChargingHot">Phone is overheating — unplug the charger and improve airflow</string>
+    <string name="Sensor_ChargingHotSpoken">Caregiver, the phone is overheating. Please unplug the charger.</string>
+    <string name="Sensor_HealthWaiting">Sensor health: waiting…</string>
 
 </resources>

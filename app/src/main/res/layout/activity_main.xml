@@ -91,16 +91,35 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/sensorBanner"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragmentContainerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
-    </LinearLayout>
+
+        <View
+            android:id="@+id/warmTintOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#00FF9329"
+            android:clickable="false"
+            android:focusable="false"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
 
 </LinearLayout>
 

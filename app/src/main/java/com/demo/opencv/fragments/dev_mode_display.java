@@ -240,6 +240,11 @@ public class dev_mode_display extends Fragment {
                 }
             }
         });
+
+        TextView sensorHealthText = view.findViewById(R.id.sensorHealthText);
+        viewModel.getSensorHealth().observe(getViewLifecycleOwner(), s -> {
+            if (s != null && sensorHealthText != null) sensorHealthText.setText(s.toDebugText());
+        });
     }
 
     @Override

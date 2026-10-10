@@ -14,8 +14,6 @@ import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.EyeDetection;
 import com.demo.opencv.vision.GazeData;
 import com.demo.opencv.vision.GoogleFaceDetector;
-import com.google.mlkit.vision.face.FaceContour;
-
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Core;
@@ -63,6 +61,46 @@ public class Model implements ContractInterface.Model {
     private int rotationIndex = 0;
     private boolean rotationConfirmed = false;
     private int framesWithoutFace = 0;
+
+    // Thermal BALANCED/POWER_SAVER: ML Kit runs on a crop around the last face instead of the full frame
+    private volatile boolean faceRoiDetection = false;
+    private int framesSinceFullScan = 0;
+    private static final int FULL_SCAN_EVERY_N_FRAMES = 30;
+
+    // Experimental, default off: green-weighted grayscale for the iris detector only (never the template path)
+    private volatile boolean warmLightIrisGray = false;
+    private Mat warmGrayWeights;
+
+    @Override
+    public void setFaceRoiDetection(boolean enabled) { faceRoiDetection = enabled; }
+
+    public void setWarmLightIrisGrayscale(boolean enabled) { warmLightIrisGray = enabled; }
+
+    private Rect detectionRoi(Mat frame) { // null = scan the full frame
+        android.graphics.Rect face = faceDetector.faceBound;
+        if (!faceRoiDetection || face == null || !faceDetector.faceDetected
+                || ++framesSinceFullScan >= FULL_SCAN_EVERY_N_FRAMES) {
+            framesSinceFullScan = 0;
+            return null;
+        }
+        int half = (int) (Math.max(face.width(), face.height()) * 0.8);
+        int x0 = Math.max(0, face.centerX() - half);
+        int y0 = Math.max(0, face.centerY() - half);
+        int x1 = Math.min(frame.cols(), face.centerX() + half);
+        int y1 = Math.min(frame.rows(), face.centerY() + half);
+        if (x1 - x0 < 96 || y1 - y0 < 96) return null;
+        return new Rect(x0, y0, x1 - x0, y1 - y0);
+    }
+
+    private Mat irisGray(Mat rgbEye) {
+        if (warmGrayWeights == null) {
+            warmGrayWeights = new Mat(1, 3, CvType.CV_32F);
+            warmGrayWeights.put(0, 0, 0.15, 0.70, 0.15);
+        }
+        Mat gray = new Mat();
+        Core.transform(rgbEye, gray, warmGrayWeights); // 3-channel 8U -> 1-channel 8U
+        return gray;
+    }
 
     @Override
     public void initialize(Context context, Context applicationContext) throws IOException { // initialize models, libraries, and datastore
@@ -304,12 +342,15 @@ public class Model implements ContractInterface.Model {
         Bitmap bmp;
 
         // google ml kit detection
+        Rect roi = detectionRoi(rgbMat);
+        Mat detectSrc = (roi != null) ? rgbMat.submat(roi) : rgbMat;
         Mat rgbaMat = new Mat();
-        Imgproc.cvtColor(rgbMat, rgbaMat, Imgproc.COLOR_RGB2RGBA);
+        Imgproc.cvtColor(detectSrc, rgbaMat, Imgproc.COLOR_RGB2RGBA);
+        if (detectSrc != rgbMat) detectSrc.release();
         bmp = Bitmap.createBitmap(rgbaMat.cols(), rgbaMat.rows(), Bitmap.Config.ARGB_8888);
         Utils.matToBitmap(rgbaMat, bmp);
         rgbaMat.release();
-        faceDetector.detect(bmp);
+        if (roi != null) faceDetector.detect(bmp, roi.x, roi.y); else faceDetector.detect(bmp);
 
         // initialization
         detectionOutput.initialize(4);
@@ -328,12 +369,14 @@ public class Model implements ContractInterface.Model {
         }
 
         Rect leftEyeBound = null;
-        if (faceDetector.leftEyeContour != null) { // left eye available
-            List<PointF> leftEyePoints = faceDetector.leftEyeContour.getPoints();
+        Mat leftEyeIris = null, rightEyeIris = null;
+        if (faceDetector.leftEyePoints != null) { // left eye available
+            List<PointF> leftEyePoints = faceDetector.leftEyePoints;
             leftEyeBound = getBoundingBox(leftEyePoints, rgbMat);
             if (leftEyeBound != null) {
                 leftEye = new Mat(rgbMat, leftEyeBound);
                 Imgproc.resize(leftEye, leftEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
+                if (warmLightIrisGray) leftEyeIris = irisGray(leftEye);
                 Imgproc.cvtColor(leftEye, leftEye, Imgproc.COLOR_RGB2GRAY);
 
                 if (!bothEyesClosed && userDataManager != null && userDataManager.checkCalibrationFiles()) { // true = calibration complete
@@ -343,12 +386,13 @@ public class Model implements ContractInterface.Model {
         }
 
         Rect rightEyeBound = null;
-        if (faceDetector.rightEyeContour != null) { // right eye available
-            List<PointF> rightEyePoints = faceDetector.rightEyeContour.getPoints();
+        if (faceDetector.rightEyePoints != null) { // right eye available
+            List<PointF> rightEyePoints = faceDetector.rightEyePoints;
             rightEyeBound = getBoundingBox(rightEyePoints, rgbMat);
             if (rightEyeBound != null) {
                 rightEye = new Mat(rgbMat, rightEyeBound);
                 Imgproc.resize(rightEye, rightEye, new Size(IMAGE_WIDTH, IMAGE_HEIGHT), Imgproc.INTER_LINEAR);
+                if (warmLightIrisGray) rightEyeIris = irisGray(rightEye);
                 Imgproc.cvtColor(rightEye, rightEye, Imgproc.COLOR_RGB2GRAY);
 
                 if (!bothEyesClosed && userDataManager != null && userDataManager.checkCalibrationFiles()) { // if there are calibration images
@@ -377,28 +421,30 @@ public class Model implements ContractInterface.Model {
         }
 
         // Robust eye contour selection: prefer left eye, fallback to right eye if left eye is missing or out of frame
-        FaceContour primaryContour = null;
+        List<PointF> primaryPoints = null;
         Rect primaryBound = null;
         Mat primaryEyeMat = null;
-        if (faceDetector.leftEyeContour != null && leftEyeBound != null && leftEye != null) {
-            primaryContour = faceDetector.leftEyeContour;
+        Mat primaryIrisMat = null;
+        if (faceDetector.leftEyePoints != null && leftEyeBound != null && leftEye != null) {
+            primaryPoints = faceDetector.leftEyePoints;
             primaryBound = leftEyeBound;
             primaryEyeMat = leftEye;
-        } else if (faceDetector.rightEyeContour != null && rightEyeBound != null && rightEye != null) {
-            primaryContour = faceDetector.rightEyeContour;
+            primaryIrisMat = leftEyeIris;
+        } else if (faceDetector.rightEyePoints != null && rightEyeBound != null && rightEye != null) {
+            primaryPoints = faceDetector.rightEyePoints;
             primaryBound = rightEyeBound;
             primaryEyeMat = rightEye;
+            primaryIrisMat = rightEyeIris;
         }
 
-        if (primaryContour != null && primaryBound != null && primaryEyeMat != null
-                && primaryContour.getPoints() != null && !primaryContour.getPoints().isEmpty()) {
-            List<PointF> points = primaryContour.getPoints();
+        if (primaryPoints != null && primaryBound != null && primaryEyeMat != null && !primaryPoints.isEmpty()) {
+            List<PointF> points = primaryPoints;
             List<NormalizedIrisEstimator.Point2D> pts = new ArrayList<>(points.size());
             for (PointF p : points) {
                 pts.add(new NormalizedIrisEstimator.Point2D(p.x, p.y));
             }
 
-            Point irisRoi = detector.irisDetection(primaryEyeMat);
+            Point irisRoi = detector.irisDetection(primaryIrisMat != null ? primaryIrisMat : primaryEyeMat);
             detectionOutput.testingMats[2] = detector.opening;
 
             NormalizedIrisEstimator.Point2D irisPt = null;
@@ -493,6 +539,8 @@ public class Model implements ContractInterface.Model {
             gestureDetector.reset();
         }
 
+        if (leftEyeIris != null) leftEyeIris.release();
+        if (rightEyeIris != null) rightEyeIris.release();
         return detectionOutput;
     }
 }

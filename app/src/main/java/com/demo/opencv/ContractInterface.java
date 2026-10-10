@@ -25,6 +25,7 @@ public interface ContractInterface {
         void initialize(Context context, Context applicationContext) throws IOException; // method to initialize models in the database (OpenCV, TensorFlow Lite, ChatGPT, etc.)
         void updateCalibrationTemplates();
         DetectionOutput classifyGaze(Mat rgbMat); // determine gaze code with output
+        void setFaceRoiDetection(boolean enabled); // run ML Kit on a crop around the last face
     }
 
     interface Presenter {
@@ -38,5 +39,7 @@ public interface ContractInterface {
         String getMode();
         void onGazeButtonClicked(int input);
         void onRecordButtonClicked();
+        void setFaceRoiDetection(boolean enabled);
+        void speakCaregiverMessage(String text);
     }
 }

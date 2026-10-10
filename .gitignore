@@ -15,3 +15,6 @@ Models/*.litertlm
 
 # The offline speech model (~150 MB) is pushed to the device with adb as well.
 Models/asr/
+
+# Serena MCP tool metadata
+.serena/

@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.text.Layout;
 import android.util.Log;
 import android.util.Range;
 import android.util.TypedValue;
@@ -124,10 +125,10 @@ public class MainActivity extends AppCompatActivity
         @Override public void onBannerChanged(@Nullable SensorBanner banner) {
             shownSensorBanner = banner;
             dismissSensorMessage();
-            // The brand gives way to the chip so every tab still fits on one line.
-            findViewById(R.id.brandTitle).setVisibility(banner == null ? View.VISIBLE : View.GONE);
             if (banner == null) { sensorBanner.setVisibility(View.GONE); return; }
+            setSensorChipCompact(false);
             sensorBanner.setText(banner.getLabelRes());
+            sensorBanner.setContentDescription(getString(banner.getLabelRes()));
             sensorBanner.setBackgroundResource(banner.getUrgent() ? R.drawable.bg_status_chip_urgent : R.drawable.bg_status_chip);
             TextViewCompat.setCompoundDrawableTintList(sensorBanner, ColorStateList.valueOf(banner.getUrgent()
                     ? ContextCompat.getColor(MainActivity.this, R.color.vk_on_emergency)
@@ -176,6 +177,13 @@ public class MainActivity extends AppCompatActivity
         sensorBanner = findViewById(R.id.sensorBanner);
         sensorBanner.setOnClickListener(v -> {
             if (sensorMessage != null) dismissSensorMessage(); else showSensorMessage();
+        });
+        // The brand and tabs keep their places; on a narrow screen the chip drops to its icon rather than a cut-off label.
+        sensorBanner.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            Layout layout = sensorBanner.getLayout();
+            if (layout != null && layout.getLineCount() > 0 && layout.getEllipsisCount(0) > 0) {
+                sensorBanner.post(() -> setSensorChipCompact(true));
+            }
         });
         warmTintOverlay = findViewById(R.id.warmTintOverlay);
         ringLightOverlay = findViewById(R.id.ringLightOverlay);
@@ -233,6 +241,14 @@ public class MainActivity extends AppCompatActivity
         });
         findViewById(R.id.blinkKeyboardButton).setOnClickListener(v -> BlinkKeyboard.open(this,
                 word -> Toast.makeText(getApplicationContext(), "Spelled: " + word, Toast.LENGTH_LONG).show()));
+    }
+
+    private void setSensorChipCompact(boolean compact) {
+        float density = getResources().getDisplayMetrics().density;
+        int start = sensorBanner.getPaddingStart();
+        if (compact) sensorBanner.setText(null);
+        sensorBanner.setCompoundDrawablePadding(compact ? 0 : Math.round(6 * density));
+        sensorBanner.setPaddingRelative(start, 0, compact ? start : Math.round(16 * density), 0);
     }
 
     private void showSensorMessage() {

@@ -72,16 +72,18 @@
             style="@style/TopTab"
             android:text="@string/Settings_Title" />
 
-        <Space
+        <!-- Phone heat and charging status: a chip, so the screen below never shifts. Tap for the full message.
+             It takes whatever room the brand and tabs leave, so neither of those ever has to give way. -->
+        <FrameLayout
             android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
 
-        <!-- Phone heat and charging status: a chip, so the screen below never shifts. Tap for the full message. -->
         <TextView
             android:id="@+id/sensorBanner"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
+            android:layout_gravity="end|center_vertical"
             android:background="@drawable/bg_status_chip"
             android:clickable="true"
             android:drawablePadding="6dp"
@@ -98,6 +100,8 @@
             app:drawableStartCompat="@drawable/ic_thermometer"
             tools:text="Phone warm"
             tools:visibility="visible" />
+
+        </FrameLayout>
 
     </LinearLayout>
 

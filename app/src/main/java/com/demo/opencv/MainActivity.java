@@ -13,6 +13,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.util.Range;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -53,6 +54,7 @@ import com.demo.opencv.sensors.SensorBanner;
 import com.demo.opencv.sensors.SensorHealthController;
 import com.demo.opencv.sensors.SensorHealthSnapshot;
 import com.demo.opencv.sensors.SensorSimulation;
+import com.demo.opencv.ui.FolderTabDrawable;
 import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
@@ -170,7 +172,8 @@ public class MainActivity extends AppCompatActivity
         TypingTest.addListener(typingTestListener);
 
         // home page set up
-        Button devButton, textButton, calibrateButton, clinicianButton, quickChatButton;
+        setUpTopTabs();
+        TextView devButton, textButton, calibrateButton, clinicianButton, quickChatButton;
         devButton = findViewById(R.id.devModeButton);
         textButton = findViewById(R.id.textModeButton);
         calibrateButton =  findViewById(R.id.calibrateButton);
@@ -213,6 +216,29 @@ public class MainActivity extends AppCompatActivity
         });
         findViewById(R.id.blinkKeyboardButton).setOnClickListener(v -> BlinkKeyboard.open(this,
                 word -> Toast.makeText(getApplicationContext(), "Spelled: " + word, Toast.LENGTH_LONG).show()));
+    }
+
+    private void setUpTopTabs() {
+        ViewGroup bar = findViewById(R.id.topTabBar);
+        float density = getResources().getDisplayMetrics().density;
+        int selected = ContextCompat.getColor(this, R.color.vk_canvas);
+        int idle = ContextCompat.getColor(this, R.color.vk_accent);
+        int edge = ContextCompat.getColor(this, R.color.vk_chrome);
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            bar.getChildAt(i).setBackground(
+                    new FolderTabDrawable(selected, idle, edge, 1.5f * density, 12 * density, 18 * density));
+        }
+    }
+
+    // The selected tab is raised so its curved feet sit over both neighbours.
+    private void selectTopTab(int tabId) {
+        ViewGroup bar = findViewById(R.id.topTabBar);
+        for (int i = 0; i < bar.getChildCount(); i++) {
+            View tab = bar.getChildAt(i);
+            boolean isSelected = tab.getId() == tabId;
+            tab.setSelected(isSelected);
+            tab.setTranslationZ(isSelected ? 1f : 0f);
+        }
     }
 
     private void setLocale(String language) {
@@ -261,6 +287,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
             presenter.setMode("Text");
+            selectTopTab(R.id.textModeButton);
             Fragment textFragment = text_mode_display.newInstance();
             fragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainerView, textFragment)
@@ -275,6 +302,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
             presenter.setMode("Calibration");
+            selectTopTab(R.id.calibrateButton);
             fragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainerView, calibration_display.class, null)
                     .setReorderingAllowed(true)
@@ -288,6 +316,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
             presenter.setMode("Dev");
+            selectTopTab(R.id.devModeButton);
             Fragment devFragment = dev_mode_display.newInstance();
             fragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainerView, devFragment)
@@ -302,6 +331,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
             presenter.setMode("QuickChat");
+            selectTopTab(R.id.quickChatButton);
             fragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainerView, quick_chat_display.class, null)
                     .setReorderingAllowed(true)
@@ -315,6 +345,7 @@ public class MainActivity extends AppCompatActivity
         runOnUiThread(() -> {
             if (isFinishing() || isDestroyed()) return;
             presenter.setMode("Clinician");
+            selectTopTab(R.id.clinicianModeButton);
             ClinicalData clinicalData = presenter.getClinicalData();
             Fragment calibrationFragment = clinician_mode_display.newInstance(clinicalData);
             fragmentManager.beginTransaction()

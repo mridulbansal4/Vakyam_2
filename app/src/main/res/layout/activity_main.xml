@@ -10,153 +10,70 @@
     android:orientation="vertical"
     tools:context="com.demo.opencv.MainActivity">
 
-    <!-- One row: widths are shared by label length and the text shrinks to fit, so no label wraps -->
+    <!-- One row of folder tabs: widths are shared by label length and the text shrinks to fit, so no label wraps.
+         Every tab after the first starts -32dp in so neighbouring tabs overlap. -->
     <LinearLayout
+        android:id="@+id/topTabBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/vk_chrome"
-        android:gravity="center_vertical"
+        android:gravity="bottom"
         android:orientation="horizontal"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
+        android:paddingStart="6dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="6dp"
         android:visibility="visible">
 
-        <Button
+        <TextView
             android:id="@+id/devModeButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
             android:layout_weight="1.2"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/Settings_Title"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform" />
+            android:text="@string/Settings_Title" />
 
-        <Button
+        <TextView
             android:id="@+id/quickChatButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
+            android:layout_marginStart="-32dp"
             android:layout_weight="0.9"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/QuickChat_TopBarTitle"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform" />
+            android:text="@string/QuickChat_TopBarTitle" />
 
-        <Button
+        <TextView
             android:id="@+id/textModeButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
+            android:layout_marginStart="-32dp"
             android:layout_weight="1.4"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/TextEntry_TopBarTitle"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform" />
+            android:text="@string/TextEntry_TopBarTitle" />
 
-        <Button
+        <TextView
             android:id="@+id/calibrateButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
+            android:layout_marginStart="-32dp"
             android:layout_weight="1.6"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/Calibration_TopBarTitle"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform" />
+            android:text="@string/Calibration_TopBarTitle" />
 
-        <Button
+        <TextView
             android:id="@+id/clinicianModeButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
+            android:layout_marginStart="-32dp"
             android:layout_weight="0.8"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/Clinician_TopBarTitle"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform" />
+            android:text="@string/Clinician_TopBarTitle" />
 
-        <Button
+        <TextView
             android:id="@+id/blinkKeyboardButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
+            android:layout_marginStart="-32dp"
             android:layout_weight="1.1"
             android:contentDescription="Spell with Eyes"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
             android:text="Spell"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform"
             tools:ignore="HardcodedText" />
 
-        <Button
+        <TextView
             android:id="@+id/sosButton"
-            style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
+            style="@style/TopTab"
+            android:layout_marginStart="-32dp"
             android:layout_weight="0.8"
-            android:backgroundTint="@color/vk_emergency"
             android:contentDescription="@string/Emergency_Title"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="1"
-            android:minWidth="0dp"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp"
-            android:text="@string/Emergency_SosButton"
-            android:textColor="@color/vk_on_chrome"
-            android:textStyle="bold"
-            android:typeface="normal"
-            app:autoSizeMaxTextSize="18sp"
-            app:autoSizeMinTextSize="10sp"
-            app:autoSizeTextType="uniform" />
+            android:text="@string/Emergency_SosButton" />
 
     </LinearLayout>
 
@@ -241,4 +158,3 @@
     </FrameLayout>
 
 </LinearLayout>
-

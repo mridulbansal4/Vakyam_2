@@ -5,7 +5,7 @@
     android:id="@+id/devModeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/ic_launcher_background"
+    android:background="@color/ghost_blue"
     android:orientation="horizontal"
     tools:context=".fragments.dev_mode_display">
 

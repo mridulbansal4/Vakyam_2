@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity
         // instantiating object of Presenter Interface
         presenter = new Presenter(this, new Model());
 
-        Log.d("MainActivityGazeLink", "initialized");
+        Log.d("MainActivityVakyam", "initialized");
         try {
             presenter.initialize(this, getApplication()); // initialize presenter
         } catch (IOException | JSONException e) {

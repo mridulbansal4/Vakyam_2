@@ -26,7 +26,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 
 /**
- * On-device Gemma 4 E2B LLM manager for Gaze-Link AAC sentence expansion.
+ * On-device Gemma 4 E2B LLM manager for Vakyam AAC sentence expansion.
  * Replaces cloud Gemini API with local on-device LiteRT-LM execution.
  */
 class GemmaManager {

@@ -95,4 +95,10 @@
     <string name="Sensor_ChargingHot">El teléfono se está sobrecalentando — desconecte el cargador y mejore la ventilación</string>
     <string name="Sensor_ChargingHotSpoken">Cuidador, el teléfono se está sobrecalentando. Por favor, desconecte el cargador.</string>
     <string name="Sensor_HealthWaiting">Estado de sensores: esperando…</string>
+    <string name="Sensor_TestTitle">Prueba de sensores — simular una condición (toque otra vez para apagar)</string>
+    <string name="Sensor_TestDarkRoom">Habitación oscura</string>
+    <string name="Sensor_TestHotPhone">Teléfono caliente</string>
+    <string name="Sensor_TestChargingHot">Carga caliente</string>
+    <string name="Sensor_TestWarmLight">Luz cálida</string>
+    <string name="Sensor_TestReset">Restablecer</string>
 </resources>

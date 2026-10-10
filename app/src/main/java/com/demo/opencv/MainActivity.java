@@ -13,6 +13,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.util.Range;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -46,6 +47,7 @@ import com.demo.opencv.other.ClinicalData;
 import com.demo.opencv.sensors.SensorBanner;
 import com.demo.opencv.sensors.SensorHealthController;
 import com.demo.opencv.sensors.SensorHealthSnapshot;
+import com.demo.opencv.sensors.SensorSimulation;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -63,7 +65,7 @@ import java.util.concurrent.Executors;
 public class MainActivity extends AppCompatActivity
         implements ContractInterface.View, calibration_display.OnButtonClickListener,
         text_mode_display.TextModeListener,
-        quick_chat_display.QuickChatListener
+        quick_chat_display.QuickChatListener, dev_mode_display.SensorTestHost
 
 {
 
@@ -81,8 +83,13 @@ public class MainActivity extends AppCompatActivity
 
     private volatile SensorHealthController sensorController;
     private TextView sensorBanner;
-    private View warmTintOverlay;
+    private View warmTintOverlay, ringLightOverlay;
     private static final int WARM_TINT_RGB = 0xFFFF9329;
+    private static final long RING_FADE_MS = 800;
+    private static final int LOW_LIGHT_MIN_FPS = 15;
+    private ProcessCameraProvider cameraProvider;
+    private ImageAnalysis boundAnalysis;
+    private boolean lowLightCamera = false;
 
     private final SensorHealthController.Listener sensorListener = new SensorHealthController.Listener() {
         @Override public void onBannerChanged(@Nullable SensorBanner banner) {
@@ -93,6 +100,9 @@ public class MainActivity extends AppCompatActivity
         }
         @Override public void onWarmTintChanged(float alpha) {
             warmTintOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(WARM_TINT_RGB, Math.round(alpha * 255)));
+        }
+        @Override public void onRingLightChanged(boolean on) {
+            setRingLight(on);
         }
         @Override public void onSnapshot(@NonNull SensorHealthSnapshot snapshot) {
             if (viewModel != null) viewModel.postSensorHealth(snapshot);
@@ -124,6 +134,7 @@ public class MainActivity extends AppCompatActivity
         viewModel = new ViewModelProvider(this).get(UIViewModel.class);
         sensorBanner = findViewById(R.id.sensorBanner);
         warmTintOverlay = findViewById(R.id.warmTintOverlay);
+        ringLightOverlay = findViewById(R.id.ringLightOverlay);
         sensorController = new SensorHealthController(this, presenter, sensorListener);
 
         // home page set up
@@ -308,7 +319,7 @@ public class MainActivity extends AppCompatActivity
         final ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
+                cameraProvider = cameraProviderFuture.get();
                 bindCamera(cameraProvider);
 
             } catch (ExecutionException | InterruptedException e) {
@@ -329,9 +340,11 @@ public class MainActivity extends AppCompatActivity
 
         Camera2Interop.Extender<ImageAnalysis> ext = new Camera2Interop.Extender<>(newBuilder);
         int TARGET_FRAME_RATE = 30;
+        // In the dark, let auto-exposure drop to 15 fps (~66 ms exposures); still above the 10 fps gesture floor.
+        int minFrameRate = lowLightCamera ? LOW_LIGHT_MIN_FPS : TARGET_FRAME_RATE;
         ext.setCaptureRequestOption(
                 CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
-                new Range<>(TARGET_FRAME_RATE, TARGET_FRAME_RATE)
+                new Range<>(minFrameRate, TARGET_FRAME_RATE)
         );
         ImageAnalysis imageAnalysis = newBuilder
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -370,6 +383,47 @@ public class MainActivity extends AppCompatActivity
             }
         });
         cameraProvider.bindToLifecycle(this, cameraSelector, imageAnalysis);
+        boundAnalysis = imageAnalysis;
+    }
+
+    private void setRingLight(boolean on) {
+        ringLightOverlay.animate().cancel();
+        if (on) {
+            ringLightOverlay.setAlpha(0f);
+            ringLightOverlay.setVisibility(View.VISIBLE);
+            ringLightOverlay.animate().alpha(1f).setDuration(RING_FADE_MS).start();
+        } else {
+            ringLightOverlay.animate().alpha(0f).setDuration(RING_FADE_MS)
+                    .withEndAction(() -> ringLightOverlay.setVisibility(View.GONE)).start();
+        }
+        // Auto-brightness dims the screen in a dark room, which would make the ring useless.
+        WindowManager.LayoutParams params = getWindow().getAttributes();
+        params.screenBrightness = on ? WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+                : WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+        getWindow().setAttributes(params);
+
+        if (lowLightCamera != on) {
+            lowLightCamera = on;
+            if (cameraProvider != null && boundAnalysis != null && !isFinishing() && !isDestroyed()) {
+                cameraProvider.unbind(boundAnalysis);
+                bindCamera(cameraProvider);
+            }
+        }
+    }
+
+    @Override
+    public boolean isSensorSimulationOn(@NonNull SensorSimulation simulation) {
+        return sensorController != null && sensorController.isSimulating(simulation);
+    }
+
+    @Override
+    public void setSensorSimulation(@NonNull SensorSimulation simulation, boolean on) {
+        if (sensorController != null) sensorController.setSimulation(simulation, on);
+    }
+
+    @Override
+    public void clearSensorSimulations() {
+        if (sensorController != null) sensorController.clearSimulations();
     }
 
     private boolean allPermissionsGranted(){

@@ -29,6 +29,7 @@ class SensorHealthController(
     interface Listener {
         fun onBannerChanged(banner: SensorBanner?)
         fun onWarmTintChanged(alpha: Float)
+        fun onRingLightChanged(on: Boolean)
         fun onSnapshot(snapshot: SensorHealthSnapshot)
     }
 
@@ -36,6 +37,7 @@ class SensorHealthController(
     private val main = Handler(Looper.getMainLooper())
     private val alert = CaregiverAlert()
     private val banners: EnumSet<SensorBanner> = EnumSet.noneOf(SensorBanner::class.java)
+    private val simulations: EnumSet<SensorSimulation> = EnumSet.noneOf(SensorSimulation::class.java)
     private var shownBanner: SensorBanner? = null
     private var snapshot = SensorHealthSnapshot()
     private var started = false
@@ -47,33 +49,62 @@ class SensorHealthController(
     // 02 — thermal
     private val thermalPolicy = ThermalPolicy()
     private var tierApplied = false
+    private var realThermalStatus = -1
+    private var realHeadroom = Float.NaN
     private val thermalMonitor = ThermalMonitor(appContext) { status, headroom ->
-        publish { it.copy(thermalStatus = status, thermalHeadroom = headroom) }
+        realThermalStatus = status
+        realHeadroom = headroom
+        publishThermal()
         reevaluateTier()
     }
 
     // 03 — battery
     private val heatGuard = BatteryHeatGuard()
+    private var realBatteryC = Float.NaN
+    private var realPlugged = false
     private val batteryMonitor = BatteryThermalMonitor(appContext) { tempC, plugged ->
-        onBatteryReading(tempC, plugged)
+        realBatteryC = tempC
+        realPlugged = plugged
+        if (SensorSimulation.CHARGING_HOT !in simulations) onBatteryReading(tempC, plugged)
     }
 
-    // 04 — color temperature
+    // 04 — color temperature, 05 — low light (same front light sensor)
     private val tintPolicy = WarmTintPolicy()
     private var cctOverrideUntilMs = 0L
-    private val colorMonitor = AmbientColorMonitor(appContext) { kelvin, lux ->
-        if (SystemClock.elapsedRealtime() >= cctOverrideUntilMs) onColorReading(kelvin, lux)
-    }
+    private var realKelvin = Float.NaN
+    private var realCctLux = Float.NaN
+    private val lowLight = LowLightPolicy()
+    private var lastLux = Float.NaN
+    private var ringOn = false
+    private val colorMonitor = AmbientColorMonitor(
+        appContext,
+        onLux = { lux ->
+            lastLux = lux
+            evaluateLowLight()
+        },
+        onReading = { kelvin, lux ->
+            realKelvin = kelvin
+            realCctLux = lux
+            when {
+                SensorSimulation.WARM_LIGHT in simulations -> onColorReading(SIM_WARM_KELVIN, lux)
+                SystemClock.elapsedRealtime() >= cctOverrideUntilMs -> onColorReading(kelvin, lux)
+            }
+        }
+    )
 
     private val processedFrames = AtomicInteger()
     private var lastTickMs = 0L
     private val ticker = object : Runnable {
         override fun run() {
             reevaluateTier() // lets ThermalPolicy step back down after its recovery hold
+            evaluateLowLight() // lux is on-change; the hold timers still need to advance
+            if (SensorSimulation.WARM_LIGHT in simulations && colorMonitor.cctSensor == null) {
+                onColorReading(SIM_WARM_KELVIN, lastLux)
+            }
             val now = SystemClock.elapsedRealtime()
             val elapsed = if (lastTickMs == 0L) TICK_MS else (now - lastTickMs).coerceAtLeast(1L)
             lastTickMs = now
-            val fps = processedFrames.getAndSet(0) * 1000f / elapsed // 0 while suspended, by design
+            val fps = processedFrames.getAndSet(0) * 1000f / elapsed
             publish { it.copy(measuredFps = fps, frameMs = lastFrameMs) }
             main.postDelayed(this, TICK_MS)
         }
@@ -134,7 +165,63 @@ class SensorHealthController(
         lastFrameMs = if (prev.isNaN()) processingMs.toFloat() else prev + 0.1f * (processingMs - prev)
     }
 
+    // ---------------------------------------------------------------- test panel
+    fun isSimulating(sim: SensorSimulation): Boolean = sim in simulations
+
+    fun setSimulation(sim: SensorSimulation, on: Boolean) {
+        if (on == (sim in simulations)) return
+        if (on) simulations.add(sim) else simulations.remove(sim)
+        Log.i(TAG, "simulation $sim -> $on")
+        publish { it.copy(simulations = simulations.toSet()) }
+        when (sim) {
+            SensorSimulation.DARK_ROOM -> evaluateLowLight()
+            SensorSimulation.HOT_PHONE -> {
+                if (!on) resetTier()
+                publishThermal()
+                reevaluateTier()
+            }
+            SensorSimulation.CHARGING_HOT -> {
+                if (on) {
+                    onBatteryReading(SIM_BATTERY_C, true)
+                } else {
+                    onBatteryReading(realBatteryC, realPlugged)
+                    resetTier()
+                    reevaluateTier()
+                }
+            }
+            SensorSimulation.WARM_LIGHT -> {
+                if (on) {
+                    onColorReading(SIM_WARM_KELVIN, lastLux)
+                } else {
+                    // The CCT sensor is on-change, so a steady room may never send a fresh reading.
+                    tintPolicy.reset()
+                    onColorReading(realKelvin, realCctLux)
+                    if (!ringOn) listener.onWarmTintChanged(tintPolicy.alpha)
+                }
+            }
+        }
+    }
+
+    fun clearSimulations() {
+        SensorSimulation.values().forEach { setSimulation(it, false) }
+    }
+
     // ---------------------------------------------------------------- 02
+    private fun publishThermal() {
+        val simulated = SensorSimulation.HOT_PHONE in simulations
+        publish {
+            it.copy(
+                thermalStatus = if (simulated) ThermalPolicy.THERMAL_STATUS_SEVERE else realThermalStatus,
+                thermalHeadroom = if (simulated) Float.NaN else realHeadroom
+            )
+        }
+    }
+
+    private fun resetTier() {
+        thermalPolicy.reset()
+        tierApplied = false
+    }
+
     private fun reevaluateTier() {
         val previous = thermalPolicy.tier
         val tier = thermalPolicy.evaluate(
@@ -181,7 +268,30 @@ class SensorHealthController(
     private fun onColorReading(kelvin: Float, lux: Float) {
         val changed = tintPolicy.update(kelvin)
         publish { it.copy(cctKelvin = tintPolicy.smoothedKelvin, ambientLux = lux, warmTintAlpha = tintPolicy.alpha) }
-        if (changed) listener.onWarmTintChanged(tintPolicy.alpha)
+        if (changed && !ringOn) listener.onWarmTintChanged(tintPolicy.alpha)
+    }
+
+    // ---------------------------------------------------------------- 05
+    private fun evaluateLowLight() {
+        lowLight.update(lastLux, SystemClock.elapsedRealtime())
+        setRing(lowLight.ringOn || SensorSimulation.DARK_ROOM in simulations)
+        publish {
+            it.copy(
+                frontLux = lastLux,
+                roomLux = lowLight.roomLux(lastLux),
+                ringContributionLux = lowLight.ringContributionLux,
+                ringLight = ringOn
+            )
+        }
+    }
+
+    private fun setRing(on: Boolean) {
+        if (on == ringOn) return
+        ringOn = on
+        Log.i(TAG, "ring light -> ${if (on) "ON" else "off"} (front=$lastLux lux)")
+        listener.onRingLightChanged(on)
+        // An amber tint over the ring would cut the light reaching the face.
+        listener.onWarmTintChanged(if (on) 0f else tintPolicy.alpha)
     }
 
     // ---------------------------------------------------------------- shared
@@ -205,5 +315,7 @@ class SensorHealthController(
         private const val TICK_MS = 1_000L
         private const val DEBUG_CCT_HOLD_MS = 60_000L
         private const val ALERT_HEAT = "heat"
+        private const val SIM_BATTERY_C = 46f
+        private const val SIM_WARM_KELVIN = 2700f
     }
 }

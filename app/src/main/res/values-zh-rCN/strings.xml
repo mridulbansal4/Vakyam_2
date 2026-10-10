@@ -95,4 +95,10 @@
     <string name="Sensor_ChargingHot">手机过热 — 请拔下充电器并改善通风</string>
     <string name="Sensor_ChargingHotSpoken">护理人员，手机过热。请拔下充电器。</string>
     <string name="Sensor_HealthWaiting">传感器状态：等待中…</string>
+    <string name="Sensor_TestTitle">传感器测试 — 模拟环境（再次点击关闭）</string>
+    <string name="Sensor_TestDarkRoom">暗室</string>
+    <string name="Sensor_TestHotPhone">手机过热</string>
+    <string name="Sensor_TestChargingHot">充电过热</string>
+    <string name="Sensor_TestWarmLight">暖光</string>
+    <string name="Sensor_TestReset">全部重置</string>
 </resources>

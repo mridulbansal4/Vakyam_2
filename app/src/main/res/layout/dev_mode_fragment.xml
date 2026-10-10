@@ -114,6 +114,47 @@
             android:textColor="#4A4A4A"
             android:textSize="14sp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="8dp"
+            android:text="@string/Sensor_TestTitle"
+            android:textColor="@color/metal_green"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <Button
+                android:id="@+id/simDarkRoomButton"
+                style="@style/SensorTestButton"
+                android:text="@string/Sensor_TestDarkRoom" />
+
+            <Button
+                android:id="@+id/simHotPhoneButton"
+                style="@style/SensorTestButton"
+                android:text="@string/Sensor_TestHotPhone" />
+
+            <Button
+                android:id="@+id/simChargingHotButton"
+                style="@style/SensorTestButton"
+                android:text="@string/Sensor_TestChargingHot" />
+
+            <Button
+                android:id="@+id/simWarmLightButton"
+                style="@style/SensorTestButton"
+                android:text="@string/Sensor_TestWarmLight" />
+
+            <Button
+                android:id="@+id/simResetButton"
+                style="@style/SensorTestButton"
+                android:text="@string/Sensor_TestReset" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"

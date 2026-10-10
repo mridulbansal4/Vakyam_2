@@ -56,6 +56,17 @@ class WarmTintPolicyTest {
     }
 
     @Test
+    fun resetDropsTheOldTintInsteadOfFadingFromIt() {
+        val p = WarmTintPolicy()
+        converge(p, 2700f)
+        p.reset()
+        assertEquals(0f, p.alpha, 0.0001f)
+        p.update(6500f)
+        assertEquals(0f, p.alpha, 0.0001f)
+        assertEquals(6500f, p.smoothedKelvin, 1f)
+    }
+
+    @Test
     fun parsesIqooLightCctEvent() {
         val event = floatArrayOf(0.03f, 11.49f, 3.29f, 2.10f, 0.99f, 1.06f, 3204f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f)
         assertEquals(3204f, CctReading.kelvinFrom(event)!!, 0.01f)

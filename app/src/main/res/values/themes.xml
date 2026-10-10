@@ -13,6 +13,17 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+    <!-- Settings screen "Sensor test" buttons; tint is set in code to show on/off. -->
+    <style name="SensorTestButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">13sp</item>
+    </style>
   <!-- Base application theme. -->
     <style name="Base.Theme.OpenCV" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->

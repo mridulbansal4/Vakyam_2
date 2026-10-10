@@ -35,6 +35,13 @@ class ThermalPolicy @JvmOverloads constructor(
         return tier
     }
 
+    /** Drops straight back to FULL; the next [evaluate] escalates again if the inputs are still hot. */
+    fun reset() {
+        tier = PerformanceTier.FULL
+        batteryTier = PerformanceTier.FULL
+        recoveryStartMs = -1L
+    }
+
     private fun statusTier(status: Int) = when {
         status >= THERMAL_STATUS_SEVERE -> PerformanceTier.POWER_SAVER
         status >= THERMAL_STATUS_MODERATE -> PerformanceTier.BALANCED

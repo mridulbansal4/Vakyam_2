@@ -9,9 +9,10 @@ import android.os.SystemClock
 import android.util.Log
 import java.util.Locale
 
-/** Emits (kelvin, lux) on the main thread. Does nothing if the phone has no CCT sensor. */
+/** Emits every front lux change, and (kelvin, lux) when the phone has a CCT sensor. Main thread. */
 class AmbientColorMonitor(
     context: Context,
+    private val onLux: (lux: Float) -> Unit,
     private val onReading: (kelvin: Float, lux: Float) -> Unit
 ) : SensorEventListener {
 
@@ -31,7 +32,12 @@ class AmbientColorMonitor(
         } else {
             Log.w(TAG, "No CCT sensor; warm tint disabled")
         }
-        lightSensor?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL) }
+        val light = lightSensor
+        if (light != null) {
+            sensorManager.registerListener(this, light, SensorManager.SENSOR_DELAY_NORMAL)
+        } else {
+            Log.w(TAG, "No light sensor; automatic ring light disabled")
+        }
     }
 
     fun stop() {
@@ -45,6 +51,7 @@ class AmbientColorMonitor(
         val type = event.sensor.type
         if (type == Sensor.TYPE_LIGHT) {
             lux = event.values[0]
+            onLux(lux)
         } else if (type == cctSensor?.type) {
             logRaw(event.values)
             CctReading.kelvinFrom(event.values)?.let { onReading(it, lux) }

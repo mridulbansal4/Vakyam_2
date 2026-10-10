@@ -117,5 +117,11 @@
     <string name="Sensor_ChargingHot">Phone is overheating — unplug the charger and improve airflow</string>
     <string name="Sensor_ChargingHotSpoken">Caregiver, the phone is overheating. Please unplug the charger.</string>
     <string name="Sensor_HealthWaiting">Sensor health: waiting…</string>
+    <string name="Sensor_TestTitle">Sensor test — simulate a condition (tap again to turn off)</string>
+    <string name="Sensor_TestDarkRoom">Dark room</string>
+    <string name="Sensor_TestHotPhone">Hot phone</string>
+    <string name="Sensor_TestChargingHot">Charging hot</string>
+    <string name="Sensor_TestWarmLight">Warm light</string>
+    <string name="Sensor_TestReset">Reset all</string>
 
 </resources>

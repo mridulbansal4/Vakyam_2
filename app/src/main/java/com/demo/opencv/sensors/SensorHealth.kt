@@ -19,6 +19,9 @@ enum class SensorBanner(@StringRes val messageRes: Int, val colorArgb: Int) {
     CHARGING_WARM(R.string.Sensor_ChargingWarm, 0xFFF9A825.toInt())
 }
 
+/** Conditions the Settings-screen test panel can fake without the real environment. */
+enum class SensorSimulation { DARK_ROOM, HOT_PHONE, CHARGING_HOT, WARM_LIGHT }
+
 data class SensorHealthSnapshot(
     val thermalStatus: Int = -1,
     val thermalHeadroom: Float = Float.NaN,
@@ -30,13 +33,20 @@ data class SensorHealthSnapshot(
     val frameMs: Float = Float.NaN,
     val cctKelvin: Float = Float.NaN,
     val ambientLux: Float = Float.NaN,
-    val warmTintAlpha: Float = 0f
+    val warmTintAlpha: Float = 0f,
+    val frontLux: Float = Float.NaN,
+    val roomLux: Float = Float.NaN,
+    val ringContributionLux: Float = 0f,
+    val ringLight: Boolean = false,
+    val simulations: Set<SensorSimulation> = emptySet()
 ) {
     fun toDebugText(): String = buildString {
         appendLine("Thermal   : ${thermalStatusName(thermalStatus)}  headroom=${fmt(thermalHeadroom, 2)}")
         appendLine("Battery   : ${fmt(batteryTempC)} °C  plugged=$plugged  heat=$chargingHeat")
         appendLine("Tier      : $tier  target=${tier.targetFps} fps  measured=${fmt(measuredFps)} fps  frame=${fmt(frameMs)} ms")
-        append("Light     : CCT=${fmt(cctKelvin, 0)} K  lux=${fmt(ambientLux, 0)}  tint=${fmt(warmTintAlpha, 2)}")
+        appendLine("Light     : CCT=${fmt(cctKelvin, 0)} K  lux=${fmt(ambientLux, 0)}  tint=${fmt(warmTintAlpha, 2)}")
+        append("Low light : front=${fmt(frontLux, 0)} lux  room≈${fmt(roomLux, 0)} lux  ring=${if (ringLight) "ON" else "off"}  self=${fmt(ringContributionLux, 0)} lux")
+        if (simulations.isNotEmpty()) append("\nSIMULATED : ${simulations.joinToString()}")
     }
 
     private fun fmt(v: Float, decimals: Int = 1): String =

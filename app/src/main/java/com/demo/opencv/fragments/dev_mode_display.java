@@ -2,10 +2,12 @@ package com.demo.opencv.fragments;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -17,6 +19,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
@@ -26,10 +29,13 @@ import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.R;
 import com.demo.opencv.UIViewModel;
 import com.demo.opencv.UserDataManager;
+import com.demo.opencv.sensors.SensorSimulation;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Objects;
 
 public class dev_mode_display extends Fragment {
@@ -242,9 +248,54 @@ public class dev_mode_display extends Fragment {
         });
 
         TextView sensorHealthText = view.findViewById(R.id.sensorHealthText);
-        viewModel.getSensorHealth().observe(getViewLifecycleOwner(), s -> {
-            if (s != null && sensorHealthText != null) sensorHealthText.setText(s.toDebugText());
+        Map<SensorSimulation, Button> simButtons = new EnumMap<>(SensorSimulation.class);
+        simButtons.put(SensorSimulation.DARK_ROOM, view.findViewById(R.id.simDarkRoomButton));
+        simButtons.put(SensorSimulation.HOT_PHONE, view.findViewById(R.id.simHotPhoneButton));
+        simButtons.put(SensorSimulation.CHARGING_HOT, view.findViewById(R.id.simChargingHotButton));
+        simButtons.put(SensorSimulation.WARM_LIGHT, view.findViewById(R.id.simWarmLightButton));
+        Button simReset = view.findViewById(R.id.simResetButton);
+        SensorTestHost host = (requireActivity() instanceof SensorTestHost) ? (SensorTestHost) requireActivity() : null;
+
+        for (Map.Entry<SensorSimulation, Button> entry : simButtons.entrySet()) {
+            SensorSimulation sim = entry.getKey();
+            Button button = entry.getValue();
+            boolean on = host != null && host.isSensorSimulationOn(sim);
+            styleSimButton(button, on);
+            button.setOnClickListener(v -> {
+                if (host == null) return;
+                boolean next = !host.isSensorSimulationOn(sim);
+                host.setSensorSimulation(sim, next);
+                styleSimButton(button, next);
+            });
+        }
+        styleSimButton(simReset, false);
+        simReset.setOnClickListener(v -> {
+            if (host != null) host.clearSensorSimulations();
+            for (Button b : simButtons.values()) styleSimButton(b, false);
         });
+
+        viewModel.getSensorHealth().observe(getViewLifecycleOwner(), s -> {
+            if (s == null) return;
+            if (sensorHealthText != null) sensorHealthText.setText(s.toDebugText());
+            for (Map.Entry<SensorSimulation, Button> entry : simButtons.entrySet()) {
+                styleSimButton(entry.getValue(), s.getSimulations().contains(entry.getKey()));
+            }
+        });
+    }
+
+    /** Implemented by MainActivity, which owns the SensorHealthController. */
+    public interface SensorTestHost {
+        boolean isSensorSimulationOn(@NonNull SensorSimulation simulation);
+        void setSensorSimulation(@NonNull SensorSimulation simulation, boolean on);
+        void clearSensorSimulations();
+    }
+
+    private static final int SIM_ON_COLOR = 0xFFEF6C00;
+
+    private void styleSimButton(Button button, boolean on) {
+        if (button == null) return;
+        int color = on ? SIM_ON_COLOR : ContextCompat.getColor(button.getContext(), R.color.metal_green);
+        button.setBackgroundTintList(ColorStateList.valueOf(color));
     }
 
     @Override

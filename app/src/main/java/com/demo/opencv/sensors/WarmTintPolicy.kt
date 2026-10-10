@@ -33,4 +33,9 @@ class WarmTintPolicy @JvmOverloads constructor(
         alpha = target
         return true
     }
+
+    fun reset() {
+        smoothedKelvin = Float.NaN
+        alpha = 0f
+    }
 }

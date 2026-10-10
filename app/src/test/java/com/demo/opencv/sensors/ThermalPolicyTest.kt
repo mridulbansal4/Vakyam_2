@@ -46,6 +46,15 @@ class ThermalPolicyTest {
     }
 
     @Test
+    fun resetSkipsTheRecoveryHold() {
+        val p = ThermalPolicy(recoveryHoldMs = 20_000L)
+        p.evaluate(SEVERE, nan, nan, 0L)
+        p.reset()
+        assertEquals(FULL, p.evaluate(NONE, nan, nan, 1L))
+        assertEquals(POWER_SAVER, p.evaluate(SEVERE, nan, nan, 2L)) // still escalates immediately
+    }
+
+    @Test
     fun headroomGivesEarlyWarning() {
         assertEquals(BALANCED, ThermalPolicy().evaluate(LIGHT, 0.92f, nan, 0L))
         assertEquals(POWER_SAVER, ThermalPolicy().evaluate(LIGHT, 1.02f, nan, 0L))

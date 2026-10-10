@@ -209,6 +209,33 @@ public class text_mode_display extends Fragment {
             }
         }
 
+        // Forward clicks on sub-options in layout 2: leftSub=1, rightSub=2, leftUpSub=4, rightUpSub=5
+        int[] subTextMapping = {-1, -1, -1, -1, -1, -1, 1, 2, 4, 5};
+        for (int i = 6; i < keyboardOptions.size() && i < subTextMapping.length; i++) {
+            int mappedInput = subTextMapping[i];
+            TextView subOpt = keyboardOptions.get(i);
+            if (subOpt != null && mappedInput != -1) {
+                subOpt.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(mappedInput));
+            }
+        }
+
+        // Corner & center icon badges forward clicks to their respective tiles
+        int[][] iconMapping = {
+            {R.id.imageView3, 3},
+            {R.id.imageView, 0},
+            {R.id.TextEntryLeftUpImage, 4},
+            {R.id.imageView13, 1},
+            {R.id.imageView11, 5},
+            {R.id.imageView12, 2}
+        };
+        for (int[] pair : iconMapping) {
+            View icon = view.findViewById(pair[0]);
+            if (icon != null) {
+                int target = pair[1];
+                icon.setOnClickListener(v -> textModeListener.onTextModeButtonClicked(target));
+            }
+        }
+
         String context = userDataManager.getTextEntryContext();
         setText(contextBox, context);
         if (contextBox != null) {

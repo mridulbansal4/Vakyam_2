@@ -24,10 +24,62 @@ class GemmaManagerTest {
     @Test
     fun testBuildUserTurnWithoutContext() {
         val turn = GemmaManager.buildUserTurn("water", "")
-        assertEquals("Keywords: water", turn)
+        assertEquals("Keywords: water. Context: ", turn)
 
         val turnBlank = GemmaManager.buildUserTurn("water", "   ")
-        assertEquals("Keywords: water", turnBlank)
+        assertEquals("Keywords: water. Context: ", turnBlank)
+    }
+
+    @Test
+    fun testUserTurnMatchesFewShotFormat() {
+        for (lang in listOf("English", "Hinglish")) {
+            val (_, examples) = GemmaManager.promptAndExamples(lang)
+            val noContextExample = examples.first { it.first.endsWith("Context: ") }.first
+            val keywords = noContextExample.removePrefix("Keywords: ").removeSuffix(". Context: ")
+            assertEquals(noContextExample, GemmaManager.buildUserTurn(keywords, ""))
+        }
+    }
+
+    @Test
+    fun testSingleKeywordExpandsToSentence() {
+        assertEquals("I would like some water, please.", GemmaManager.fallbackSentence("water", "English"))
+        assertEquals("I would like something to eat, please.", GemmaManager.fallbackSentence("food", "English"))
+        assertEquals("Could I please have some tea?", GemmaManager.fallbackSentence("tea", "English"))
+        assertEquals("I need to use the washroom, please.", GemmaManager.fallbackSentence("Toilet", "English"))
+        assertEquals("Can someone please help me?", GemmaManager.fallbackSentence("help", "English"))
+        assertEquals("I want book, please.", GemmaManager.fallbackSentence("book", "English"))
+        assertEquals("I want AC, please.", GemmaManager.fallbackSentence(" AC, ", "English"))
+
+        assertEquals("Mujhe paani chahiye.", GemmaManager.fallbackSentence("water", "Hinglish"))
+        assertEquals("Mujhe paani chahiye.", GemmaManager.fallbackSentence("paani", "Hinglish"))
+        assertEquals("Mujhe dawai leni hai.", GemmaManager.fallbackSentence("dawai", "Hinglish"))
+        assertEquals("Kripya meri madad karein.", GemmaManager.fallbackSentence("help", "Hinglish"))
+        assertEquals("Mujhe kitaab chahiye.", GemmaManager.fallbackSentence("kitaab", "Hinglish"))
+    }
+
+    @Test
+    fun testStandaloneRepliesAreNotExpanded() {
+        assertEquals("Yes.", GemmaManager.fallbackSentence("yes", "English"))
+        assertEquals("Thanks.", GemmaManager.fallbackSentence("thanks", "English"))
+        assertEquals("Nahi.", GemmaManager.fallbackSentence("nahi", "Hinglish"))
+    }
+
+    @Test
+    fun testBareKeywordReplyIsDetected() {
+        assertTrue(GemmaManager.isBareKeyword("Water.", "water"))
+        assertTrue(GemmaManager.isBareKeyword("\"water\"", "water"))
+        assertTrue(GemmaManager.isBareKeyword("Water, cold.", "water, cold"))
+        assertTrue(GemmaManager.isBareKeyword("   ", "water"))
+        assertFalse(GemmaManager.isBareKeyword("I would like some water, please.", "water"))
+        assertFalse(GemmaManager.isBareKeyword("Mujhe thanda paani chahiye.", "paani, thanda"))
+    }
+
+    @Test
+    fun testPromptsForbidBareKeywordReplies() {
+        for (lang in listOf("English", "Hinglish")) {
+            val (system, _) = GemmaManager.promptAndExamples(lang)
+            assertTrue(lang, system.contains("NEVER output only the raw keyword or a single word."))
+        }
     }
 
     @Test

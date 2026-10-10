@@ -244,12 +244,19 @@ class GemmaManager {
                 val startMs = System.currentTimeMillis()
                 val generated = expandWithGemma(activeEngine, kw, ctx, lang)
                 Log.i(TIMING_TAG, "lang=$lang ms=${System.currentTimeMillis() - startMs} keywords=\"$kw\" -> \"$generated\"")
-                val finalSentence = if (generated.isNotBlank() && !hasDevanagari(generated)) {
-                    generated
-                } else {
+                val finalSentence = when {
+                    generated.isBlank() -> fallbackSentence(kw, lang)
                     // The screen and keyboard are English letters only, so a Devanagari reply is never shown
-                    if (generated.isNotBlank()) Log.w(TAG, "Gemma returned Devanagari, using fallback: $generated")
-                    fallbackSentence(kw, lang)
+                    hasDevanagari(generated) -> {
+                        Log.w(TAG, "Gemma returned Devanagari, using fallback: $generated")
+                        fallbackSentence(kw, lang)
+                    }
+                    // The patient must never speak a bare word, so an echo of the keywords is expanded instead
+                    isBareKeyword(generated, kw) -> {
+                        Log.w(TAG, "Gemma echoed the keywords, using fallback: $generated")
+                        fallbackSentence(kw, lang)
+                    }
+                    else -> generated
                 }
                 sendMessage(finalSentence)
             } catch (e: Throwable) {
@@ -345,10 +352,12 @@ class GemmaManager {
 
         // Caregivers often ask in Hinglish whatever the patient types in, so both prompts must read it by meaning.
         private const val HINGLISH_CONTEXT_NOTE = "The Context is what the caregiver just said; it may be in English or in Hinglish (Hindi written in English letters). Understand its meaning before answering, e.g. \"aapko khane me kya chahiye\" means \"what do you want to eat\" and \"dard kahan ho raha hai\" means \"where does it hurt\"."
+        private const val EXPAND_RULE_ENGLISH = "CRITICAL: Always expand the keywords into a complete, natural, first-person sentence (e.g., 'I want water, please.'). NEVER output only the raw keyword or a single word."
+        private const val EXPAND_RULE_HINGLISH = "CRITICAL: Always expand the keywords into a complete, natural, first-person sentence (e.g., 'Mujhe paani chahiye.'). NEVER output only the raw keyword or a single word."
 
         internal fun promptAndExamples(language: String): Pair<String, List<Pair<String, String>>> = when (language) {
             "Hinglish" -> Pair(
-                "You are an AI assistant for a person who cannot speak or move due to ALS/motor neuron disease. The user communicates by selecting keywords with their eyes, typing Hindi in English letters (Hinglish) mixed with English words. Generate ONE natural, grammatical, first-person sentence in Hinglish: Hindi written only in English (Roman) letters, never in Devanagari script, using the keywords and answering the conversation context. Keep any English words the user chose as they are. $HINGLISH_CONTEXT_NOTE Reply with the sentence only, without quotes, translation or explanation.",
+                "You are an AI assistant for a person who cannot speak or move due to ALS/motor neuron disease. The user communicates by selecting keywords with their eyes, typing Hindi in English letters (Hinglish) mixed with English words. Generate ONE natural, grammatical, first-person sentence in Hinglish: Hindi written only in English (Roman) letters, never in Devanagari script, using the keywords and answering the conversation context. Keep any English words the user chose as they are. $EXPAND_RULE_HINGLISH $HINGLISH_CONTEXT_NOTE Reply with the sentence only, without quotes, translation or explanation.",
                 listOf(
                     "Keywords: paani, thanda. Context: " to "Mujhe thanda paani chahiye.",
                     "Keywords: dard, peeth. Context: " to "Meri peeth mein dard ho raha hai.",
@@ -358,7 +367,7 @@ class GemmaManager {
                 )
             )
             else -> Pair(
-                "You are an AI assistant for a person who cannot speak or move due to ALS/motor neuron disease. The user communicates by selecting keywords with their eyes. Your task is to generate ONE natural, grammatical, first-person English sentence using the provided keywords that answers the conversation context. $HINGLISH_CONTEXT_NOTE Reply with the sentence only, in English, without quotes or explanation.",
+                "You are an AI assistant for a person who cannot speak or move due to ALS/motor neuron disease. The user communicates by selecting keywords with their eyes. Your task is to generate ONE natural, grammatical, first-person English sentence using the provided keywords that answers the conversation context. $EXPAND_RULE_ENGLISH $HINGLISH_CONTEXT_NOTE Reply with the sentence only, in English, without quotes or explanation.",
                 listOf(
                     "Keywords: chicken. Context: What do you want to eat for dinner" to "I want to have chicken for dinner.",
                     "Keywords: hot, AC, two. Context: is the room temperature ok" to "I am hot, can you turn the AC down by two degrees?",
@@ -376,11 +385,12 @@ class GemmaManager {
             }
         }
 
+        // Must match the few-shot examples, which always carry ". Context: "
         fun buildUserTurn(keywords: String, context: String): String {
             return if (context.isNotBlank()) {
-                "Keywords: $keywords. Context: $context"
+                "Keywords: $keywords. Context: ${context.trim()}"
             } else {
-                "Keywords: $keywords"
+                "Keywords: $keywords. Context: "
             }
         }
 
@@ -397,6 +407,65 @@ class GemmaManager {
 
         internal fun hasDevanagari(text: String): Boolean = text.any { it in '\u0900'..'\u097F' }
 
+        private val NON_WORD = Regex("[^\\p{L}\\p{N}]+")
+
+        // A reply of one word, or one that only repeats the keywords, is not a sentence
+        internal fun isBareKeyword(generated: String, keywords: String): Boolean {
+            val reply = generated.lowercase().replace(NON_WORD, " ").trim()
+            if (reply.isEmpty() || !reply.contains(' ')) return true
+            return reply == keywords.lowercase().replace(NON_WORD, " ").trim()
+        }
+
+        private val SINGLE_KEYWORD = Regex("[A-Za-z]+")
+
+        // Already a complete reply on their own, so they are spoken as they are
+        private val STANDALONE_REPLIES = setOf(
+            "yes", "no", "ok", "okay", "hello", "hi", "bye", "thanks", "sorry", "please",
+            "haan", "nahi", "namaste", "shukriya", "dhanyavaad"
+        )
+
+        private val ENGLISH_REQUESTS = mapOf(
+            "water" to "I would like some water, please.",
+            "food" to "I would like something to eat, please.",
+            "tea" to "Could I please have some tea?",
+            "coffee" to "Could I please have some coffee?",
+            "medicine" to "I need to take my medicine, please.",
+            "toilet" to "I need to use the washroom, please.",
+            "washroom" to "I need to use the washroom, please.",
+            "help" to "Can someone please help me?",
+            "pain" to "I am in pain, please help me.",
+            "cold" to "I am feeling cold, please help.",
+            "hot" to "I am feeling hot, please adjust the temperature.",
+            "hungry" to "I am hungry, I would like something to eat.",
+            "tired" to "I am feeling tired and need to rest."
+        )
+
+        private val HINGLISH_REQUESTS = mapOf(
+            "water" to "Mujhe paani chahiye.",
+            "paani" to "Mujhe paani chahiye.",
+            "food" to "Mujhe khana chahiye.",
+            "khana" to "Mujhe khana chahiye.",
+            "tea" to "Mujhe chai chahiye.",
+            "chai" to "Mujhe chai chahiye.",
+            "coffee" to "Mujhe coffee chahiye.",
+            "medicine" to "Mujhe dawai leni hai.",
+            "dawai" to "Mujhe dawai leni hai.",
+            "toilet" to "Mujhe washroom jaana hai.",
+            "washroom" to "Mujhe washroom jaana hai.",
+            "help" to "Kripya meri madad karein.",
+            "madad" to "Kripya meri madad karein.",
+            "pain" to "Mujhe dard ho raha hai.",
+            "dard" to "Mujhe dard ho raha hai.",
+            "cold" to "Mujhe thand lag rahi hai.",
+            "thand" to "Mujhe thand lag rahi hai.",
+            "hot" to "Mujhe garmi lag rahi hai.",
+            "garmi" to "Mujhe garmi lag rahi hai.",
+            "hungry" to "Mujhe bhookh lagi hai.",
+            "bhookh" to "Mujhe bhookh lagi hai.",
+            "tired" to "Mujhe thakan ho rahi hai.",
+            "thakan" to "Mujhe thakan ho rahi hai."
+        )
+
         fun fallbackSentence(keywords: String, language: String? = null): String {
             val clean = keywords.trim().trim(',', '.', ';')
             val lang = language ?: defaultInstance?.activeLanguage ?: "English"
@@ -404,7 +473,16 @@ class GemmaManager {
                 return if (lang == "Hinglish") "Haan." else "Yes."
             }
             val capitalized = clean.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
-            return "$capitalized."
+            // Phrases, punctuation and non-Latin input are kept as the user wrote them
+            if (!SINGLE_KEYWORD.matches(clean)) return "$capitalized."
+
+            val word = clean.lowercase()
+            if (word in STANDALONE_REPLIES) return "$capitalized."
+            return if (lang == "Hinglish") {
+                HINGLISH_REQUESTS[word] ?: "Mujhe $clean chahiye."
+            } else {
+                ENGLISH_REQUESTS[word] ?: "I want $clean, please."
+            }
         }
     }
 }

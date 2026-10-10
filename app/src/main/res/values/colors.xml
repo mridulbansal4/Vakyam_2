@@ -33,7 +33,21 @@
     <color name="vk_accent">#48615A</color>
     <color name="vk_on_chrome">#F4F1E8</color>
 
+    <!-- Direction badges on gaze tiles: quiet until the tile is being selected -->
+    <color name="vk_badge">#EEF2EA</color>
+    <color name="vk_badge_ink">#34463F</color>
+
+    <!-- Top bar: the current screen is a light pill joined in colour to the page -->
+    <color name="vk_tab_idle_text">#C9D3CC</color>
+
+    <!-- Spell keyboard: light flat keys on a warm grey tray, darker function keys -->
+    <color name="vk_tray">#DCD7C8</color>
+    <color name="vk_key_flat">#FBF9F3</color>
+    <color name="vk_key_function">#C9C3B1</color>
+    <color name="vk_key_shadow">#40303A35</color>
+
     <!-- Status -->
     <color name="vk_warning">#D2694F</color>
     <color name="vk_emergency">#C62828</color>
+    <color name="vk_on_emergency">#FFF8F5</color>
 </resources>

@@ -91,14 +91,12 @@
         android:layout_height="wrap_content"
         android:backgroundTint="@color/vk_accent"
         android:textColor="@color/vk_on_chrome"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="@dimen/vk_screen_margin"
+        android:minWidth="140dp"
         android:text="@string/Calibration_Start"
-        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.972"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.938" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <Button
         android:id="@+id/switchEyesButton"
@@ -107,14 +105,10 @@
         android:backgroundTint="@color/vk_key_alt"
         android:textColor="@color/vk_ink"
         android:text="@string/Calibration_SwitchEyes"
-        android:textStyle="bold"
+        android:layout_marginEnd="@dimen/vk_gutter"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.754"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.934" />
+        app:layout_constraintBottom_toBottomOf="@id/calibrationButton"
+        app:layout_constraintEnd_toStartOf="@id/calibrationButton" />
 
     <TextView
         android:id="@+id/CalibrationDescription"
@@ -129,22 +123,12 @@
         android:textColor="@color/vk_ink_soft"
         android:textSize="18sp"
         android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="@+id/CalibrationImage"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toTopOf="@id/calibrationButton"
         app:layout_constraintEnd_toStartOf="@+id/calibrationSplit"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/CalibrationImage" />
-
-    <ImageView
-        android:id="@+id/imageView14"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
-        android:src="@drawable/baseline_control_camera_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.023"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.045" />
+        app:layout_constraintTop_toBottomOf="@id/calibrationInstruction"
+        app:layout_constraintVertical_bias="0" />
 
     <TextView
         android:id="@+id/calibrationInstruction"
@@ -152,8 +136,8 @@
         android:layout_height="wrap_content"
         android:text="@string/Calibration_Title"
         android:textColor="@color/vk_ink"
-        android:textSize="35sp"
-        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:textSize="@dimen/vk_text_title"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -181,7 +165,6 @@
         android:layout_height="wrap_content"
         android:textColor="@color/vk_ink_soft"
         android:textSize="18sp"
-        android:textStyle="bold"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -189,19 +172,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.21" />
-
-    <ImageView
-        android:id="@+id/imageView15"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:background="@drawable/gaze_option_bg_2"
-        android:src="@drawable/baseline_close_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.988"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.026" />
 
     <!-- Intro page: instructions on the left half, picture on the right half, above the start button -->
     <androidx.constraintlayout.widget.Guideline
@@ -215,9 +185,10 @@
         android:id="@+id/CalibrationImage"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="12dp"
+        android:scaleType="fitStart"
         android:src="@drawable/calibration_image"
         android:visibility="invisible"
         app:layout_constraintBottom_toTopOf="@id/calibrationButton"

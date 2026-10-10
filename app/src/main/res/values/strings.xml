@@ -17,22 +17,22 @@
     <string name="TextEntryMode3">Ambiguous keyboard + LLM</string>
 
     <!-- Settings UI Strings -->
-    <string name="Settings_TopBarTitle">SETTINGS</string>
-    <string name="Settings_Title">SETTINGS</string>
-    <string name="Settings_GazeType">Gaze Type</string>
-    <string name="Settings_IrisLightingThreshold">Lighting Threshold</string>
+    <string name="Settings_TopBarTitle">Settings</string>
+    <string name="Settings_Title">Settings</string>
+    <string name="Settings_GazeType">Gaze type</string>
+    <string name="Settings_IrisLightingThreshold">Lighting threshold</string>
     <string name="Settings_GazeSensitivity">Sensitivity</string>
     <string name="Settings_TextEntryMode">Text entry mode</string>
     <string name="Settings_Language">Language</string>
 
     <!-- Calibration UI Strings -->
-    <string name="Calibration_TopBarTitle">CALIBRATION</string>
-    <string name="Calibration_Title">EYE CALIBRATION</string>
+    <string name="Calibration_TopBarTitle">Calibrate</string>
+    <string name="Calibration_Title">Eye calibration</string>
     <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see the picture). Press start, then hold your gaze in each direction until you hear a beep. Each direction is captured automatically.</string>
-    <string name="Calibration_Continue">CONTINUE</string>
-    <string name="Calibration_Start">START</string>
-    <string name="Calibration_Restart">RESTART</string>
-    <string name="Calibration_CaptureNow">CAPTURE NOW</string>
+    <string name="Calibration_Continue">Continue</string>
+    <string name="Calibration_Start">Start</string>
+    <string name="Calibration_Restart">Restart</string>
+    <string name="Calibration_CaptureNow">Capture now</string>
     <string name="Calibration_StatusListen">Listen to the instruction…</string>
     <string name="Calibration_StatusNoFace">Face not found. Keep your face in front of the camera.</string>
     <string name="Calibration_StatusNoEyes">Eyes not visible. Move your face into view.</string>
@@ -47,33 +47,37 @@
     <string name="Calibration_LookUp">Look up</string>
     <string name="Calibration_LookLeftUp">Look left and up</string>
     <string name="Calibration_LookRightUp">Look right and up</string>
-    <string name="Calibration_SwitchEyes">Switch Eyes</string>
+    <string name="Calibration_SwitchEyes">Switch eyes</string>
     <string name="Calibration_Finished">Calibration Finished!</string>
 
     <!-- Text Entry UI Strings -->
-    <string name="TextEntry_TopBarTitle">TEXT ENTRY</string>
-    <string name="TextEntry_Switch">SWITCH</string>
-    <string name="TextEntry_Delete">DELETE</string>
+    <string name="TextEntry_TopBarTitle">Type</string>
+    <string name="TextEntry_Switch">Switch</string>
+    <string name="TextEntry_Delete">Delete</string>
     <string name="TextEntry_Text">Text:</string>
-    <string name="TextEntry_NoMatch">NO MATCH</string>
-    <string name="TextEntry_NextPage">NEXT PAGE</string>
+    <string name="TextEntry_NoMatch">No match</string>
+    <string name="TextEntry_NextPage">Next page</string>
     <string name="TextEntry_EnterContext">Add Context: </string>
-    <string name="TextEntry_Finished">FINISH</string>
+    <string name="TextEntry_Finished">Finish</string>
     <string name="TextEntry_EnableLLM">Enable LLM to generate</string>
     <string name="TextEntry_Generating">Generating</string>
-    <string name="TextEntry_Back">BACK</string>
-    <string name="TextEntry_Speak">SPEAK</string>
+    <string name="TextEntry_Back">Back</string>
+    <string name="TextEntry_Speak">Speak</string>
+    <string name="TextEntry_HintTyped">Letters you choose appear here</string>
+    <string name="TextEntry_HintSentence">Your sentence appears here</string>
+    <string name="TextEntry_HeardContext">Heard: %1$s</string>
+    <string name="TextEntry_HintContext">Context, e.g. the question you were asked</string>
 
     <!-- Quick Chat Strings -->
 
-    <string name="QuickChat_TopBarTitle">QUICK</string>
+    <string name="QuickChat_TopBarTitle">Quick chat</string>
     <string name="QuickChat_BackMenuButton">Back to home page</string>
     <string name="QuickChat_BackButton">Back</string>
-    <string name="QuickChat_Category1">Basic Needs</string>
+    <string name="QuickChat_Category1">Basic needs</string>
     <string name="QuickChat_Category2">Emotions</string>
-    <string name="QuickChat_Category3">Environment Control</string>
-    <string name="QuickChat_Category4">Social Activities and Recreation</string>
-    <string name="QuickChat_Category5">Medical Needs</string>
+    <string name="QuickChat_Category3">Surroundings</string>
+    <string name="QuickChat_Category4">Activities</string>
+    <string name="QuickChat_Category5">Medical needs</string>
 
     <string name="QuickChat_Category1_1">I want to eat something.</string>
     <string name="QuickChat_Category1_2">I want to sleep.</string>
@@ -106,12 +110,15 @@
     <string name="QuickChat_Category5_5">I feel fine.</string>
 
     <!-- Clinician UI Strings -->
-    <string name="Clinician_TopBarTitle">DATA</string>
-    <string name="Clinician_GazeInputLog">Gaze Input Log</string>
+    <string name="Clinician_TopBarTitle">Data</string>
+    <string name="Clinician_GazeInputLog">Gaze input log</string>
     <string name="Settings_Error">Gaze Error</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="Sensor_ThermalCritical">Device warm — cooling down while keeping the keyboard active</string>
+    <string name="Sensor_ThermalCritical">The phone is warm, so Vakyam is running a little slower while it cools down. Eye typing keeps working. This clears by itself once the phone has cooled.</string>
+    <string name="Sensor_ChipThermal">Phone warm</string>
+    <string name="Sensor_ChipChargingWarm">Charging warm</string>
+    <string name="Sensor_ChipChargingHot">Unplug charger</string>
     <string name="Sensor_ChargingWarm">Phone is warm while charging — check airflow around the charger</string>
     <string name="Sensor_ChargingHot">Phone is overheating — unplug the charger and improve airflow</string>
     <string name="Sensor_ChargingHotSpoken">Caregiver, the phone is overheating. Please unplug the charger.</string>
@@ -125,7 +132,6 @@
 
     <string name="QuickChat_MyPhrases">My phrases</string>
     <string name="QuickChat_MyPhrasesEmpty">Sentences you speak in Text or Spell will appear here.</string>
-    <string name="Emergency_SosButton">SOS</string>
     <string name="Emergency_Title">HELP NEEDED</string>
     <string name="Emergency_Subtitle">The patient is calling for help</string>
     <string name="Emergency_Dismiss">I AM HERE — STOP ALARM</string>
@@ -141,10 +147,10 @@
     <string name="Emergency_NotVisible">The camera cannot see your eyes — please move the phone</string>
     <string name="Settings_CaregiverPhone">Caregiver phone</string>
     <string name="Settings_CaregiverPhoneHint">For emergency text messages</string>
-    <string name="Settings_Save">SAVE</string>
-    <string name="Settings_CaregiverSaved">Caregiver number saved. Press SOS once to check that the text message arrives.</string>
+    <string name="Settings_Save">Save</string>
+    <string name="Settings_CaregiverSaved">Caregiver number saved. Use the Help key in Spell once to check that the text message arrives.</string>
     <string name="Settings_CaregiverCleared">Caregiver number removed. The alarm will still sound, but no text message is sent.</string>
-    <string name="Settings_HelpSignalHint">Calling for help, on any screen: close your eyes for about two seconds, three times in a row. The phone sounds an alarm, speaks, and texts the caregiver number above. The SOS button does the same.</string>
+    <string name="Settings_HelpSignalHint">Calling for help, on any screen: close your eyes for about two seconds, three times in a row. The phone sounds an alarm, speaks, and texts the caregiver number above. The Help key in Spell does the same.</string>
     <string name="TypingTest_Title">Typing speed test</string>
     <string name="TypingTest_Start">New test</string>
     <string name="TypingTest_Share">Share results</string>
@@ -155,8 +161,8 @@
     <string name="TypingTest_Waiting">waiting for the first selection</string>
     <string name="TypingTest_Running">%1$d s, %2$d selections</string>
     <string name="TypingTest_Finished">TEST DONE · “%1$s” · %2$s</string>
-    <string name="TypingTest_Done">DONE</string>
-    <string name="TypingTest_Close">CLOSE</string>
+    <string name="TypingTest_Done">Done</string>
+    <string name="TypingTest_Close">Close</string>
     <string name="Vocabulary_Title">Personal vocabulary</string>
     <string name="Vocabulary_Forget">Forget…</string>
     <string name="Vocabulary_ForgetTitle">Forget mistyped words and sentences</string>

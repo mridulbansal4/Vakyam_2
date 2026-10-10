@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
     <solid android:color="@color/vk_warning"/>
-    <corners android:radius="12dp"/>
-    <padding android:left="0dp" android:top="0dp" android:right="0dp" android:bottom="0dp" />
+    <stroke android:width="@dimen/vk_outline_focus" android:color="@color/vk_ink" />
 </shape>

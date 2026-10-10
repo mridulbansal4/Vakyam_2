@@ -1,317 +1,294 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Caregiver settings: preferences on the left, live camera and detection on the right, sensor tests below. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/devModeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/vk_canvas"
-    android:orientation="horizontal"
     tools:context=".fragments.dev_mode_display">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="13dp">
+        android:padding="@dimen/vk_screen_margin">
 
         <TextView
             android:id="@+id/gazeDetectionStastics"
+            style="@style/Vk.Text.Title"
             android:layout_width="match_parent"
-            android:layout_height="45dp"
-            android:layout_weight="1"
-            android:padding="4sp"
-            android:text="@string/Settings_Title"
-            android:textAlignment="center"
-            android:textColor="@color/vk_ink"
-            android:textSize="25sp"
-            android:textStyle="bold" />
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/vk_space_m"
+            android:text="@string/Settings_Title" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
             android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/imageView1"
-                android:layout_width="800dp"
-                android:layout_height="150dp"
-                android:layout_weight="1"
-                android:adjustViewBounds="false"
-
-                android:scaleType="fitCenter"
-
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:srcCompat="@tools:sample/avatars" />
-
-            <TextView
-                android:id="@+id/gazeInputLog2"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/text_rounded_dark"
-                android:padding="9sp"
-                android:textAlignment="viewStart"
-                android:textColor="@color/vk_ink_soft"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                tools:layout_editor_absoluteX="343dp"
-                tools:layout_editor_absoluteY="84dp"
-                tools:text="NO INPUT" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/textView1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAlignment="textStart"
-            android:textColor="@color/vk_ink_soft"
-            android:textSize="16sp"
-            tools:text="-------------" />
-
-        <TextView
-            android:id="@+id/textView2"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAlignment="textStart"
-            android:textColor="@color/vk_ink_soft"
-            android:textSize="16sp"
-            tools:text="-------------" />
-
-        <TextView
-            android:id="@+id/textView3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAlignment="textStart"
-            android:textColor="@color/vk_ink_soft"
-            android:textSize="16sp"
-            tools:text="-------------" />
-
-        <TextView
-            android:id="@+id/textView4"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textAlignment="textStart"
-            android:textColor="@color/vk_ink_soft"
-            android:textSize="16sp"
-            tools:text="-------------" />
-
-        <TextView
-            android:id="@+id/sensorHealthText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:padding="8dp"
-            android:text="@string/Sensor_HealthWaiting"
-            android:textColor="@color/vk_ink_soft"
-            android:textSize="14sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="8dp"
-            android:text="@string/Sensor_TestTitle"
-            android:textColor="@color/vk_ink"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="4dp">
-
-            <Button
-                android:id="@+id/simDarkRoomButton"
-                style="@style/SensorTestButton"
-                android:text="@string/Sensor_TestDarkRoom" />
-
-            <Button
-                android:id="@+id/simHotPhoneButton"
-                style="@style/SensorTestButton"
-                android:text="@string/Sensor_TestHotPhone" />
-
-            <Button
-                android:id="@+id/simChargingHotButton"
-                style="@style/SensorTestButton"
-                android:text="@string/Sensor_TestChargingHot" />
-
-            <Button
-                android:id="@+id/simWarmLightButton"
-                style="@style/SensorTestButton"
-                android:text="@string/Sensor_TestWarmLight" />
-
-            <Button
-                android:id="@+id/simResetButton"
-                style="@style/SensorTestButton"
-                android:text="@string/Sensor_TestReset" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:padding="5dp">
-
-            <TextView
-                android:id="@+id/sensitivityTitle"
-                android:layout_width="30dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.3"
-                android:text="@string/Settings_GazeSensitivity"
-                android:textAlignment="textEnd"
-                android:textColor="@color/vk_ink"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/textView5"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.2"
-                android:paddingStart="8dp"
-                android:textAlignment="textStart"
-                android:textColor="@color/vk_ink"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                tools:text="15" />
-
-            <SeekBar
-                android:id="@+id/seekBar"
+            <!-- Preferences -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/vk_half_gutter"
+                android:layout_weight="1.15"
+                android:background="@drawable/bg_card"
+                android:orientation="vertical"
+                android:padding="@dimen/vk_space_l">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textView6"
+                        style="@style/Vk.Text.Label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.4"
+                        android:text="@string/Settings_Language" />
+
+                    <Spinner
+                        android:id="@+id/languageSpinner"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="0.6"
+                        android:background="@drawable/text_rounded_light_green"
+                        android:entries="@array/language_options"
+                        android:popupBackground="@drawable/bg_card" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textView7"
+                        style="@style/Vk.Text.Label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.4"
+                        android:text="@string/Settings_TextEntryMode" />
+
+                    <Spinner
+                        android:id="@+id/textEntrySpinner"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="0.6"
+                        android:background="@drawable/text_rounded_light_green"
+                        android:entries="@array/textEntry_options"
+                        android:popupBackground="@drawable/bg_card" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/sensitivityTitle"
+                        style="@style/Vk.Text.Label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.4"
+                        android:text="@string/Settings_GazeSensitivity" />
+
+                    <SeekBar
+                        android:id="@+id/seekBar"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.6"
+                        android:max="255"
+                        android:minHeight="30dp"
+                        android:progress="15"
+                        android:progressDrawable="@drawable/seekbar_progress"
+                        android:splitTrack="false"
+                        android:thumb="@drawable/seekbar_thumb" />
+
+                    <TextView
+                        android:id="@+id/textView5"
+                        style="@style/Vk.Text.Label"
+                        android:layout_width="48dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="end"
+                        tools:text="15" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        style="@style/Vk.Text.Label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.4"
+                        android:text="@string/Settings_CaregiverPhone" />
+
+                    <EditText
+                        android:id="@+id/caregiverPhoneInput"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="0.6"
+                        android:autofillHints="phone"
+                        android:background="@drawable/text_rounded_light_green"
+                        android:hint="@string/Settings_CaregiverPhoneHint"
+                        android:imeOptions="actionDone"
+                        android:inputType="phone"
+                        android:paddingStart="@dimen/vk_space_l"
+                        android:paddingEnd="@dimen/vk_space_l"
+                        android:textColor="@color/vk_ink"
+                        android:textColorHint="@color/vk_ink_muted"
+                        android:textSize="@dimen/vk_text_label" />
+
+                    <Button
+                        android:id="@+id/caregiverPhoneSave"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="@dimen/vk_space_s"
+                        android:minHeight="48dp"
+                        android:text="@string/Settings_Save" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/Vk.Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/vk_space_s"
+                    android:text="@string/Settings_HelpSignalHint" />
+            </LinearLayout>
+
+            <!-- Camera and detection -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/vk_half_gutter"
                 android:layout_weight="1"
-                android:max="255"
-                android:minHeight="30dp"
-                android:progress="15"
-                android:progressDrawable="@drawable/seekbar_progress"
-                android:splitTrack="false"
-                android:thumb="@drawable/seekbar_thumb" />
+                android:background="@drawable/bg_card"
+                android:orientation="vertical"
+                android:padding="@dimen/vk_space_l">
 
+                <ImageView
+                    android:id="@+id/imageView1"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:background="@drawable/text_rounded_light_green"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    tools:srcCompat="@tools:sample/avatars" />
+
+                <TextView
+                    android:id="@+id/textView1"
+                    style="@style/Vk.Text.Label"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/vk_space_m"
+                    tools:text="Gaze detected" />
+
+                <TextView
+                    android:id="@+id/textView2"
+                    style="@style/Vk.Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:text="Overall gaze type: Straight" />
+
+                <TextView
+                    android:id="@+id/textView3"
+                    style="@style/Vk.Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:text="Overall loss: 0.12" />
+
+                <TextView
+                    android:id="@+id/textView4"
+                    style="@style/Vk.Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/gazeInputLog2"
+                    style="@style/Vk.Text.Caption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/vk_space_s"
+                    android:maxLines="3"
+                    android:ellipsize="start"
+                    tools:text="Gaze input log: Left, Up, Closed" />
+            </LinearLayout>
         </LinearLayout>
 
+        <!-- Sensor test -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="5dp">
+            android:layout_marginTop="@dimen/vk_gutter"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="@dimen/vk_space_l">
 
             <TextView
-                android:id="@+id/textView6"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.3"
-                android:paddingTop="10dp"
-                android:text="@string/Settings_Language"
-                android:textAlignment="center"
-                android:textColor="@color/vk_ink"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                style="@style/Vk.Text.Label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/vk_space_s"
+                android:text="@string/Sensor_TestTitle" />
 
-            <Spinner
-                android:id="@+id/languageSpinner"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="0.5"
-                android:background="@drawable/text_rounded_light_green"
-                android:entries="@array/language_options"
-                android:minWidth="50dp"
-                android:popupBackground="@drawable/gaze_option_bg_1" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <Button
+                    android:id="@+id/simDarkRoomButton"
+                    style="@style/SensorTestButton"
+                    android:text="@string/Sensor_TestDarkRoom" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="5dp">
+                <Button
+                    android:id="@+id/simHotPhoneButton"
+                    style="@style/SensorTestButton"
+                    android:text="@string/Sensor_TestHotPhone" />
 
-            <TextView
-                android:id="@+id/textView7"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.3"
-                android:paddingTop="10dp"
-                android:text="@string/Settings_TextEntryMode"
-                android:textAlignment="center"
-                android:textColor="@color/vk_ink"
-                android:textSize="20sp"
-                android:textStyle="bold" />
+                <Button
+                    android:id="@+id/simChargingHotButton"
+                    style="@style/SensorTestButton"
+                    android:text="@string/Sensor_TestChargingHot" />
 
-            <Spinner
-                android:id="@+id/textEntrySpinner"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="0.5"
-                android:background="@drawable/text_rounded_light_green"
-                android:entries="@array/textEntry_options"
-                android:minWidth="50dp"
-                android:popupBackground="@drawable/gaze_option_bg_1" />
+                <Button
+                    android:id="@+id/simWarmLightButton"
+                    style="@style/SensorTestButton"
+                    android:text="@string/Sensor_TestWarmLight" />
 
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="5dp">
+                <Button
+                    android:id="@+id/simResetButton"
+                    style="@style/SensorTestButton"
+                    android:layout_marginEnd="0dp"
+                    android:text="@string/Sensor_TestReset" />
+            </LinearLayout>
 
             <TextView
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="0.3"
-                android:paddingTop="10dp"
-                android:text="@string/Settings_CaregiverPhone"
-                android:textAlignment="center"
-                android:textColor="@color/vk_ink"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <EditText
-                android:id="@+id/caregiverPhoneInput"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_weight="0.35"
-                android:autofillHints="phone"
-                android:background="@drawable/text_rounded_light_green"
-                android:hint="@string/Settings_CaregiverPhoneHint"
-                android:imeOptions="actionDone"
-                android:inputType="phone"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="@color/vk_ink"
-                android:textSize="18sp" />
-
-            <Button
-                android:id="@+id/caregiverPhoneSave"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="0dp"
-                android:layout_height="50dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="0.15"
-                android:text="@string/Settings_Save"
-                android:textColor="@color/vk_on_chrome"
-                android:textStyle="bold" />
-
+                android:id="@+id/sensorHealthText"
+                style="@style/Vk.Text.Caption"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/vk_space_m"
+                android:fontFamily="monospace"
+                android:text="@string/Sensor_HealthWaiting"
+                android:textSize="13sp" />
         </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:text="@string/Settings_HelpSignalHint"
-            android:textColor="@color/vk_ink_soft"
-            android:textSize="16sp" />
 
     </LinearLayout>
-
-
 </ScrollView>

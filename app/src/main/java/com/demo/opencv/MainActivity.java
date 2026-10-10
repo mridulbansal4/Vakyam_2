@@ -1,6 +1,7 @@
 package com.demo.opencv;
 
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.ImageFormat;
@@ -12,11 +13,14 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 import android.util.Range;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +38,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.ColorUtils;
+import androidx.core.widget.TextViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -54,7 +59,6 @@ import com.demo.opencv.sensors.SensorBanner;
 import com.demo.opencv.sensors.SensorHealthController;
 import com.demo.opencv.sensors.SensorHealthSnapshot;
 import com.demo.opencv.sensors.SensorSimulation;
-import com.demo.opencv.ui.FolderTabDrawable;
 import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
@@ -91,6 +95,10 @@ public class MainActivity extends AppCompatActivity
 
     private volatile SensorHealthController sensorController;
     private TextView sensorBanner;
+    @Nullable private SensorBanner shownSensorBanner;
+    @Nullable private PopupWindow sensorMessage;
+    private static final long SENSOR_MESSAGE_MS = 6000;
+    private final Runnable dismissSensorMessageTask = this::dismissSensorMessage;
     private View warmTintOverlay, ringLightOverlay;
     private static final int WARM_TINT_RGB = 0xFFFF9329;
     private static final long RING_FADE_MS = 800;
@@ -114,10 +122,19 @@ public class MainActivity extends AppCompatActivity
 
     private final SensorHealthController.Listener sensorListener = new SensorHealthController.Listener() {
         @Override public void onBannerChanged(@Nullable SensorBanner banner) {
+            shownSensorBanner = banner;
+            dismissSensorMessage();
+            // The brand gives way to the chip so every tab still fits on one line.
+            findViewById(R.id.brandTitle).setVisibility(banner == null ? View.VISIBLE : View.GONE);
             if (banner == null) { sensorBanner.setVisibility(View.GONE); return; }
-            sensorBanner.setText(banner.getMessageRes());
-            sensorBanner.setBackgroundColor(banner.getColorArgb());
+            sensorBanner.setText(banner.getLabelRes());
+            sensorBanner.setBackgroundResource(banner.getUrgent() ? R.drawable.bg_status_chip_urgent : R.drawable.bg_status_chip);
+            TextViewCompat.setCompoundDrawableTintList(sensorBanner, ColorStateList.valueOf(banner.getUrgent()
+                    ? ContextCompat.getColor(MainActivity.this, R.color.vk_on_emergency)
+                    : ContextCompat.getColor(MainActivity.this, R.color.vk_key_selecting)));
             sensorBanner.setVisibility(View.VISIBLE);
+            // Explain once when it first appears, then stay out of the way as a chip.
+            sensorBanner.post(MainActivity.this::showSensorMessage);
         }
         @Override public void onWarmTintChanged(float alpha) {
             warmTintOverlay.setBackgroundColor(ColorUtils.setAlphaComponent(WARM_TINT_RGB, Math.round(alpha * 255)));
@@ -157,13 +174,14 @@ public class MainActivity extends AppCompatActivity
         }
         viewModel = new ViewModelProvider(this).get(UIViewModel.class);
         sensorBanner = findViewById(R.id.sensorBanner);
+        sensorBanner.setOnClickListener(v -> {
+            if (sensorMessage != null) dismissSensorMessage(); else showSensorMessage();
+        });
         warmTintOverlay = findViewById(R.id.warmTintOverlay);
         ringLightOverlay = findViewById(R.id.ringLightOverlay);
         sensorController = new SensorHealthController(this, presenter, sensorListener);
 
         emergency = new EmergencyController(this);
-        findViewById(R.id.sosButton).setOnClickListener(v -> emergency.trigger("SOS button"));
-
         typingTestBar = findViewById(R.id.typingTestBar);
         typingTestText = findViewById(R.id.typingTestText);
         typingTestDone = findViewById(R.id.typingTestDone);
@@ -172,7 +190,6 @@ public class MainActivity extends AppCompatActivity
         TypingTest.addListener(typingTestListener);
 
         // home page set up
-        setUpTopTabs();
         TextView devButton, textButton, calibrateButton, clinicianButton, quickChatButton;
         devButton = findViewById(R.id.devModeButton);
         textButton = findViewById(R.id.textModeButton);
@@ -218,26 +235,42 @@ public class MainActivity extends AppCompatActivity
                 word -> Toast.makeText(getApplicationContext(), "Spelled: " + word, Toast.LENGTH_LONG).show()));
     }
 
-    private void setUpTopTabs() {
-        ViewGroup bar = findViewById(R.id.topTabBar);
+    private void showSensorMessage() {
+        SensorBanner banner = shownSensorBanner;
+        if (banner == null || isFinishing() || isDestroyed() || sensorBanner.getWindowToken() == null) return;
+        dismissSensorMessage();
         float density = getResources().getDisplayMetrics().density;
-        int selected = ContextCompat.getColor(this, R.color.vk_canvas);
-        int idle = ContextCompat.getColor(this, R.color.vk_accent);
-        int edge = ContextCompat.getColor(this, R.color.vk_chrome);
-        for (int i = 0; i < bar.getChildCount(); i++) {
-            bar.getChildAt(i).setBackground(
-                    new FolderTabDrawable(selected, idle, edge, 1.5f * density, 12 * density, 18 * density));
-        }
+        TextView card = new TextView(this);
+        card.setText(banner.getMessageRes());
+        card.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        card.setLineSpacing(0, 1.15f);
+        card.setTextColor(ContextCompat.getColor(this, R.color.vk_ink));
+        card.setBackgroundResource(R.drawable.bg_card);
+        card.setMaxWidth(Math.round(380 * density));
+        int pad = Math.round(16 * density);
+        card.setPadding(pad, Math.round(12 * density), pad, Math.round(12 * density));
+        card.setOnClickListener(v -> dismissSensorMessage());
+        PopupWindow popup = new PopupWindow(card, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+        popup.setElevation(8 * density);
+        popup.setOutsideTouchable(true);
+        popup.setOnDismissListener(() -> { if (sensorMessage == popup) sensorMessage = null; });
+        sensorMessage = popup;
+        popup.showAsDropDown(sensorBanner, 0, Math.round(8 * density), Gravity.END);
+        mainHandler.postDelayed(dismissSensorMessageTask, SENSOR_MESSAGE_MS);
     }
 
-    // The selected tab is raised so its curved feet sit over both neighbours.
+    private void dismissSensorMessage() {
+        mainHandler.removeCallbacks(dismissSensorMessageTask);
+        PopupWindow popup = sensorMessage;
+        sensorMessage = null;
+        if (popup != null && popup.isShowing()) popup.dismiss();
+    }
+
     private void selectTopTab(int tabId) {
         ViewGroup bar = findViewById(R.id.topTabBar);
         for (int i = 0; i < bar.getChildCount(); i++) {
             View tab = bar.getChildAt(i);
-            boolean isSelected = tab.getId() == tabId;
-            tab.setSelected(isSelected);
-            tab.setTranslationZ(isSelected ? 1f : 0f);
+            tab.setSelected(tab.getId() == tabId);
         }
     }
 
@@ -393,6 +426,7 @@ public class MainActivity extends AppCompatActivity
         if (sensorController != null) sensorController.stop();
         if (emergency != null) emergency.stop();
         mainHandler.removeCallbacks(typingTestClock);
+        dismissSensorMessage();
         super.onPause();
     }
 

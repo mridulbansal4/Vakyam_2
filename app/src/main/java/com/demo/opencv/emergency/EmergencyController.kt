@@ -32,7 +32,7 @@ import java.util.Locale
  * setContentView, feed it every eye sample, start() in onResume, stop() in onPause and release()
  * in onDestroy.
  *
- * Three long blinks (see [HelpSignalDetector]), the SOS button or the blink keyboard's HELP key
+ * Three long blinks (see [HelpSignalDetector]), or the blink keyboard's HELP key
  * start a siren, a spoken call for help and a text message to the caregiver; only a touch on the
  * screen stops them. It also chimes when the camera has lost the patient, because then no eye
  * input works at all.

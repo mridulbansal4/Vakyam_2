@@ -203,18 +203,13 @@ public class dev_mode_display extends Fragment {
                 gazeInputLog.setText(text);
             }
             if (detection.AnalyzedData != null) {
-                String s = "Overall Gaze Type: " + detection.AnalyzedData.getTypeString(detection.AnalyzedData.GazeType);
+                String s = "Overall gaze type: " + detection.AnalyzedData.getTypeString(detection.AnalyzedData.GazeType);
                 texts[1].setText(s);
 
-                s = "Overall Loss: " + String.format(java.util.Locale.US, "%.2f", detection.AnalyzedData.GazeProbability);
+                s = "Overall loss: " + String.format(java.util.Locale.US, "%.2f", detection.AnalyzedData.GazeProbability);
                 texts[2].setText(s);
 
-                if (detection.AnalyzedData.Success) { // check if the final output is successful
-                    String text = "GAZE DETECTED";
-                    texts[0].setText(text);
-                } else {
-                    texts[0].setText("---------------");
-                }
+                texts[0].setText(detection.AnalyzedData.Success ? "Gaze detected" : "Looking for a gaze…");
             }
         });
 
@@ -273,7 +268,7 @@ public class dev_mode_display extends Fragment {
         void clearSensorSimulations();
     }
 
-    private static final int SIM_ON_COLOR = 0xFFEF6C00;
+    private static final int SIM_ON_COLOR = 0xFF9A5A36;
     private static final int REQUEST_SEND_SMS = 300;
 
     private void styleSimButton(Button button, boolean on) {

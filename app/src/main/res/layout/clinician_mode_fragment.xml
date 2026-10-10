@@ -1,107 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Caregiver data: gaze log and typing tests side by side, vocabulary and the chart below. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/clinicianModeFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:padding="10dp"
-    android:translationY="15sp">
+    android:background="@color/vk_canvas">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="@dimen/vk_screen_margin">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="220dp"
+            android:baselineAligned="false"
             android:orientation="horizontal">
 
             <androidx.core.widget.NestedScrollView
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_weight="0.8"
-                android:background="@color/vk_surface"
-                android:padding="5dp">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/vk_half_gutter"
+                android:layout_weight="1.2"
+                android:background="@drawable/bg_card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="10dp">
+                    android:padding="@dimen/vk_space_l">
 
                     <TextView
                         android:id="@+id/gazeLogTitle"
+                        style="@style/Vk.Text.Section"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:lineSpacingExtra="5sp"
-                        android:text="@string/Clinician_GazeInputLog"
-                        android:textColor="@color/vk_ink"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:text="@string/Clinician_GazeInputLog" />
 
                     <TextView
                         android:id="@+id/gazeLogText"
+                        style="@style/Vk.Text.Caption"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:lineSpacingExtra="5sp"
-                        android:textColor="@color/vk_ink_soft"
-                        android:textSize="16sp"
-                        android:translationY="5dp"
-                        tools:text="" />
-
+                        android:layout_marginTop="@dimen/vk_space_s"
+                        android:lineSpacingExtra="4sp"
+                        tools:text="Left, Up, Closed" />
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
 
             <androidx.core.widget.NestedScrollView
-                android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_weight="0.45"
-                android:background="@color/vk_canvas">
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/vk_half_gutter"
+                android:layout_weight="1"
+                android:background="@drawable/bg_card">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="10dp">
+                    android:padding="@dimen/vk_space_l">
 
                     <TextView
                         android:id="@+id/textView10"
+                        style="@style/Vk.Text.Section"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/TypingTest_Title"
-                        android:textColor="@color/vk_ink_soft"
-                        android:textSize="20sp"
-                        android:textStyle="bold" />
+                        android:text="@string/TypingTest_Title" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/vk_space_s"
                         android:orientation="horizontal">
 
                         <Button
                             android:id="@+id/typingTestStartButton"
-                            style="@style/Widget.AppCompat.Button.Colored"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/TypingTest_Start"
-                            android:textColor="@color/vk_on_chrome" />
+                            android:layout_marginEnd="@dimen/vk_space_s"
+                            android:text="@string/TypingTest_Start" />
 
                         <Button
                             android:id="@+id/typingTestShareButton"
-                            style="@style/Widget.AppCompat.Button.Colored"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:minHeight="52dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
                             android:text="@string/TypingTest_Share"
-                            android:textColor="@color/vk_on_chrome" />
+                            android:textAllCaps="false"
+                            android:textColor="@color/vk_accent"
+                            android:textSize="@dimen/vk_text_label"
+                            app:cornerRadius="@dimen/vk_radius_box"
+                            app:strokeColor="@color/vk_outline"
+                            xmlns:app="http://schemas.android.com/apk/res-auto" />
                     </LinearLayout>
 
                     <HorizontalScrollView
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/vk_space_s">
 
                         <TextView
                             android:id="@+id/typingTestResults"
@@ -112,20 +114,17 @@
                             android:textSize="13sp"
                             tools:text="gaze-letter      3 tests  avg  2.1 WPM" />
                     </HorizontalScrollView>
-
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>
-
-
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:background="@color/vk_canvas"
+            android:layout_marginTop="@dimen/vk_gutter"
+            android:background="@drawable/bg_card"
             android:orientation="vertical"
-            android:padding="10dp">
+            android:padding="@dimen/vk_space_l">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -134,37 +133,36 @@
                 android:orientation="horizontal">
 
                 <TextView
+                    style="@style/Vk.Text.Section"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/Vocabulary_Title"
-                    android:textColor="@color/vk_ink_soft"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
+                    android:text="@string/Vocabulary_Title" />
 
                 <Button
                     android:id="@+id/vocabularyForgetButton"
-                    style="@style/Widget.AppCompat.Button.Colored"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/Vocabulary_Forget"
-                    android:textColor="@color/vk_on_chrome" />
+                    android:text="@string/Vocabulary_Forget" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/vocabularySummary"
+                style="@style/Vk.Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:lineSpacingExtra="4sp"
-                android:textColor="@color/vk_ink"
-                android:textSize="16sp"
+                android:layout_marginTop="@dimen/vk_space_s"
+                android:textSize="@dimen/vk_text_caption"
                 tools:text="Words: Harshad ×5, water ×4" />
         </LinearLayout>
 
         <com.github.mikephil.charting.charts.LineChart
             android:id="@+id/chart"
             android:layout_width="match_parent"
-            android:layout_height="300dp" />
+            android:layout_height="300dp"
+            android:layout_marginTop="@dimen/vk_gutter"
+            android:background="@drawable/bg_card"
+            android:padding="@dimen/vk_space_s" />
 
     </LinearLayout>
 </ScrollView>

@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.LayerDrawable
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -60,8 +61,13 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     private val ink = color(R.color.vk_ink)
     private val inkSoft = color(R.color.vk_ink_soft)
     private val inkMuted = color(R.color.vk_ink_muted)
+    private val tray = color(R.color.vk_tray)
+    private val keyFlat = color(R.color.vk_key_flat)
+    private val keyFunction = color(R.color.vk_key_function)
+    private val keyShadow = color(R.color.vk_key_shadow)
     private val keyAlt = color(R.color.vk_key_alt)
     private val selecting = color(R.color.vk_key_selecting)
+    private val selectingSoft = (selecting and 0x00FFFFFF) or (0x59 shl 24)
     private val outline = color(R.color.vk_outline)
     private val warning = color(R.color.vk_warning)
     private val emergencyRed = color(R.color.vk_emergency)
@@ -84,11 +90,11 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         id = "actions",
         label = "Actions",
         items = listOf(
-            KeyItem("backspace", "BACKSPACE", KeyType.ACTION, KeyActions.BACKSPACE),
-            KeyItem("space", "SPACE", KeyType.ACTION, KeyActions.SPACE),
-            KeyItem("speak", "SPEAK & SAVE", KeyType.ACTION, KeyActions.SPEAK_AND_SAVE),
-            KeyItem("cancel", "CANCEL", KeyType.ACTION, KeyActions.CANCEL),
-            KeyItem("help", "HELP", KeyType.ACTION, KeyActions.HELP),
+            KeyItem("backspace", "Backspace", KeyType.ACTION, KeyActions.BACKSPACE),
+            KeyItem("space", "Space", KeyType.ACTION, KeyActions.SPACE),
+            KeyItem("speak", "Speak & save", KeyType.ACTION, KeyActions.SPEAK_AND_SAVE),
+            KeyItem("cancel", "Cancel", KeyType.ACTION, KeyActions.CANCEL),
+            KeyItem("help", "Help", KeyType.ACTION, KeyActions.HELP),
         ),
         style = RowStyle.ACTIONS,
     )
@@ -153,89 +159,102 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         val root = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
         addView(root, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
 
-        // Same dark bar as the main screen's navigation row
+        // Header: title and scan state on the left, camera state and close on the right.
         val header = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundColor(chrome)
-            setPadding(dp(12), dp(4), dp(4), dp(4))
+            setPadding(dp(20), 0, dp(8), 0)
         }
-        header.addView(text("SPELL WITH EYES", 20f, onChrome, bold = true), wrap())
-        statusView = text("", 16f, ink, bold = true).apply {
+        header.addView(text("Spell", 20f, onChrome), wrap())
+        statusView = text("", 14f, ink).apply {
             gravity = Gravity.CENTER
             maxLines = 1
-            setPadding(dp(14), dp(4), dp(14), dp(4))
+            setPadding(dp(12), dp(5), dp(12), dp(5))
         }
-        header.addView(statusView, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
-            marginStart = dp(16); marginEnd = dp(16)
-        })
-        cameraStatusView = text("Starting camera…", 13f, onChrome)
+        header.addView(statusView, wrap().apply { marginStart = dp(14) })
+        header.addView(View(context), LinearLayout.LayoutParams(0, 1, 1f))
+        cameraStatusView = text("Starting camera…", 13f, onChrome, medium = false).apply { maxLines = 1 }
         header.addView(cameraStatusView, wrap())
         val closeButton = ImageView(context).apply {
             setImageResource(R.drawable.baseline_close_24)
-            setBackgroundResource(R.drawable.gaze_option_bg_2)
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            setColorFilter(onChrome)
+            setPadding(dp(10), dp(10), dp(10), dp(10))
             contentDescription = "Close keyboard"
             setOnClickListener { listener?.onClose() }
         }
-        header.addView(closeButton, LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginStart = dp(12) })
-        root.addView(header, matchWrap())
+        header.addView(closeButton, LinearLayout.LayoutParams(dp(44), dp(44)).apply { marginStart = dp(12) })
+        root.addView(header, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(52)))
 
         val body = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(6), dp(12), dp(8))
+            setPadding(dp(16), dp(12), dp(16), dp(12))
         }
         root.addView(body, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
 
-        typingTestView = text("", 16f, onChrome, bold = true).apply {
+        typingTestView = text("", 15f, onChrome).apply {
             gravity = Gravity.CENTER
-            setPadding(dp(12), dp(4), dp(12), dp(4))
+            setPadding(dp(12), dp(6), dp(12), dp(6))
             background = rounded(accent, dp(12).toFloat())
             maxLines = 1
             visibility = GONE
         }
-        body.addView(typingTestView, matchWrap().apply { bottomMargin = dp(6) })
+        body.addView(typingTestView, matchWrap().apply { bottomMargin = dp(8) })
 
-        bufferView = text("", 26f, ink).apply {
-            gravity = Gravity.CENTER_VERTICAL
-            setBackgroundResource(R.drawable.text_rounded_dark)
-            setPadding(dp(14), dp(6), dp(14), dp(6))
-            maxLines = 1
+        // Composer: the spelled text, blink feedback on the right, the blink gauge as a line along the bottom.
+        val composer = FrameLayout(context).apply {
+            background = rounded(keyFlat, dp(16).toFloat())
+            elevation = dp(1).toFloat()
         }
-        body.addView(bufferView, matchWrap())
-
-        val gaugeRow = LinearLayout(context).apply {
+        val composerRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(20), 0, dp(20), dp(4))
         }
+        bufferView = text("", 28f, ink).apply {
+            letterSpacing = 0.03f
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.START
+        }
+        composerRow.addView(bufferView, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f))
+        val feedback = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.END
+        }
+        gaugeLabel = text(gaugeText(0), 15f, inkSoft).apply { maxLines = 1 }
+        feedback.addView(gaugeLabel, wrap())
+        infoView = text("Close eyes ½–1 s to select", 13f, inkMuted, medium = false).apply {
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+        feedback.addView(infoView, wrap())
+        composerRow.addView(feedback, LinearLayout.LayoutParams(dp(300), LayoutParams.WRAP_CONTENT).apply { marginStart = dp(16) })
+        composer.addView(composerRow, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
         gaugeView = DwellGaugeView(context)
-        gaugeRow.addView(gaugeView, LinearLayout.LayoutParams(0, dp(12), 1f))
-        gaugeLabel = text(gaugeText(0), 14f, inkSoft, bold = true)
-        gaugeRow.addView(gaugeLabel, LinearLayout.LayoutParams(dp(250), LayoutParams.WRAP_CONTENT).apply {
-            marginStart = dp(12)
+        composer.addView(gaugeView, LayoutParams(LayoutParams.MATCH_PARENT, dp(4), Gravity.BOTTOM).apply {
+            leftMargin = dp(16); rightMargin = dp(16); bottomMargin = dp(6)
         })
-        body.addView(gaugeRow, matchWrap().apply { topMargin = dp(6) })
+        body.addView(composer, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(60)))
 
-        infoView = text(
-            "Natural blinks are ignored. Close eyes ½–1 s to select, over 2 s to rest, 2 s three times to call for help. Tap or Space is a switch.",
-            13f, inkSoft,
-        ).apply { maxLines = 1 }
-        body.addView(infoView, matchWrap().apply { topMargin = dp(2) })
-
-        val rowsContainer = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        matrix.forEach { _ ->
+        // Keyboard tray
+        val rowsContainer = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            background = rounded(tray, dp(20).toFloat())
+            setPadding(dp(8), dp(6), dp(8), dp(8))
+        }
+        matrix.forEachIndexed { i, _ ->
             val rowView = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                setPadding(dp(4), dp(4), dp(4), dp(4))
+                setPadding(dp(3), dp(3), dp(3), dp(3))
             }
             rowViews.add(rowView)
             keyViews.add(emptyList())
             rowsContainer.addView(rowView, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f).apply {
-                topMargin = dp(3)
+                if (i > 0) topMargin = dp(1)
             })
         }
         body.addView(rowsContainer, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f).apply {
-            topMargin = dp(4)
+            topMargin = dp(10)
         })
 
         matrix.indices.forEach(::rebuildRowViews)
@@ -382,32 +401,48 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         rowView.removeAllViews()
         if (row.items.isEmpty() && row.style == RowStyle.SUGGESTIONS) {
             rowView.addView(
-                text("Predictions appear here as you type", 16f, inkSoft).apply { gravity = Gravity.CENTER },
+                text("Word suggestions appear here as you spell", 16f, inkMuted, medium = false).apply { gravity = Gravity.CENTER },
                 LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f),
             )
         }
-        keyViews[rowIdx] = row.items.map { item ->
+        // Letter keys share one width across rows, so shorter rows are centred like a real keyboard.
+        val inset = if (row.style == RowStyle.LETTERS) (LETTER_COLUMNS - row.items.size) / 2f else 0f
+        if (inset > 0) rowView.addView(View(context), LinearLayout.LayoutParams(0, 1, inset))
+        keyViews[rowIdx] = row.items.mapIndexed { i, item ->
+            if (row.style == RowStyle.SUGGESTIONS && i > 0) {
+                rowView.addView(View(context).apply { setBackgroundColor(keyShadow) },
+                    LinearLayout.LayoutParams(dp(1), LayoutParams.MATCH_PARENT).apply { topMargin = dp(8); bottomMargin = dp(8) })
+            }
             val size = when (row.style) {
-                RowStyle.LETTERS -> 24f
-                RowStyle.SUGGESTIONS -> 20f
+                RowStyle.LETTERS -> 26f
+                RowStyle.SUGGESTIONS -> 22f
                 RowStyle.ACTIONS -> 18f
             }
-            text(item.label, size, ink, bold = true).apply {
+            text(item.label, size, ink, medium = row.style != RowStyle.SUGGESTIONS).apply {
                 gravity = Gravity.CENTER
                 maxLines = 1
+                if (row.style != RowStyle.SUGGESTIONS) setPadding(0, 0, 0, dp(KEY_SHADOW_DP))
             }.also {
-                rowView.addView(it, LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f).apply {
+                rowView.addView(it, LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, keyWeight(item)).apply {
                     marginStart = dp(3); marginEnd = dp(3)
                 })
             }
         }
+        if (inset > 0) rowView.addView(View(context), LinearLayout.LayoutParams(0, 1, inset))
+    }
+
+    private fun keyWeight(item: KeyItem): Float = when (item.value) {
+        KeyActions.SPACE -> 3f
+        KeyActions.SPEAK_AND_SAVE -> 2.5f
+        KeyActions.BACKSPACE, KeyActions.CANCEL, KeyActions.HELP -> 1.5f
+        else -> 1f
     }
 
     private fun render() {
         statusView.text = when (engine.tier) {
-            ScanTier.ROW -> "ROW SCAN · blink to pick the highlighted row"
-            ScanTier.COLUMN -> "KEY SCAN · blink to pick the highlighted key"
-            ScanTier.PAUSED -> "PAUSED · blink ½ s or tap to resume"
+            ScanTier.ROW -> "Choosing a row"
+            ScanTier.COLUMN -> "Choosing a key"
+            ScanTier.PAUSED -> "Paused · blink or tap to resume"
         }
         statusView.background = rounded(
             when (engine.tier) {
@@ -415,27 +450,33 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                 ScanTier.COLUMN -> selecting
                 ScanTier.PAUSED -> surfaceTint
             },
-            dp(12).toFloat(),
+            dp(18).toFloat(),
         )
-        val radius = dp(14).toFloat()
+        val rowRadius = dp(14).toFloat()
         matrix.forEachIndexed { r, row ->
             val isActiveRow = r == engine.activeRowIdx
+            // The scanned row is tinted amber and ringed in ink, so it reads without relying on colour alone.
             rowViews[r].background = when {
-                isActiveRow && engine.tier == ScanTier.ROW -> rounded(selecting, radius, ink, dp(3))
-                isActiveRow && engine.tier == ScanTier.COLUMN -> rounded(Color.TRANSPARENT, radius, accent, dp(2))
-                row.style == RowStyle.SUGGESTIONS -> rounded(surfaceTint, dp(12).toFloat())
+                isActiveRow && engine.tier == ScanTier.ROW -> rounded(selectingSoft, rowRadius, ink, dp(3))
+                isActiveRow && engine.tier == ScanTier.COLUMN -> rounded(Color.TRANSPARENT, rowRadius, inkSoft, dp(2))
                 else -> null
             }
             keyViews[r].forEachIndexed { c, key ->
                 val isActiveKey = isActiveRow && engine.tier == ScanTier.COLUMN && c == engine.activeColIdx
-                val isHelp = row.items[c].value == KeyActions.HELP
+                val value = row.items[c].value
+                val isHelp = value == KeyActions.HELP
+                val isSpeak = value == KeyActions.SPEAK_AND_SAVE
+                val isSuggestion = row.style == RowStyle.SUGGESTIONS
                 key.background = when {
-                    isActiveKey -> keyDrawable(R.drawable.gaze_option_bg_selecting)
-                    isHelp -> rounded(emergencyRed, radius, outline, dp(2))
-                    row.style == RowStyle.LETTERS -> keyDrawable(R.drawable.gaze_option_bg_1)
-                    else -> keyDrawable(R.drawable.gaze_option_bg_2)
+                    isActiveKey && isSuggestion -> rounded(selecting, dp(10).toFloat(), ink, dp(3))
+                    isActiveKey -> keyFace(selecting, stroke = ink)
+                    isSuggestion -> null
+                    isHelp -> keyFace(emergencyRed)
+                    isSpeak -> keyFace(accent)
+                    row.style == RowStyle.LETTERS || value == KeyActions.SPACE -> keyFace(keyFlat)
+                    else -> keyFace(keyFunction)
                 }
-                key.setTextColor(if (isHelp && !isActiveKey) onChrome else ink)
+                key.setTextColor(if ((isHelp || isSpeak) && !isActiveKey) onChrome else ink)
             }
         }
     }
@@ -455,15 +496,21 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         durationMs <= 0 -> "Eyes open"
         durationMs < config.involuntaryBlinkMaxMs -> "Natural blink…"
         durationMs < config.minBlinkDurationMs -> "Keep closed…"
-        durationMs <= config.maxBlinkDurationMs -> "✓ Open eyes now to SELECT"
+        durationMs <= config.maxBlinkDurationMs -> "✓ Open eyes now to select"
         durationMs < config.restClosureMs -> "Too long, won't select"
         else -> "Resting, scanning paused"
     }
 
-    /** The shared key shapes (sage / sand / amber with the soft outline) used by text entry. */
-    private fun keyDrawable(id: Int): Drawable? = ContextCompat.getDrawable(context, id)
-
     private fun color(id: Int) = ContextCompat.getColor(context, id)
+
+    /** A flat key face resting on a soft shadow a couple of dp below it. */
+    private fun keyFace(fill: Int, stroke: Int = Color.TRANSPARENT): Drawable {
+        val radius = dp(10).toFloat()
+        val face = rounded(fill, radius, stroke, if (stroke == Color.TRANSPARENT) 0 else dp(3))
+        return LayerDrawable(arrayOf(rounded(keyShadow, radius), face)).apply {
+            setLayerInset(1, 0, 0, 0, dp(KEY_SHADOW_DP))
+        }
+    }
 
     private fun rounded(fill: Int, radius: Float, stroke: Int = Color.TRANSPARENT, strokeWidth: Int = 0) =
         GradientDrawable().apply {
@@ -472,11 +519,11 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             if (strokeWidth > 0) setStroke(strokeWidth, stroke)
         }
 
-    private fun text(value: String, sizeSp: Float, color: Int, bold: Boolean = false) = TextView(context).apply {
+    private fun text(value: String, sizeSp: Float, color: Int, medium: Boolean = true) = TextView(context).apply {
         text = value
         setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp)
         setTextColor(color)
-        typeface = Typeface.create("sans-serif-medium", if (bold) Typeface.BOLD else Typeface.NORMAL)
+        typeface = Typeface.create(if (medium) "sans-serif-medium" else "sans-serif", Typeface.NORMAL)
     }
 
     private fun wrap() = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
@@ -515,5 +562,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     private companion object {
         /** Opacity of the camera read-out while nothing needs attention. */
         const val QUIET_ALPHA = 0.7f
+        const val LETTER_COLUMNS = 10
+        const val KEY_SHADOW_DP = 2
     }
 }

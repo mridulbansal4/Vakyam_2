@@ -74,7 +74,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/upgaze" />
+                android:src="@drawable/ic_gaze_up" />
 
             <TextView
                 android:id="@+id/upGazeText"
@@ -102,7 +102,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/leftgaze" />
+                android:src="@drawable/ic_gaze_left" />
 
             <TextView
                 android:id="@+id/leftGazeText"
@@ -130,7 +130,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/rightgaze" />
+                android:src="@drawable/ic_gaze_right" />
 
             <TextView
                 android:id="@+id/rightGazeText"
@@ -158,7 +158,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/closedgaze" />
+                android:src="@drawable/ic_gaze_closed" />
 
             <TextView
                 android:id="@+id/closedGazeText"
@@ -186,7 +186,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/leftupgaze" />
+                android:src="@drawable/ic_gaze_left_up" />
 
             <TextView
                 android:id="@+id/leftUpGazeText"
@@ -214,7 +214,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/rightupgaze" />
+                android:src="@drawable/ic_gaze_right_up" />
 
             <TextView
                 android:id="@+id/rightUpGazeText"

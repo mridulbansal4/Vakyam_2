@@ -45,11 +45,11 @@ public class TextEntryManager {
     String llmLanguage = HinglishDetector.ENGLISH; // what the last sentence was generated in
     static final String GENERATING = "Generating...";
 
-    String NoMatchString = "NO MATCH";
-    String NextPageString = "NEXT PAGE";
-    String SwitchString = "SWITCH";
-    String DeleteString = "DELETE";
-    String FinishedString = "FINISH";
+    String NoMatchString = "No match";
+    String NextPageString = "Next page";
+    String SwitchString = "Switch";
+    String DeleteString = "Delete";
+    String FinishedString = "Finish";
 
     String[] wordModeUI;
     int[] wordIndex = {-1, 2, -1, -1, 0, 1, -1, -1, -1, -1};
@@ -102,10 +102,15 @@ public class TextEntryManager {
     }
 
     // Debug builds only: adb shell am broadcast -a com.vakyam.debug.SPEAK --es text "Mujhe paani chahiye"
+    // or, to stand in for what the mic heard: --es context "What would you like to eat?"
     static final String DEBUG_SPEAK_ACTION = "com.vakyam.debug.SPEAK";
     private final BroadcastReceiver debugSpeakReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (intent.hasExtra("context")) {
+                updateContext(intent.getStringExtra("context"));
+                return;
+            }
             String text = intent.getStringExtra("text");
             Log.i("TextEntryManager", "debug speak: voice=" + speak(text) + " text=\"" + text + "\"");
         }
@@ -219,9 +224,9 @@ public class TextEntryManager {
             keyboardData.sentence = (mContext != null) ? mContext.getString(R.string.TextEntry_EnableLLM) : "Enable LLM to generate";
         }
         if (context == null || context.isEmpty()) {
-            keyboardData.context = (mContext != null) ? mContext.getString(R.string.TextEntry_EnterContext) : "Add Context: ";
+            keyboardData.context = "";
         } else {
-            keyboardData.context = "Context: " + context;
+            keyboardData.context = (mContext != null) ? mContext.getString(R.string.TextEntry_HeardContext, context) : "Heard: " + context;
         }
     }
 

@@ -25,6 +25,17 @@
     <color name="vk_accent">#4F6A61</color>
     <color name="vk_on_chrome">#E6E2D6</color>
 
+    <color name="vk_badge">#2C3531</color>
+    <color name="vk_badge_ink">#DDD9CC</color>
+
+    <color name="vk_tab_idle_text">#A9B2AA</color>
+
+    <color name="vk_tray">#1E2422</color>
+    <color name="vk_key_flat">#36403B</color>
+    <color name="vk_key_function">#2A322F</color>
+    <color name="vk_key_shadow">#59000000</color>
+
     <color name="vk_warning">#C96A52</color>
-    <color name="vk_emergency">#C62828</color>
+    <color name="vk_emergency">#B3261E</color>
+    <color name="vk_on_emergency">#FFF1EE</color>
 </resources>

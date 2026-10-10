@@ -1,3 +1,35 @@
 <resources>
-      <dimen name="fab_margin">16dp</dimen>
-   </resources>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- 8dp spacing scale: every screen uses the same outer margin and the same gap between tiles. -->
+    <dimen name="vk_space_xs">4dp</dimen>
+    <dimen name="vk_space_s">8dp</dimen>
+    <dimen name="vk_space_m">12dp</dimen>
+    <dimen name="vk_space_l">16dp</dimen>
+    <dimen name="vk_space_xl">24dp</dimen>
+    <dimen name="vk_screen_margin">16dp</dimen>
+    <dimen name="vk_gutter">12dp</dimen>
+    <dimen name="vk_half_gutter">6dp</dimen>
+
+    <dimen name="vk_radius_tile">20dp</dimen>
+    <dimen name="vk_radius_box">14dp</dimen>
+    <dimen name="vk_radius_pill">22dp</dimen>
+    <dimen name="vk_outline">1.5dp</dimen>
+    <dimen name="vk_outline_focus">4dp</dimen>
+
+    <!-- Direction badge on each gaze tile. -->
+    <dimen name="vk_badge">36dp</dimen>
+    <dimen name="vk_badge_inset">10dp</dimen>
+    <dimen name="vk_tile_top_clearance">50dp</dimen>
+
+    <!-- Type: targets the patient reads from arm's length, often lying down, are never below 22sp. -->
+    <dimen name="vk_text_target">28sp</dimen>
+    <dimen name="vk_text_phrase">25sp</dimen>
+    <dimen name="vk_text_word">22sp</dimen>
+    <dimen name="vk_text_body">20sp</dimen>
+    <dimen name="vk_text_label">17sp</dimen>
+    <dimen name="vk_text_caption">15sp</dimen>
+    <dimen name="vk_text_title">26sp</dimen>
+
+    <dimen name="vk_top_bar">56dp</dimen>
+</resources>

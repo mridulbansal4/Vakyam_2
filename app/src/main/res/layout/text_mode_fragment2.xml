@@ -1,456 +1,319 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Three columns on a 16dp margin / 12dp gutter grid.
+     Sides: four corner tiles, each holding a main option (badge row) and a sub option (lower part).
+     Centre: Switch and Finish, then typed letters, the suggested sentence and the context.
+     The finish overlay (darkenLayer, finishBox, speak and back) sits above everything. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/vk_canvas"
-    android:orientation="horizontal">
+    android:background="@color/vk_canvas">
 
-    <ImageButton
-        android:id="@+id/recordButton"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="@drawable/record_button_idle"
-        android:contentDescription="A button to record voice"
-        android:src="@drawable/baseline_mic_24"
-        android:translationZ="7dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.688"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.895" />
-
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="50dp"
-        android:layout_height="35dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/upgaze"
-        android:translationZ="5dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.685"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.032" />
-
-    <ImageView
-        android:id="@+id/imageView3"
-        android:layout_width="50dp"
-        android:layout_height="35dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/closedgaze"
-        android:translationZ="5dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.457"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.032" />
-
-    <TextView
-        android:id="@+id/textInput2"
+    <!-- Column skeleton -->
+    <Space
+        android:id="@+id/centerColumn"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/text_rounded_dark"
-        android:fontFamily="sans-serif-medium"
-        android:padding="7sp"
-        android:textAllCaps="false"
-        android:textColor="@color/vk_ink"
-        android:textSize="18sp"
+        android:layout_marginStart="@dimen/vk_gutter"
+        android:layout_marginTop="@dimen/vk_screen_margin"
+        android:layout_marginEnd="@dimen/vk_gutter"
+        android:layout_marginBottom="@dimen/vk_screen_margin"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/rightUpGazeText2"
+        app:layout_constraintHorizontal_weight="1.45"
+        app:layout_constraintStart_toEndOf="@id/leftUpGazeText2"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.21"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.213"
-        app:layout_constraintWidth_percent="0.44"
-        tools:text="This is the user inputted text." />
-
-    <TextView
-        android:id="@+id/leftUpGazeSubText"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fontFamily="sans-serif-medium"
-        android:padding="7sp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink_muted"
-
-        android:textSize="20sp"
-        android:translationZ="3dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.14"
-        app:layout_constraintHorizontal_bias="0.04"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.278"
-        app:layout_constraintWidth_percent="0.24"
-        tools:text="Word 1" />
-
-    <TextView
-        android:id="@+id/rightUpGazeSubText"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fontFamily="sans-serif-medium"
-        android:padding="7sp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink_muted"
-
-        android:textSize="20sp"
-        android:translationZ="3dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.14"
-        app:layout_constraintHorizontal_bias="0.963"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.278"
-        app:layout_constraintWidth_percent="0.24"
-        tools:text="Word 2" />
-
-    <TextView
-        android:id="@+id/leftGazeSubText"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fontFamily="sans-serif-medium"
-        android:padding="7sp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink_muted"
-
-        android:textSize="20sp"
-        android:translationZ="3dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.14"
-        app:layout_constraintHorizontal_bias="0.04"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.864"
-        app:layout_constraintWidth_percent="0.24"
-        tools:text="Word 3" />
-
-    <TextView
-        android:id="@+id/rightGazeSubText"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:fontFamily="sans-serif-medium"
-        android:padding="7sp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink_muted"
-
-        android:textSize="20sp"
-        android:translationZ="3dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.14"
-        app:layout_constraintHorizontal_bias="0.969"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.86"
-        app:layout_constraintWidth_percent="0.24"
-        tools:text="Word 4" />
-
-    <TextView
-        android:id="@+id/contextBox2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:autofillHints="@string/TextEntry_EnterContext"
-        android:background="@drawable/text_rounded_dark"
-        android:fontFamily="sans-serif-medium"
-        android:paddingLeft="7dp"
-        android:paddingTop="7dp"
-        android:paddingRight="50dp"
-        android:paddingBottom="7dp"
-        android:textAllCaps="false"
-        android:textColor="@color/vk_ink"
-        android:textColorHint="@color/vk_ink_muted"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.2"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.931"
-        app:layout_constraintWidth_percent="0.44"
-        tools:text="This is the context that the user will type out. " />
-
-    <TextView
-        android:id="@+id/sentenceBox2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/text_rounded_green"
-        android:fontFamily="sans-serif-medium"
-        android:padding="7sp"
-        android:textAllCaps="false"
-        android:textColor="@color/vk_ink"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.3"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.592"
-        app:layout_constraintWidth_percent="0.44"
-        tools:text="This is the sentence users generate with sentence prediction" />
-
-    <ImageView
-        android:id="@+id/imageView2"
-        android:layout_width="70dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/upgaze"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.837"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.115" />
-
+    <!-- Left column -->
     <TextView
         android:id="@+id/leftUpGazeText2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_1"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="10dp"
-        android:paddingTop="35dp"
-        android:paddingEnd="10dp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="23sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.35"
-        app:layout_constraintHorizontal_bias="0.04"
+        style="@style/Vk.KeyTile"
+        android:layout_marginStart="@dimen/vk_screen_margin"
+        android:layout_marginTop="@dimen/vk_screen_margin"
+        android:layout_marginBottom="@dimen/vk_half_gutter"
+        app:layout_constraintBottom_toTopOf="@id/leftGazeText2"
+        app:layout_constraintEnd_toStartOf="@id/centerColumn"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-
-        app:layout_constraintVertical_bias="0.069"
-        app:layout_constraintWidth_percent="0.24"
-        tools:text="ABCDEF" />
-
-    <TextView
-        android:id="@+id/rightUpGazeText2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_1"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="10dp"
-        android:paddingTop="35dp"
-        android:paddingEnd="10dp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="23sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.35"
-        app:layout_constraintHorizontal_bias="0.97"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.069"
-        app:layout_constraintWidth_percent="0.245"
         tools:text="ABCDEF" />
 
     <TextView
         android:id="@+id/leftGazeText2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_1"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="15dp"
-        android:paddingEnd="15dp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="23sp"
-        android:textStyle="bold"
+        style="@style/Vk.KeyTile"
+        android:layout_marginTop="@dimen/vk_half_gutter"
+        android:layout_marginBottom="@dimen/vk_screen_margin"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@id/leftUpGazeText2"
+        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
+        app:layout_constraintTop_toBottomOf="@id/leftUpGazeText2"
+        tools:text="NOPQRST" />
+
+    <!-- Right column -->
+    <TextView
+        android:id="@+id/rightUpGazeText2"
+        style="@style/Vk.KeyTile"
+        android:layout_marginTop="@dimen/vk_screen_margin"
+        android:layout_marginEnd="@dimen/vk_screen_margin"
+        android:layout_marginBottom="@dimen/vk_half_gutter"
+        app:layout_constraintBottom_toTopOf="@id/rightGazeText2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.35"
-        app:layout_constraintHorizontal_bias="0.04"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/centerColumn"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.93"
-        app:layout_constraintWidth_percent="0.24
-"
-        tools:text="ABCDEF" />
+        tools:text="GHIJKLM" />
 
     <TextView
         android:id="@+id/rightGazeText2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_1"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="15dp"
-        android:paddingEnd="15dp"
-        android:textAlignment="center"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="23sp"
-        android:textStyle="bold"
+        style="@style/Vk.KeyTile"
+        android:layout_marginTop="@dimen/vk_half_gutter"
+        android:layout_marginBottom="@dimen/vk_screen_margin"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.35"
-        app:layout_constraintHorizontal_bias="0.97"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.93"
-        app:layout_constraintWidth_percent="0.245"
-        tools:text="ABCDEF" />
+        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
+        app:layout_constraintStart_toStartOf="@id/rightUpGazeText2"
+        app:layout_constraintTop_toBottomOf="@id/rightUpGazeText2"
+        tools:text="UVWXYZ" />
 
+    <!-- Dividers between main and sub option -->
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="@dimen/vk_space_l"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="@dimen/vk_space_l"
+        android:alpha="0.35"
+        android:background="@color/vk_outline"
+        app:layout_constraintEnd_toEndOf="@id/leftUpGazeText2"
+        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
+        app:layout_constraintTop_toTopOf="@id/leftUpGazeText2" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="@dimen/vk_space_l"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="@dimen/vk_space_l"
+        android:alpha="0.35"
+        android:background="@color/vk_outline"
+        app:layout_constraintEnd_toEndOf="@id/leftGazeText2"
+        app:layout_constraintStart_toStartOf="@id/leftGazeText2"
+        app:layout_constraintTop_toTopOf="@id/leftGazeText2" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="@dimen/vk_space_l"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="@dimen/vk_space_l"
+        android:alpha="0.35"
+        android:background="@color/vk_outline"
+        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
+        app:layout_constraintStart_toStartOf="@id/rightUpGazeText2"
+        app:layout_constraintTop_toTopOf="@id/rightUpGazeText2" />
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="@dimen/vk_space_l"
+        android:layout_marginTop="58dp"
+        android:layout_marginEnd="@dimen/vk_space_l"
+        android:alpha="0.35"
+        android:background="@color/vk_outline"
+        app:layout_constraintEnd_toEndOf="@id/rightGazeText2"
+        app:layout_constraintStart_toStartOf="@id/rightGazeText2"
+        app:layout_constraintTop_toTopOf="@id/rightGazeText2" />
+
+    <!-- Sub options: the lower part of each corner tile -->
+    <TextView
+        android:id="@+id/leftUpGazeSubText"
+        style="@style/Vk.KeySub"
+        android:layout_marginTop="60dp"
+        app:layout_constraintBottom_toBottomOf="@id/leftUpGazeText2"
+        app:layout_constraintEnd_toEndOf="@id/leftUpGazeText2"
+        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
+        app:layout_constraintTop_toTopOf="@id/leftUpGazeText2"
+        tools:text="hello" />
+
+    <TextView
+        android:id="@+id/leftGazeSubText"
+        style="@style/Vk.KeySub"
+        android:layout_marginTop="60dp"
+        app:layout_constraintBottom_toBottomOf="@id/leftGazeText2"
+        app:layout_constraintEnd_toEndOf="@id/leftGazeText2"
+        app:layout_constraintStart_toStartOf="@id/leftGazeText2"
+        app:layout_constraintTop_toTopOf="@id/leftGazeText2"
+        tools:text="water" />
+
+    <TextView
+        android:id="@+id/rightUpGazeSubText"
+        style="@style/Vk.KeySub"
+        android:layout_marginTop="60dp"
+        app:layout_constraintBottom_toBottomOf="@id/rightUpGazeText2"
+        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
+        app:layout_constraintStart_toStartOf="@id/rightUpGazeText2"
+        app:layout_constraintTop_toTopOf="@id/rightUpGazeText2"
+        tools:text="good" />
+
+    <TextView
+        android:id="@+id/rightGazeSubText"
+        style="@style/Vk.KeySub"
+        android:layout_marginTop="60dp"
+        app:layout_constraintBottom_toBottomOf="@id/rightGazeText2"
+        app:layout_constraintEnd_toEndOf="@id/rightGazeText2"
+        app:layout_constraintStart_toStartOf="@id/rightGazeText2"
+        app:layout_constraintTop_toTopOf="@id/rightGazeText2"
+        tools:text="thanks" />
+
+    <!-- Corner badges -->
     <ImageView
         android:id="@+id/TextEntryLeftUpImage"
-        android:layout_width="70dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/leftupgaze"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.007" />
-
-    <TextView
-        android:id="@+id/closedGazeText2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_2"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="5dp"
-        android:textAlignment="textStart"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.12"
-        app:layout_constraintWidth_percent="0.21"
-        app:layout_constraintHorizontal_bias="0.365"
-
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.033"
-
-        tools:text="SWITCH" />
-
-    <TextView
-        android:id="@+id/upGazeText2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_2"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="5dp"
-        android:textAlignment="textStart"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.12"
-        app:layout_constraintHorizontal_bias="0.637"
-
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.033"
-        app:layout_constraintWidth_percent="0.21"
-        tools:text="FINISH" />
-
-    <ImageView
-        android:id="@+id/imageView11"
-        android:layout_width="70dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/rightupgaze"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.007" />
-
-    <ImageView
-        android:id="@+id/imageView12"
-        android:layout_width="70dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/rightgaze"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.996" />
+        style="@style/Vk.Badge"
+        android:layout_marginStart="@dimen/vk_badge_inset"
+        android:layout_marginTop="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_left_up"
+        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
+        app:layout_constraintTop_toTopOf="@id/leftUpGazeText2" />
 
     <ImageView
         android:id="@+id/imageView13"
-        android:layout_width="70dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/leftgaze"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.996" />
+        style="@style/Vk.Badge"
+        android:layout_marginStart="@dimen/vk_badge_inset"
+        android:layout_marginTop="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_left"
+        app:layout_constraintStart_toStartOf="@id/leftGazeText2"
+        app:layout_constraintTop_toTopOf="@id/leftGazeText2" />
+
+    <ImageView
+        android:id="@+id/imageView11"
+        style="@style/Vk.Badge"
+        android:layout_marginTop="@dimen/vk_badge_inset"
+        android:layout_marginEnd="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_right_up"
+        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
+        app:layout_constraintTop_toTopOf="@id/rightUpGazeText2" />
+
+    <ImageView
+        android:id="@+id/imageView12"
+        style="@style/Vk.Badge"
+        android:layout_marginTop="@dimen/vk_badge_inset"
+        android:layout_marginEnd="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_right"
+        app:layout_constraintEnd_toEndOf="@id/rightGazeText2"
+        app:layout_constraintTop_toTopOf="@id/rightGazeText2" />
+
+    <!-- Centre column: Switch (eyes closed) and Finish (up) -->
+    <TextView
+        android:id="@+id/closedGazeText2"
+        style="@style/Vk.PillTile"
+        android:layout_height="60dp"
+        android:layout_marginEnd="@dimen/vk_half_gutter"
+        android:background="@drawable/gaze_option_bg_2"
+        app:layout_constraintEnd_toStartOf="@id/upGazeText2"
+        app:layout_constraintStart_toStartOf="@id/centerColumn"
+        app:layout_constraintTop_toTopOf="@id/centerColumn"
+        tools:text="Switch" />
 
     <TextView
-        android:id="@+id/finishBox"
+        android:id="@+id/upGazeText2"
+        style="@style/Vk.PillTile"
+        android:layout_height="60dp"
+        android:layout_marginStart="@dimen/vk_half_gutter"
+        android:background="@drawable/gaze_option_bg_2"
+        app:layout_constraintEnd_toEndOf="@id/centerColumn"
+        app:layout_constraintStart_toEndOf="@id/closedGazeText2"
+        app:layout_constraintTop_toTopOf="@id/centerColumn"
+        tools:text="Finish" />
+
+    <ImageView
+        android:id="@+id/imageView3"
+        style="@style/Vk.Badge"
+        android:layout_marginStart="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_closed"
+        app:layout_constraintBottom_toBottomOf="@id/closedGazeText2"
+        app:layout_constraintStart_toStartOf="@id/closedGazeText2"
+        app:layout_constraintTop_toTopOf="@id/closedGazeText2" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        style="@style/Vk.Badge"
+        android:layout_marginStart="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_up"
+        app:layout_constraintBottom_toBottomOf="@id/upGazeText2"
+        app:layout_constraintStart_toStartOf="@id/upGazeText2"
+        app:layout_constraintTop_toTopOf="@id/upGazeText2" />
+
+    <!-- Centre column: the sentence fills the middle; the bottom row is the mic alone, centred, until something
+         is heard; then the heard text takes the row and the mic moves to its end. -->
+    <TextView
+        android:id="@+id/textInput2"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_1"
-        android:fontFamily="sans-serif"
-        android:paddingStart="20dp"
-        android:paddingTop="50dp"
-        android:paddingEnd="20dp"
-        android:text="This is the final sentence the user will type out and process."
-        android:textAlignment="center"
-        android:textColor="@color/vk_ink"
-        android:textSize="23sp"
-        android:textStyle="bold"
-        android:translationZ="20dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.7"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="0.7
-" />
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@id/centerColumn"
+        app:layout_constraintTop_toTopOf="@id/centerColumn" />
 
+    <ImageButton
+        android:id="@+id/recordButton"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:background="@drawable/record_button_idle"
+        android:contentDescription="Record what was said to you"
+        android:scaleType="center"
+        android:src="@drawable/baseline_mic_24"
+        app:layout_constraintBottom_toBottomOf="@id/centerColumn"
+        app:layout_constraintEnd_toEndOf="@id/centerColumn"
+        app:layout_constraintStart_toStartOf="@id/centerColumn" />
+
+    <TextView
+        android:id="@+id/contextBox2"
+        style="@style/Vk.Box"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/vk_space_s"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:lineSpacingMultiplier="1.05"
+        android:maxLines="6"
+        android:minHeight="52dp"
+        android:textSize="@dimen/vk_text_caption"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/centerColumn"
+        app:layout_constraintEnd_toStartOf="@id/recordButton"
+        app:layout_constraintStart_toStartOf="@id/centerColumn"
+        tools:text="Heard: Aapko khane me kya chahiye?"
+        tools:visibility="visible" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/bottomRowTop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierAllowsGoneWidgets="false"
+        app:barrierDirection="top"
+        app:constraint_referenced_ids="recordButton,contextBox2" />
+
+    <TextView
+        android:id="@+id/sentenceBox2"
+        style="@style/Vk.Box"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/vk_space_s"
+        android:layout_marginBottom="@dimen/vk_space_s"
+        android:background="@drawable/text_rounded_green"
+        android:ellipsize="end"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:hint="@string/TextEntry_HintSentence"
+        android:textSize="@dimen/vk_text_phrase"
+        app:autoSizeMaxTextSize="@dimen/vk_text_phrase"
+        app:autoSizeMinTextSize="14sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/bottomRowTop"
+        app:layout_constraintEnd_toEndOf="@id/centerColumn"
+        app:layout_constraintStart_toStartOf="@id/centerColumn"
+        app:layout_constraintTop_toBottomOf="@id/closedGazeText2"
+        tools:text="I want to drink some water." />
+
+    <!-- Finish overlay -->
     <TextView
         android:id="@+id/darkenLayer"
         android:layout_width="0dp"
@@ -460,95 +323,87 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/finishBox"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="@dimen/vk_space_xl"
+        android:background="@drawable/bg_card"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center"
+        android:lineSpacingMultiplier="1.15"
+        android:paddingStart="@dimen/vk_space_xl"
+        android:paddingTop="@dimen/vk_space_l"
+        android:paddingEnd="@dimen/vk_space_xl"
+        android:paddingBottom="@dimen/vk_space_l"
+        android:textAlignment="center"
+        android:textColor="@color/vk_ink"
+        android:textSize="30sp"
+        android:translationZ="20dp"
+        android:visibility="invisible"
+        app:autoSizeMaxTextSize="30sp"
+        app:autoSizeMinTextSize="18sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/speakButton"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintWidth_percent="1" />
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintWidth_percent="0.66"
+        tools:text="I want to drink some water." />
 
     <TextView
         android:id="@+id/speakButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/gaze_option_bg_2"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="7dp"
+        style="@style/Vk.PillTile"
+        android:layout_height="68dp"
+        android:layout_marginTop="@dimen/vk_gutter"
+        android:layout_marginEnd="@dimen/vk_half_gutter"
+        android:layout_marginBottom="@dimen/vk_space_xl"
         android:text="@string/TextEntry_Speak"
-        android:textAlignment="textStart"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="25sp"
-        android:textStyle="bold"
         android:translationZ="22dp"
         android:visibility="invisible"
-
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.15"
-        app:layout_constraintHorizontal_bias="0.224"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.802"
-        app:layout_constraintWidth_percent="0.28" />
-
-    <ImageView
-        android:id="@+id/speakButtonImage"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/leftgaze"
-        android:translationZ="25dp"
-        android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.374"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.81" />
+        app:layout_constraintEnd_toStartOf="@id/backButton"
+        app:layout_constraintStart_toStartOf="@id/finishBox"
+        app:layout_constraintTop_toBottomOf="@id/finishBox" />
 
     <TextView
         android:id="@+id/backButton"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/Vk.PillTile"
+        android:layout_height="68dp"
+        android:layout_marginStart="@dimen/vk_half_gutter"
         android:background="@drawable/gaze_option_bg_2"
-        android:fontFamily="sans-serif-medium"
-        android:paddingStart="15dp"
-        android:paddingTop="4dp"
         android:text="@string/TextEntry_Back"
-        android:textAlignment="textStart"
-        android:textAllCaps="true"
-        android:textColor="@color/vk_ink"
-        android:textSize="23sp"
-        android:textStyle="bold"
         android:translationZ="22dp"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/speakButton"
+        app:layout_constraintEnd_toEndOf="@id/finishBox"
+        app:layout_constraintStart_toEndOf="@id/speakButton"
+        app:layout_constraintTop_toTopOf="@id/speakButton" />
 
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.13"
-        app:layout_constraintHorizontal_bias="0.774"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.193"
-        app:layout_constraintWidth_percent="0.28" />
+    <ImageView
+        android:id="@+id/speakButtonImage"
+        style="@style/Vk.Badge"
+        android:layout_marginStart="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_left"
+        android:translationZ="25dp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/speakButton"
+        app:layout_constraintStart_toStartOf="@id/speakButton"
+        app:layout_constraintTop_toTopOf="@id/speakButton" />
 
     <ImageView
         android:id="@+id/backButtonImage"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_weight="5"
-        android:contentDescription="@string/app_name"
-        android:padding="2sp"
-        android:src="@drawable/rightupgaze"
+        style="@style/Vk.Badge"
+        android:layout_marginStart="@dimen/vk_badge_inset"
+        android:src="@drawable/ic_gaze_right_up"
         android:translationZ="25dp"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.808"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.177" />
+        app:layout_constraintBottom_toBottomOf="@id/backButton"
+        app:layout_constraintStart_toStartOf="@id/backButton"
+        app:layout_constraintTop_toTopOf="@id/backButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -236,6 +237,17 @@ public class text_mode_display extends Fragment {
                     }
                 }
                 setText(contextBox, keyboardData.context); // set context
+                if (!useFirstLayout && contextBox != null) {
+                    boolean heard = keyboardData.context != null && !keyboardData.context.isEmpty();
+                    if (heard != (contextBox.getVisibility() == View.VISIBLE)) {
+                        contextBox.setVisibility(heard ? View.VISIBLE : View.GONE);
+                        if (recordButton != null) {
+                            ConstraintLayout.LayoutParams lp = (ConstraintLayout.LayoutParams) recordButton.getLayoutParams();
+                            lp.horizontalBias = heard ? 1f : 0.5f;
+                            recordButton.setLayoutParams(lp);
+                        }
+                    }
+                }
                 setText(textInput, keyboardData.TextInput);
                 setText(sentenceBox, keyboardData.sentence);
 

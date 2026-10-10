@@ -11,35 +11,163 @@
         <item name="android:windowBackground">@color/vk_canvas</item>
         <item name="android:statusBarColor">@color/vk_chrome</item>
         <item name="android:navigationBarColor">@color/vk_chrome</item>
+        <item name="materialButtonStyle">@style/Vk.Button</item>
+        <item name="android:buttonStyle">@style/Vk.Button</item>
     </style>
-    <!-- Top bar tabs; the folder-tab background is set in MainActivity. Side padding clears the overlap with neighbours. -->
-    <style name="TopTab">
+
+    <style name="Vk" parent="" />
+
+    <!-- Sentence case reads faster than capitals: word shapes stay recognisable. -->
+    <style name="Vk.Button" parent="Widget.MaterialComponents.Button.UnelevatedButton">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/vk_text_label</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingStart">@dimen/vk_space_xl</item>
+        <item name="android:paddingEnd">@dimen/vk_space_xl</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="cornerRadius">@dimen/vk_radius_box</item>
+        <item name="backgroundTint">@color/vk_accent</item>
+        <item name="android:textColor">@color/vk_on_chrome</item>
+    </style>
+
+    <!-- Text styles -->
+    <style name="Vk.Text" parent="">
+        <item name="android:textColor">@color/vk_ink</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:lineSpacingMultiplier">1.15</item>
+    </style>
+    <style name="Vk.Text.Title">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/vk_text_title</item>
+    </style>
+    <style name="Vk.Text.Section">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/vk_text_body</item>
+    </style>
+    <style name="Vk.Text.Body">
+        <item name="android:textSize">@dimen/vk_text_body</item>
+    </style>
+    <style name="Vk.Text.Label">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/vk_text_label</item>
+    </style>
+    <style name="Vk.Text.Caption">
+        <item name="android:textSize">@dimen/vk_text_caption</item>
+        <item name="android:textColor">@color/vk_ink_soft</item>
+    </style>
+
+    <!-- A gaze target. Padding leaves room for the direction badge in whichever corner it sits. -->
+    <style name="Vk.Tile">
         <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">52dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:background">@drawable/gaze_option_bg_1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/vk_ink</item>
+        <item name="android:textSize">@dimen/vk_text_phrase</item>
+        <item name="android:lineSpacingMultiplier">1.1</item>
+        <item name="android:paddingStart">@dimen/vk_space_xl</item>
+        <item name="android:paddingEnd">@dimen/vk_space_xl</item>
+        <item name="android:paddingTop">@dimen/vk_space_l</item>
+        <item name="android:paddingBottom">@dimen/vk_space_l</item>
+        <item name="autoSizeTextType">uniform</item>
+        <item name="autoSizeMinTextSize">18sp</item>
+        <item name="autoSizeMaxTextSize">@dimen/vk_text_phrase</item>
+    </style>
+    <!-- Text entry corner tile: the main option sits on the badge row, the sub option fills the lower part. -->
+    <style name="Vk.KeyTile" parent="Vk.Tile">
+        <item name="android:gravity">top|center_horizontal</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">54dp</item>
+        <item name="android:paddingEnd">54dp</item>
+        <item name="android:paddingTop">@dimen/vk_space_m</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:textSize">@dimen/vk_text_target</item>
+        <item name="autoSizeMinTextSize">16sp</item>
+        <item name="autoSizeMaxTextSize">@dimen/vk_text_target</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+    <style name="Vk.KeySub">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:paddingStart">@dimen/vk_space_l</item>
+        <item name="android:paddingEnd">@dimen/vk_space_l</item>
+        <item name="android:paddingBottom">@dimen/vk_space_s</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textColor">@color/vk_ink_soft</item>
+        <item name="android:textSize">@dimen/vk_text_word</item>
+        <item name="autoSizeTextType">uniform</item>
+        <item name="autoSizeMinTextSize">15sp</item>
+        <item name="autoSizeMaxTextSize">@dimen/vk_text_word</item>
+    </style>
+    <!-- Wide, short gaze target: badge at the start, label centred in the remaining space. -->
+    <style name="Vk.PillTile" parent="Vk.Tile">
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingStart">52dp</item>
+        <item name="android:paddingEnd">@dimen/vk_space_l</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:textSize">@dimen/vk_text_phrase</item>
+        <item name="autoSizeMaxTextSize">@dimen/vk_text_phrase</item>
+    </style>
+    <style name="Vk.Box">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:background">@drawable/text_rounded_dark</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:gravity">center_vertical|start</item>
+        <item name="android:paddingStart">@dimen/vk_space_l</item>
+        <item name="android:paddingEnd">@dimen/vk_space_l</item>
+        <item name="android:paddingTop">@dimen/vk_space_s</item>
+        <item name="android:paddingBottom">@dimen/vk_space_s</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textColor">@color/vk_ink</item>
+        <item name="android:textColorHint">@color/vk_ink_muted</item>
+        <item name="android:textSize">@dimen/vk_text_body</item>
+        <item name="android:ellipsize">start</item>
+    </style>
+    <style name="Vk.Badge">
+        <item name="android:layout_width">@dimen/vk_badge</item>
+        <item name="android:layout_height">@dimen/vk_badge</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
+
+    <!-- Top bar: one row, sentence case; the current screen is a light pill. -->
+    <style name="TopTab">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">44dp</item>
+        <item name="android:layout_marginEnd">@dimen/vk_space_xs</item>
+        <item name="android:background">@drawable/bg_top_tab</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:gravity">center</item>
         <item name="android:maxLines">1</item>
-        <item name="android:paddingStart">24dp</item>
-        <item name="android:paddingEnd">24dp</item>
-        <item name="android:textAllCaps">true</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:textAllCaps">false</item>
         <item name="android:textColor">@color/top_tab_text</item>
-        <item name="android:textStyle">bold</item>
-        <item name="autoSizeMaxTextSize">18sp</item>
-        <item name="autoSizeMinTextSize">10sp</item>
-        <item name="autoSizeTextType">uniform</item>
+        <item name="android:textSize">17sp</item>
     </style>
+
     <!-- Settings screen "Sensor test" buttons; tint is set in code to show on/off. -->
-    <style name="SensorTestButton">
+    <style name="SensorTestButton" parent="Vk.Button">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_weight">1</item>
-        <item name="android:layout_marginEnd">4dp</item>
+        <item name="android:layout_marginEnd">@dimen/vk_space_s</item>
         <item name="android:maxLines">2</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textColor">@color/vk_on_chrome</item>
-        <item name="android:textSize">13sp</item>
+        <item name="android:paddingStart">@dimen/vk_space_s</item>
+        <item name="android:paddingEnd">@dimen/vk_space_s</item>
+        <item name="android:textSize">@dimen/vk_text_caption</item>
     </style>
   <!-- Base application theme. -->
     <style name="Base.Theme.OpenCV" parent="Theme.Material3.DayNight.NoActionBar">

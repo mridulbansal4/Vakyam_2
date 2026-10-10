@@ -12,11 +12,15 @@ enum class PerformanceTier(val targetFps: Int) {
 
 enum class ChargingHeat { NORMAL, WARM, HOT }
 
-/** Declaration order is display priority: the first active banner wins. */
-enum class SensorBanner(@StringRes val messageRes: Int, val colorArgb: Int) {
-    CHARGING_HOT(R.string.Sensor_ChargingHot, 0xFFC62828.toInt()),
-    THERMAL_CRITICAL(R.string.Sensor_ThermalCritical, 0xFFEF6C00.toInt()),
-    CHARGING_WARM(R.string.Sensor_ChargingWarm, 0xFFF9A825.toInt())
+/**
+ * Declaration order is display priority: the first active banner wins.
+ * Shown as a chip in the top bar ([labelRes]) with [messageRes] as the expanded explanation.
+ * Only [urgent] conditions are red; the rest inform the caregiver without alarming the patient.
+ */
+enum class SensorBanner(@StringRes val labelRes: Int, @StringRes val messageRes: Int, val urgent: Boolean) {
+    CHARGING_HOT(R.string.Sensor_ChipChargingHot, R.string.Sensor_ChargingHot, true),
+    THERMAL_CRITICAL(R.string.Sensor_ChipThermal, R.string.Sensor_ThermalCritical, false),
+    CHARGING_WARM(R.string.Sensor_ChipChargingWarm, R.string.Sensor_ChargingWarm, false)
 }
 
 /** Conditions the Settings-screen test panel can fake without the real environment. */

@@ -9,22 +9,24 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.LayerDrawable
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
+import com.demo.opencv.R
 import com.demo.opencv.metrics.TypingTest
 import com.demo.opencv.personal.PersonalLexicon
 import java.util.Locale
 import kotlin.math.min
 
 /**
- * High-contrast eye-blink scanning keyboard. Feed camera results through [onEyeSample] or use
+ * Eye-blink scanning keyboard, styled like the text entry screen. Feed camera results through [onEyeSample] or use
  * [triggerManualSelect] (screen tap / Space) as a switch; spelled text is spoken through
  * [speaker], learned by the shared [PersonalLexicon] and reported via [Listener.onWordCompleted].
  */
@@ -49,6 +51,16 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     var listener: Listener? = null
     var speaker: Speaker? = null
 
+    private val slate = color(R.color.purple_500)
+    private val sage = color(R.color.purple_200)
+    private val dark = color(R.color.metal_green)
+    private val paleBlue = color(R.color.columbia_blue)
+    private val ghost = color(R.color.ghost_blue)
+    private val highlight = color(R.color.bright_yellow_green)
+    private val teal = color(R.color.teal_700)
+    private val warning = color(R.color.sunset_orange)
+    private val emergencyRed = color(R.color.emergency_red)
+
     private val audio = AudioFeedbackService()
     private val lexicon = PersonalLexicon.get(context)
     private val predictor = WordPredictionService(context, lexicon)
@@ -67,11 +79,11 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         id = "actions",
         label = "Actions",
         items = listOf(
-            KeyItem("backspace", "⌫ BACKSPACE", KeyType.ACTION, KeyActions.BACKSPACE),
-            KeyItem("space", "␣ SPACE", KeyType.ACTION, KeyActions.SPACE),
-            KeyItem("speak", "🔊 SPEAK & SAVE", KeyType.ACTION, KeyActions.SPEAK_AND_SAVE),
-            KeyItem("cancel", "✖ CANCEL", KeyType.ACTION, KeyActions.CANCEL),
-            KeyItem("help", "🆘 HELP", KeyType.ACTION, KeyActions.HELP),
+            KeyItem("backspace", "BACKSPACE", KeyType.ACTION, KeyActions.BACKSPACE),
+            KeyItem("space", "SPACE", KeyType.ACTION, KeyActions.SPACE),
+            KeyItem("speak", "SPEAK & SAVE", KeyType.ACTION, KeyActions.SPEAK_AND_SAVE),
+            KeyItem("cancel", "CANCEL", KeyType.ACTION, KeyActions.CANCEL),
+            KeyItem("help", "HELP", KeyType.ACTION, KeyActions.HELP),
         ),
         style = RowStyle.ACTIONS,
     )
@@ -129,80 +141,86 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     private val keyViews = mutableListOf<List<TextView>>()
 
     init {
-        setBackgroundColor(BG)
+        setBackgroundColor(slate)
         isSoundEffectsEnabled = false
         setOnClickListener { triggerManualSelect() }
 
-        val root = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(8), dp(12), dp(8))
-        }
+        val root = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
         addView(root, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
 
+        // Same dark bar as the main screen's navigation row
         val header = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
+            setBackgroundColor(dark)
+            setPadding(dp(12), dp(4), dp(4), dp(4))
         }
-        header.addView(text("👁 Spell with Eyes", 20f, CYAN, bold = true), wrap())
-        statusView = text("", 16f, Color.WHITE, bold = true).apply {
+        header.addView(text("SPELL WITH EYES", 20f, Color.WHITE, bold = true), wrap())
+        statusView = text("", 16f, Color.BLACK, bold = true).apply {
             gravity = Gravity.CENTER
+            maxLines = 1
             setPadding(dp(14), dp(4), dp(14), dp(4))
         }
         header.addView(statusView, LinearLayout.LayoutParams(0, LayoutParams.WRAP_CONTENT, 1f).apply {
             marginStart = dp(16); marginEnd = dp(16)
         })
-        cameraStatusView = text("Starting camera…", 13f, MUTED)
+        cameraStatusView = text("Starting camera…", 13f, paleBlue)
         header.addView(cameraStatusView, wrap())
-        val closeButton = text("✕", 22f, Color.WHITE, bold = true).apply {
-            gravity = Gravity.CENTER
-            background = rounded(0xFF334155.toInt(), dp(8).toFloat())
+        val closeButton = ImageView(context).apply {
+            setImageResource(R.drawable.baseline_close_24)
+            setBackgroundColor(paleBlue)
             contentDescription = "Close keyboard"
             setOnClickListener { listener?.onClose() }
         }
-        header.addView(closeButton, LinearLayout.LayoutParams(dp(44), dp(40)).apply { marginStart = dp(12) })
+        header.addView(closeButton, LinearLayout.LayoutParams(dp(44), dp(44)).apply { marginStart = dp(12) })
         root.addView(header, matchWrap())
+
+        val body = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(6), dp(12), dp(8))
+        }
+        root.addView(body, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f))
 
         typingTestView = text("", 16f, Color.WHITE, bold = true).apply {
             gravity = Gravity.CENTER
             setPadding(dp(12), dp(4), dp(12), dp(4))
-            background = rounded(0xFF4F6367.toInt(), dp(8).toFloat())
+            background = rounded(teal, dp(5).toFloat())
             maxLines = 1
             visibility = GONE
         }
-        root.addView(typingTestView, matchWrap().apply { topMargin = dp(4) })
+        body.addView(typingTestView, matchWrap().apply { bottomMargin = dp(6) })
 
-        bufferView = text("", 30f, Color.WHITE, bold = true).apply {
-            typeface = Typeface.MONOSPACE
+        bufferView = text("", 26f, paleBlue).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(16), dp(4), dp(16), dp(4))
-            background = rounded(0xFF020617.toInt(), dp(10).toFloat(), 0xFF334155.toInt(), dp(2))
+            setBackgroundResource(R.drawable.text_rounded_dark)
+            setPadding(dp(14), dp(6), dp(14), dp(6))
             maxLines = 1
         }
-        root.addView(bufferView, matchWrap().apply { topMargin = dp(6) })
+        body.addView(bufferView, matchWrap())
 
         val gaugeRow = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        gaugeView = DwellGaugeView(context, config)
-        gaugeRow.addView(gaugeView, LinearLayout.LayoutParams(0, dp(14), 1f))
-        gaugeLabel = text(gaugeText(0), 14f, MUTED)
+        gaugeView = DwellGaugeView(context)
+        gaugeRow.addView(gaugeView, LinearLayout.LayoutParams(0, dp(12), 1f))
+        gaugeLabel = text(gaugeText(0), 14f, ghost, bold = true)
         gaugeRow.addView(gaugeLabel, LinearLayout.LayoutParams(dp(250), LayoutParams.WRAP_CONTENT).apply {
             marginStart = dp(12)
         })
-        root.addView(gaugeRow, matchWrap().apply { topMargin = dp(6) })
+        body.addView(gaugeRow, matchWrap().apply { topMargin = dp(6) })
 
         infoView = text(
             "Natural blinks are ignored. Close eyes ½–1 s to select, over 2 s to rest, 2 s three times to call for help. Tap or Space is a switch.",
-            13f, MUTED,
+            13f, ghost,
         ).apply { maxLines = 1 }
-        root.addView(infoView, matchWrap().apply { topMargin = dp(2) })
+        body.addView(infoView, matchWrap().apply { topMargin = dp(2) })
 
         val rowsContainer = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
         matrix.forEach { _ ->
             val rowView = LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
-                setPadding(dp(5), dp(5), dp(5), dp(5))
+                setPadding(dp(4), dp(4), dp(4), dp(4))
             }
             rowViews.add(rowView)
             keyViews.add(emptyList())
@@ -210,7 +228,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                 topMargin = dp(3)
             })
         }
-        root.addView(rowsContainer, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f).apply {
+        body.addView(rowsContainer, LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f).apply {
             topMargin = dp(4)
         })
 
@@ -258,7 +276,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         if (!sample.faceFound) {
             detector.reset()
             cameraStatusView.text = "No face. Tap or press Space"
-            cameraStatusView.setTextColor(AMBER)
+            cameraStatusView.setTextColor(warning)
             return
         }
         detector.processEyeState(sample.eyesClosed, sample.timestampMs)
@@ -266,12 +284,12 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         cameraStatusView.text = String.format(
             Locale.US, "Face ✓  EAR %s / %.2f  open %.2f", ear, sample.earThreshold, sample.eyeOpenProbability,
         )
-        cameraStatusView.setTextColor(if (sample.eyesClosed) GREEN else MUTED)
+        cameraStatusView.setTextColor(if (sample.eyesClosed) highlight else paleBlue)
     }
 
     fun setCameraStatus(message: String) {
         cameraStatusView.text = message
-        cameraStatusView.setTextColor(AMBER)
+        cameraStatusView.setTextColor(warning)
     }
 
     private fun activate(item: KeyItem) {
@@ -318,7 +336,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         lexicon.recordUtterance(words, text)
         TypingTest.onSpoken(text, TypingTest.MODE_BLINK)
         audio.playWordSaved()
-        infoView.text = "🔊 Spoke and saved “$text”"
+        infoView.text = "Spoke and saved “$text”"
         buffer.setLength(0)
         onBufferChanged()
         listener?.onWordCompleted(text)
@@ -337,7 +355,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         matrix = buildMatrix(predictor.predict(prefix, previousWord))
         rebuildRowViews(0)
         bufferView.text = if (buffer.isEmpty()) "Start spelling…▌" else buffer.toString().uppercase() + "▌"
-        bufferView.setTextColor(if (buffer.isEmpty()) MUTED else Color.WHITE)
+        bufferView.setTextColor(if (buffer.isEmpty()) sage else paleBlue)
         render()
     }
 
@@ -357,17 +375,17 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         rowView.removeAllViews()
         if (row.items.isEmpty() && row.style == RowStyle.SUGGESTIONS) {
             rowView.addView(
-                text("Predictions appear here as you type", 16f, 0xFF7C3AED.toInt()).apply { gravity = Gravity.CENTER },
+                text("Predictions appear here as you type", 16f, ghost).apply { gravity = Gravity.CENTER },
                 LinearLayout.LayoutParams(0, LayoutParams.MATCH_PARENT, 1f),
             )
         }
         keyViews[rowIdx] = row.items.map { item ->
             val size = when (row.style) {
                 RowStyle.LETTERS -> 24f
-                RowStyle.SUGGESTIONS -> 22f
+                RowStyle.SUGGESTIONS -> 20f
                 RowStyle.ACTIONS -> 18f
             }
-            text(item.label, size, Color.WHITE, bold = true).apply {
+            text(item.label, size, Color.BLACK, bold = true).apply {
                 gravity = Gravity.CENTER
                 maxLines = 1
             }.also {
@@ -380,40 +398,37 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
 
     private fun render() {
         statusView.text = when (engine.tier) {
-            ScanTier.ROW -> "ROW SCAN · blink to pick the glowing row"
-            ScanTier.COLUMN -> "KEY SCAN · blink to pick the glowing key"
+            ScanTier.ROW -> "ROW SCAN · blink to pick the highlighted row"
+            ScanTier.COLUMN -> "KEY SCAN · blink to pick the highlighted key"
             ScanTier.PAUSED -> "PAUSED · blink ½ s or tap to resume"
         }
         statusView.background = rounded(
             when (engine.tier) {
-                ScanTier.ROW -> 0xFF155E75.toInt()
-                ScanTier.COLUMN -> 0xFF92400E.toInt()
-                ScanTier.PAUSED -> 0xFF581C87.toInt()
+                ScanTier.ROW -> ghost
+                ScanTier.COLUMN -> highlight
+                ScanTier.PAUSED -> warning
             },
-            dp(16).toFloat(),
+            dp(10).toFloat(),
         )
         val radius = dp(10).toFloat()
         matrix.forEachIndexed { r, row ->
             val isActiveRow = r == engine.activeRowIdx
             rowViews[r].background = when {
-                isActiveRow && engine.tier == ScanTier.ROW -> glow(0xFF0B3440.toInt(), radius)
-                isActiveRow && engine.tier == ScanTier.COLUMN -> rounded(0xFF0F2A33.toInt(), radius, CYAN, dp(2))
-                row.style == RowStyle.SUGGESTIONS -> rounded(0xFF1A0B2E.toInt(), radius, 0xFF6B21A8.toInt(), dp(1))
-                else -> rounded(Color.TRANSPARENT, radius, 0xFF1E293B.toInt(), dp(1))
+                isActiveRow && engine.tier == ScanTier.ROW -> rounded(highlight, radius, dark, dp(3))
+                isActiveRow && engine.tier == ScanTier.COLUMN -> rounded(Color.TRANSPARENT, radius, highlight, dp(3))
+                row.style == RowStyle.SUGGESTIONS -> rounded(teal, dp(5).toFloat())
+                else -> null
             }
             keyViews[r].forEachIndexed { c, key ->
                 val isActiveKey = isActiveRow && engine.tier == ScanTier.COLUMN && c == engine.activeColIdx
-                val item = row.items[c]
-                key.background = if (isActiveKey) glow(0xFF164E63.toInt(), dp(8).toFloat()) else keyBackground(row.style)
-                key.setTextColor(
-                    when {
-                        isActiveKey -> Color.WHITE
-                        row.style == RowStyle.SUGGESTIONS -> 0xFFF3E8FF.toInt()
-                        item.value == KeyActions.CANCEL || item.value == KeyActions.HELP -> 0xFFFCA5A5.toInt()
-                        row.style == RowStyle.ACTIONS -> 0xFFFDE68A.toInt()
-                        else -> 0xFFF8FAFC.toInt()
-                    }
-                )
+                val isHelp = row.items[c].value == KeyActions.HELP
+                key.background = when {
+                    isActiveKey -> keyDrawable(R.drawable.gaze_option_bg_selecting)
+                    isHelp -> rounded(emergencyRed, radius, dark, dp(3))
+                    row.style == RowStyle.LETTERS -> keyDrawable(R.drawable.gaze_option_bg_1)
+                    else -> keyDrawable(R.drawable.gaze_option_bg_2)
+                }
+                key.setTextColor(if (isHelp && !isActiveKey) Color.WHITE else Color.BLACK)
             }
         }
     }
@@ -438,24 +453,10 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         else -> "Resting, scanning paused"
     }
 
-    private fun keyBackground(style: RowStyle): Drawable = when (style) {
-        RowStyle.SUGGESTIONS -> rounded(0xFF2E1065.toInt(), dp(8).toFloat(), 0xFFA855F7.toInt(), dp(2))
-        RowStyle.ACTIONS -> rounded(0xFF1C1917.toInt(), dp(8).toFloat(), 0xFFB45309.toInt(), dp(1))
-        RowStyle.LETTERS -> rounded(0xFF1E293B.toInt(), dp(8).toFloat(), 0xFF334155.toInt(), dp(1))
-    }
+    /** The shared key shapes (beige / pale blue / yellow-green with the dark outline) used by text entry. */
+    private fun keyDrawable(id: Int): Drawable? = ContextCompat.getDrawable(context, id)
 
-    /** Approximates `box-shadow: 0 0 20px #06B6D4, inset 0 0 10px #06B6D4; border-color: #22D3EE`. */
-    private fun glow(fill: Int, radius: Float): Drawable {
-        val outer = rounded(Color.TRANSPARENT, radius, 0x3306B6D4, dp(4))
-        val middle = rounded(Color.TRANSPARENT, radius, 0x7706B6D4, dp(3))
-        val inner = rounded(fill, radius, CYAN, dp(3))
-        val innerGlow = rounded(Color.TRANSPARENT, radius, 0x5506B6D4, dp(4))
-        return LayerDrawable(arrayOf(outer, middle, inner, innerGlow)).apply {
-            setLayerInset(1, dp(3), dp(3), dp(3), dp(3))
-            setLayerInset(2, dp(5), dp(5), dp(5), dp(5))
-            setLayerInset(3, dp(8), dp(8), dp(8), dp(8))
-        }
-    }
+    private fun color(id: Int) = ContextCompat.getColor(context, id)
 
     private fun rounded(fill: Int, radius: Float, stroke: Int = Color.TRANSPARENT, strokeWidth: Int = 0) =
         GradientDrawable().apply {
@@ -468,14 +469,14 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
         text = value
         setTextSize(TypedValue.COMPLEX_UNIT_SP, sizeSp)
         setTextColor(color)
-        if (bold) setTypeface(typeface, Typeface.BOLD)
+        typeface = Typeface.create("sans-serif-medium", if (bold) Typeface.BOLD else Typeface.NORMAL)
     }
 
     private fun wrap() = LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
     private fun matchWrap() = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
 
-    private class DwellGaugeView(context: Context, private val config: BlinkConfig) : View(context) {
+    private inner class DwellGaugeView(context: Context) : View(context) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         private val rect = RectF()
 
@@ -486,29 +487,21 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             }
 
         override fun onDraw(canvas: Canvas) {
-            val radius = height / 2f
+            val radius = dp(5).toFloat()
             rect.set(0f, 0f, width.toFloat(), height.toFloat())
-            paint.color = 0xFF1E293B.toInt()
+            paint.color = dark
             canvas.drawRoundRect(rect, radius, radius, paint)
             if (durationMs <= 0) return
             val fraction = min(1f, durationMs.toFloat() / config.minBlinkDurationMs)
             paint.color = when {
-                durationMs < config.involuntaryBlinkMaxMs -> MUTED
-                durationMs < config.minBlinkDurationMs -> CYAN
-                durationMs <= config.maxBlinkDurationMs -> GREEN
-                durationMs < config.restClosureMs -> AMBER
-                else -> 0xFFA855F7.toInt()
+                durationMs < config.involuntaryBlinkMaxMs -> sage
+                durationMs < config.minBlinkDurationMs -> paleBlue
+                durationMs <= config.maxBlinkDurationMs -> highlight
+                durationMs < config.restClosureMs -> warning
+                else -> teal
             }
             rect.right = width * fraction
             canvas.drawRoundRect(rect, radius, radius, paint)
         }
-    }
-
-    private companion object {
-        const val BG = 0xFF0F172A.toInt()
-        const val CYAN = 0xFF22D3EE.toInt()
-        const val GREEN = 0xFF22C55E.toInt()
-        const val AMBER = 0xFFF59E0B.toInt()
-        const val MUTED = 0xFF94A3B8.toInt()
     }
 }

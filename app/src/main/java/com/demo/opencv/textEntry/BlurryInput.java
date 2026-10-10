@@ -6,21 +6,35 @@ import android.util.Log;
 import com.demo.opencv.personal.PersonalLexicon;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
 
 public class BlurryInput {
     private final List<String> wordList = new ArrayList<>(); // top words frequency list
     private final List<String> blurryInputProcessed = new ArrayList<>(); // processed string with 1, 2, 3, and 4 for blurry input
+    private final List<String> hinglishWordList = new ArrayList<>(); // Roman-script Hindi, offered alongside English
+    private final List<String> hinglishProcessed = new ArrayList<>();
     List<String> extendedWordList = new ArrayList<>(); // extra words for context-based prediction
     private PersonalLexicon personalLexicon; // the patient's own words, null until set
-    private PersonalLexicon.Script script = PersonalLexicon.Script.LATIN;
+    private final PersonalLexicon.Script script = PersonalLexicon.Script.LATIN; // older Devanagari entries stay hidden
+    private String languageSetting = HinglishDetector.ENGLISH;
+    private HinglishDetector hinglishDetector = new HinglishDetector(HinglishLexicon.EMPTY);
+    private String lastSpokenLanguage = HinglishDetector.ENGLISH; // decides the dictionary order before a word is typed
+
+    public interface AssetSource {
+        InputStream open(String name) throws IOException;
+    }
 
     private static class BigramEntry {
         String word;
@@ -33,28 +47,47 @@ public class BlurryInput {
     private final Map<String, List<BigramEntry>> bigramMap = new HashMap<>();
 
     public void initialize(Context mContext, String language) {
+        if (mContext == null) {
+            initialize(language, null, HinglishLexicon.EMPTY);
+            return;
+        }
+        Context appContext = mContext.getApplicationContext() != null ? mContext.getApplicationContext() : mContext;
+        initialize(language, name -> appContext.getAssets().open(name), HinglishLexicon.get(appContext));
+    }
+
+    void initialize(String language, AssetSource assets, HinglishLexicon hinglish) {
         wordList.clear();
         blurryInputProcessed.clear();
+        hinglishWordList.clear();
+        hinglishProcessed.clear();
         bigramMap.clear();
-        script = PersonalLexicon.Script.forLanguage(language);
-        if (mContext == null) return;
-        try {
-            InputStream inputStream = mContext.getAssets().open(language + "Words.txt"); // set the correct language
-            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        languageSetting = language;
+        hinglishDetector = new HinglishDetector(hinglish);
+        if (assets == null) return;
+        // Both languages type on the same English letters; the setting only decides which words come first
+        loadWords(assets, HinglishLexicon.ENGLISH_ASSET, wordList, blurryInputProcessed);
+        loadBigrams(assets, "EnglishBigrams.txt");
+        for (String word : hinglish.getWords()) {
+            hinglishWordList.add(word);
+            hinglishProcessed.add(processWord(word));
+        }
+        loadBigrams(assets, HinglishLexicon.BIGRAMS_ASSET);
+    }
 
+    private void loadWords(AssetSource assets, String name, List<String> words, List<String> processed) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(assets.open(name), StandardCharsets.UTF_8))) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                wordList.add(line);
-                blurryInputProcessed.add(processWord(line)); // process word
+                words.add(line);
+                processed.add(processWord(line)); // process word
             }
-            inputStream.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.w("BlurryInput", "word list unavailable: " + name, e);
         }
-        try {
-            InputStream inputStream = mContext.getAssets().open(language + "Bigrams.txt");
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+    }
+
+    private void loadBigrams(AssetSource assets, String name) {
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(assets.open(name), StandardCharsets.UTF_8))) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
                 String[] parts = line.split(" ");
@@ -64,10 +97,9 @@ public class BlurryInput {
                         nextWords = new ArrayList<>();
                         bigramMap.put(parts[0], nextWords);
                     }
-                    nextWords.add(new BigramEntry(parts[1], Integer.parseInt(parts[2])));
+                    nextWords.add(new BigramEntry(parts[1], Integer.parseInt(parts[2].trim())));
                 }
             }
-            inputStream.close();
         } catch (Exception e) {
             // ignore
         }
@@ -75,6 +107,40 @@ public class BlurryInput {
 
     public void setPersonalLexicon(PersonalLexicon personalLexicon) {
         this.personalLexicon = personalLexicon;
+    }
+
+    public void setLastSpokenLanguage(String language) {
+        this.lastSpokenLanguage = language;
+    }
+
+    // The language the patient is typing in gets two of every three dictionary slots, the other language one.
+    private void addDictionaryMatches(List<String> englishMatches, List<String> hinglishMatches, List<String> currentWords, List<String> wordPredictions) {
+        boolean hinglishFirst = HinglishDetector.HINGLISH.equals(
+                hinglishDetector.resolve(languageSetting, currentWords, null, lastSpokenLanguage));
+        Set<String> alreadyOffered = new HashSet<>(wordPredictions);
+        englishMatches.removeAll(alreadyOffered);
+        hinglishMatches.removeAll(alreadyOffered);
+        List<String> merged = hinglishFirst
+                ? HinglishLexicon.interleave(hinglishMatches, englishMatches)
+                : HinglishLexicon.interleave(englishMatches, hinglishMatches);
+        wordPredictions.addAll(merged);
+    }
+
+    private static List<String> codeMatches(List<String> processed, List<String> words, String codeA) {
+        Set<String> matches = new LinkedHashSet<>();
+        for (int i = 0; i < processed.size(); i++) {
+            String codeB = processed.get(i);
+            if (codeB != null && codeB.startsWith(codeA) && words.get(i) != null) matches.add(words.get(i));
+        }
+        return new ArrayList<>(matches);
+    }
+
+    private static List<String> prefixMatches(List<String> words, String prefix) {
+        Set<String> matches = new LinkedHashSet<>();
+        for (String word : words) {
+            if (word != null && word.startsWith(prefix)) matches.add(word);
+        }
+        return new ArrayList<>(matches);
     }
 
     // Words the patient has typed straight after the last word, then nothing else: their own habits outrank the generic bigrams.
@@ -168,20 +234,9 @@ public class BlurryInput {
             }
         }
 
-        // normal 5000 word bank prediction
-        for (int i = 0; i < blurryInputProcessed.size(); i++) {
-            String codeB = blurryInputProcessed.get(i);
-            if (codeB == null) continue;
-            if (codeB.length() >= codeA.length()) { // any prefix match
-                String subString = codeB.substring(0, codeA.length());
-                if (subString.equals(codeA)) {
-                    String word = wordList.get(i);
-                    if (!wordPredictions.contains(word)) {
-                        wordPredictions.add(word);
-                    }
-                }
-            }
-        }
+        // normal 5000 word bank prediction, interleaved with the Hinglish words
+        addDictionaryMatches(codeMatches(blurryInputProcessed, wordList, codeA),
+                codeMatches(hinglishProcessed, hinglishWordList, codeA), currentWords, wordPredictions);
         return wordPredictions;
     }
 
@@ -211,11 +266,7 @@ public class BlurryInput {
                 wordPredictions.add(word);
             }
         }
-        for (String word : wordList) {
-            if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
-                wordPredictions.add(word);
-            }
-        }
+        addDictionaryMatches(prefixMatches(wordList, prefix), prefixMatches(hinglishWordList, prefix), currentWords, wordPredictions);
         return wordPredictions;
     }
 

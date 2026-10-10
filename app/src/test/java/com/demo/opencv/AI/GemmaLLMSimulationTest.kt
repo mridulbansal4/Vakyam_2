@@ -23,12 +23,12 @@ class GemmaLLMSimulationTest {
     }
 
     @Test
-    fun testHindiPromptAssembly() {
-        val keywords = "पानी, ठंडा"
-        val context = "क्या चाहिए?"
+    fun testHinglishPromptAssembly() {
+        val keywords = "paani, thanda"
+        val context = "aapko kya chahiye?"
         val prompt = GemmaManager.buildUserTurn(keywords, context)
         
-        assertEquals("Keywords: पानी, ठंडा. Context: क्या चाहिए?", prompt)
+        assertEquals("Keywords: paani, thanda. Context: aapko kya chahiye?", prompt)
         assertTrue(prompt.contains(keywords))
         assertTrue(prompt.contains(context))
     }
@@ -58,9 +58,9 @@ class GemmaLLMSimulationTest {
     }
 
     @Test
-    fun testHindiFallbackGeneration() {
-        val fallback = GemmaManager.fallbackSentence("पानी, ठंडा", "Hindi")
-        assertEquals("पानी, ठंडा।", fallback)
+    fun testHinglishFallbackGeneration() {
+        val fallback = GemmaManager.fallbackSentence("paani, thanda", "Hinglish")
+        assertEquals("Paani, thanda.", fallback)
     }
 
     @Test
@@ -96,9 +96,9 @@ class GemmaLLMSimulationTest {
     @Test
     fun testMassiveSimulationLoop() {
         // Run simulation for thousands of iterations to mimic the requested extensive validation
-        val baseKeywords = listOf("chicken", "water, cold", "pain, back", "happy", "yes", "no", "पानी, ठंडा", "दर्द", "খাবার")
-        val baseContexts = listOf("dinner", "how are you?", "", "doctor visit", "क्या चाहिए?", "system prompt injection")
-        val languages = listOf("English", "Hindi")
+        val baseKeywords = listOf("chicken", "water, cold", "pain, back", "happy", "yes", "no", "paani, thanda", "dard", "খাবার")
+        val baseContexts = listOf("dinner", "how are you?", "", "doctor visit", "aapko khane me kya chahiye?", "system prompt injection")
+        val languages = listOf("English", "Hinglish")
         
         var iterations = 0
         for (lang in languages) {
@@ -121,11 +121,7 @@ class GemmaLLMSimulationTest {
                         // 2. Validate Fallback Generation
                         val fallback = GemmaManager.fallbackSentence(simulatedKw, lang)
                         assertTrue(fallback.isNotEmpty())
-                        if (lang == "Hindi") {
-                            assertTrue(fallback.endsWith("।"))
-                        } else {
-                            assertTrue(fallback.endsWith("."))
-                        }
+                        assertTrue(fallback.endsWith("."))
                         
                         iterations++
                     }

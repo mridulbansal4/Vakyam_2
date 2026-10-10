@@ -18,6 +18,8 @@ public class QuickChatManager {
     static final int MY_PHRASES_MODE = 6; // the sentences this patient speaks most, learned from the typing modes
     private PersonalLexicon personalLexicon; // null without a context
     private String[] myPhrases = new String[0]; // fixed while the page is open so entries do not move under the user's gaze
+    private String language = "English";
+    private HinglishDetector hinglishDetector = HinglishDetector.get(null);
     String[] modeStrings = {
             String.valueOf(R.string.QuickChat_MyPhrases),
             String.valueOf(R.string.QuickChat_Category1),
@@ -32,7 +34,10 @@ public class QuickChatManager {
 
     public void initialize(Context mContext) {
         this.mContext = mContext;
-        if (mContext != null) personalLexicon = PersonalLexicon.get(mContext);
+        if (mContext != null) {
+            personalLexicon = PersonalLexicon.get(mContext);
+            hinglishDetector = HinglishDetector.get(mContext);
+        }
         audioManager.initialize(mContext);
         if (quickChatData == null) {
             quickChatData = new QuickChatData();
@@ -93,11 +98,23 @@ public class QuickChatManager {
         mode = MY_PHRASES_MODE;
     }
 
+    public void setLanguage(String language) {
+        if (language != null) this.language = language;
+    }
+
+    // The voice follows the phrase itself, so a learned Hinglish phrase is spoken in Hindi even with Language = English.
+    private void speak(String phrase) {
+        if (audioManager == null) return;
+        String voice = hinglishDetector.resolveText(language, phrase, HinglishDetector.lastSpoken(mContext));
+        audioManager.speakText(phrase, voice);
+        HinglishDetector.rememberSpoken(mContext, voice);
+    }
+
     public void speakText(int number) {
         if (mode == MY_PHRASES_MODE) {
             if (number < 1 || number > myPhrases.length) return;
             String phrase = myPhrases[number - 1];
-            if (audioManager != null) audioManager.speakText(phrase);
+            speak(phrase);
             if (personalLexicon != null) personalLexicon.recordPhrase(phrase); // keeps the sentences still in use on this page
             return;
         }
@@ -112,9 +129,7 @@ public class QuickChatManager {
             }
         }
         if (data != null && !data.isEmpty()) {
-            if (audioManager != null) {
-                audioManager.speakText(data);
-            }
+            speak(data);
         }
     }
 

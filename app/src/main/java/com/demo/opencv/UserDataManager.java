@@ -75,7 +75,9 @@ public class UserDataManager extends Application {
     public void getSettings() {
         // get string values
         language = getString("Language");
-        if (!"Hindi".equals(language)) language = "English"; // a saved language that is no longer offered
+        // Hindi used to be typed in Devanagari; it is now Hinglish, Hindi in English letters
+        if ("Hindi".equals(language)) setLanguage("Hinglish");
+        else if (!"Hinglish".equals(language)) language = "English"; // a saved language that is no longer offered
         lightingThreshold = parseIntOrDefault(getString("LightingThreshold"), 0);
         textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
         sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);

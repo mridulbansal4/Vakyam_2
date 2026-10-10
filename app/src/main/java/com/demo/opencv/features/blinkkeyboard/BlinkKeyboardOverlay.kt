@@ -357,8 +357,9 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
 
     private fun onBufferChanged() {
         val prefix = buffer.substring(buffer.lastIndexOf(" ") + 1)
-        val previousWord = buffer.trim().split(' ').dropLast(if (prefix.isEmpty()) 0 else 1).lastOrNull()
-        matrix = buildMatrix(predictor.predict(prefix, previousWord))
+        val earlierWords = buffer.trim().split(' ').dropLast(if (prefix.isEmpty()) 0 else 1)
+        val previousWord = earlierWords.lastOrNull()
+        matrix = buildMatrix(predictor.predict(prefix, previousWord, typedWords = earlierWords.filter { it.isNotBlank() }))
         rebuildRowViews(0)
         bufferView.text = if (buffer.isEmpty()) "Start spelling…▌" else buffer.toString().uppercase() + "▌"
         bufferView.setTextColor(if (buffer.isEmpty()) inkMuted else ink)

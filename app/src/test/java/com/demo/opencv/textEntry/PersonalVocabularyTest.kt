@@ -57,13 +57,14 @@ class PersonalVocabularyTest {
     }
 
     @Test
-    fun hindiWordsStayOutOfEnglishPredictions() {
+    fun devanagariLearnedByOldVersionsIsNeverSuggested() {
         val blurry = BlurryInput().apply { setPersonalLexicon(lexicon) }
-        lexicon.recordUtterance(listOf("पानी"))
-        blurry.initialize(null, "English")
-        assertTrue(blurry.getExactMatchingWords("", emptyList()).isEmpty())
-        blurry.initialize(null, "Hindi")
-        assertEquals(listOf("पानी"), blurry.getExactMatchingWords("पा", emptyList()))
+        lexicon.recordUtterance(listOf("\u092A\u093E\u0928\u0940"))
+        lexicon.recordUtterance(listOf("paani"))
+        for (setting in listOf("English", "Hinglish")) {
+            blurry.initialize(null, setting)
+            assertEquals(setting, listOf("paani"), blurry.getExactMatchingWords("", emptyList()))
+        }
     }
 
     @Test

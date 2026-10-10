@@ -9,6 +9,8 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 import android.util.Log;
 
 import java.io.File;
@@ -16,6 +18,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class AudioManager {
     MediaPlayer mediaPlayer = new MediaPlayer();
@@ -28,7 +34,27 @@ public class AudioManager {
     private String fileName;
     String finalText;
     private volatile boolean isTtsReady = false;
-    private final List<String> pendingUtterances = new ArrayList<>();
+    private final List<String[]> pendingUtterances = new ArrayList<>(); // {text, language}; language null = default voice
+    private static final Locale HINDI = new Locale("hi", "IN");
+    private static final Locale INDIAN_ENGLISH = new Locale("en", "IN");
+    private Locale defaultLocale = Locale.US; // voice for speakText(text), set by setLanguage
+    // Hinglish utterance id -> its Roman text, re-spoken in Indian English if the Hindi voice fails
+    // (an online-only Hindi voice reports itself available, then fails to synthesise without network)
+    private final Map<String, String> romanFallback = new ConcurrentHashMap<>();
+    private final AtomicInteger utteranceIds = new AtomicInteger();
+    private final UtteranceProgressListener romanRetry = new UtteranceProgressListener() {
+        @Override public void onStart(String id) {}
+        @Override public void onDone(String id) { if (id != null) romanFallback.remove(id); }
+        @Override public void onStop(String id, boolean interrupted) { if (id != null) romanFallback.remove(id); }
+        @Override public void onError(String id) { onError(id, TextToSpeech.ERROR); }
+        @Override public void onError(String id, int errorCode) {
+            String roman = id == null ? null : romanFallback.remove(id);
+            if (roman == null || textToSpeech == null) return;
+            Log.w("AudioManager", "Hindi voice failed (" + errorCode + "), speaking Hinglish in Indian English");
+            if (!applyVoice(INDIAN_ENGLISH)) applyVoice(Locale.US);
+            textToSpeech.speak(roman, TextToSpeech.QUEUE_ADD, null, null);
+        }
+    };
 
     public interface AudioManagerListener {
         void onAudioUpdated(String key, String value);
@@ -42,17 +68,19 @@ public class AudioManager {
     public void initialize(Context mContext) {
         if (mContext == null) return;
 
+        appContext = mContext.getApplicationContext();
         textToSpeech = new TextToSpeech(mContext, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 if (textToSpeech != null) {
-                    textToSpeech.setLanguage(Locale.US);
+                    applyVoice(defaultLocale);
+                    textToSpeech.setOnUtteranceProgressListener(romanRetry);
                 }
                 isTtsReady = true;
                 Log.d("AudioManager", "TTS initialized successfully");
                 synchronized (pendingUtterances) {
-                    for (String utterance : pendingUtterances) {
+                    for (String[] utterance : pendingUtterances) {
                         if (textToSpeech != null) {
-                            textToSpeech.speak(utterance, TextToSpeech.QUEUE_ADD, null, null);
+                            speakNow(utterance[0], utterance[1], TextToSpeech.QUEUE_ADD);
                         }
                     }
                     pendingUtterances.clear();
@@ -73,7 +101,6 @@ public class AudioManager {
 
         setSpeechRecognizer(mContext); // set speech to text
 
-        appContext = mContext.getApplicationContext();
         offlineSpeechRecognizer.init(mContext); // cheap: the model is only loaded on first offline use
         offlineSpeechRecognizer.setListener(new OfflineSpeechRecognizer.Listener() {
             @Override
@@ -96,31 +123,84 @@ public class AudioManager {
     }
 
     public void setLanguage(String language) {
-        Locale locale = Locale.US;
-        String speechLang = "en-US";
-        if ("Hindi".equals(language)) {
-            locale = new Locale("hi", "IN");
-            speechLang = "hi-IN";
+        defaultLocale = "Hinglish".equals(language) ? HINDI : Locale.US;
+        if (textToSpeech != null && isTtsReady) {
+            applyVoice(defaultLocale);
         }
-        
-        if (textToSpeech != null) {
-            textToSpeech.setLanguage(locale);
-        }
-        this.speechLang = speechLang;
     }
-    
-    private String speechLang = "en-US";
 
+    // Indian English recognition copes with Indian accents and writes Hindi speech in English letters,
+    // so the caregiver's words stay Roman-script for the keyboard and the LLM in both languages
+    private final String speechLang = "en-IN";
+
+    /** Speaks in the voice chosen by {@link #setLanguage}; calibration prompts and caregiver messages use this. */
     public void speakText(String text) {
+        speakText(text, null);
+    }
+
+    /**
+     * Speaks in the voice for [language]: "Hinglish" text (Roman letters) is read by the Hindi voice so the
+     * Hindi words sound Hindi; "English" uses US English.
+     */
+    public void speakText(String text, String language) {
         if (text == null || text.trim().isEmpty()) return;
-        Log.d("AudioManager", "Speaking: " + text);
+        Log.d("AudioManager", "Speaking (" + language + "): " + text);
         if (isTtsReady && textToSpeech != null) {
-            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null);
+            speakNow(text, language, TextToSpeech.QUEUE_FLUSH);
         } else {
             synchronized (pendingUtterances) {
-                pendingUtterances.add(text);
+                pendingUtterances.add(new String[]{text, language});
             }
         }
+    }
+
+    private void speakNow(String text, String language, int queueMode) {
+        String id = "vakyam-" + utteranceIds.incrementAndGet();
+        Locale voice = language == null ? defaultLocale : "Hinglish".equals(language) ? HINDI : Locale.US;
+        if (HINDI.equals(voice)) {
+            if (applyVoice(HINDI)) {
+                romanFallback.put(id, text);
+            } else if (!applyVoice(INDIAN_ENGLISH)) {
+                applyVoice(Locale.US);
+            }
+        } else {
+            applyVoice(voice);
+        }
+        textToSpeech.speak(text, queueMode, null, id);
+    }
+
+    /** False when the engine has no voice for [locale]; the previous voice is then left in place. */
+    private boolean applyVoice(Locale locale) {
+        if (textToSpeech == null) return false;
+        int result = textToSpeech.setLanguage(locale);
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.w("AudioManager", "No TTS voice for " + locale + " (" + result + ")");
+            return false;
+        }
+        if (HINDI.equals(locale)) { // English keeps the engine's own voice choice
+            Voice offline = installedVoice(locale);
+            if (offline != null && !offline.equals(textToSpeech.getVoice())) textToSpeech.setVoice(offline);
+        }
+        return true;
+    }
+
+    /** setLanguage can pick a network voice even when an installed one exists; this finds the installed one. */
+    private Voice installedVoice(Locale locale) {
+        Set<Voice> voices;
+        try {
+            voices = textToSpeech.getVoices();
+        } catch (RuntimeException e) { // some engines throw instead of returning null
+            return null;
+        }
+        if (voices == null) return null;
+        Voice best = null;
+        for (Voice v : voices) {
+            Locale l = v.getLocale();
+            if (l == null || !locale.getLanguage().equals(l.getLanguage()) || !locale.getCountry().equals(l.getCountry())) continue;
+            if (v.isNetworkConnectionRequired() || v.getFeatures().contains(TextToSpeech.Engine.KEY_FEATURE_NOT_INSTALLED)) continue;
+            if (best == null || v.getQuality() > best.getQuality()) best = v;
+        }
+        return best;
     }
 
     public boolean isTtsReady() {

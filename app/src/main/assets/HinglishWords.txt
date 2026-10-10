@@ -1,0 +1,1068 @@
+hai	hei
+main	mai,mei
+mujhe	muje,mujhey,mjhe
+nahi	nahin,nhi,nai,nahee
+kya	kyaa,kia
+ko
+ka
+ki
+ke
+mein	me
+se
+toh	to,tho
+bhi	bi
+hi
+haan	han,haa,ha
+ho
+hoon	hun,hu,hoo
+hain
+raha	rha
+rahi	rhi
+rahe	rhe
+kar
+karo	kro
+do
+de
+le
+lo
+aur	or,awr
+par	pe,pr
+mera	mra
+meri	mri
+mere	mre
+aap	ap
+aapko	apko
+aapka	apka
+aapki	apki
+aapke	apke
+tum
+tumhe	tumhein,tumhen
+tumhara	tumhra
+tumhari	tumhri
+tumhare	tumhre
+hum	ham
+humein	hame,hamein,humen,hume
+hamara	humara
+hamari	humari
+hamare	humare
+woh	wo,vo,voh,vah
+yeh	ye,yah
+tha
+thi
+the
+chahiye	chaiye,chahie,chaahiye,chahiya
+paani	pani,panee
+dard	dardh
+dawai	davai,dawaai
+khana	khaana,kana
+neend	nind
+bhookh	bhook,bhukh,bhuk
+pyaas	pyas
+aaram	aram
+madad	madat
+thanda	thnda
+garam	garm,garum
+chai	chay,chaay
+doodh	dudh,dood
+ghar
+maa	ma,maan
+papa
+beta
+beti
+khush	khus
+abhi	abi
+ab
+bahut	bohot,bahot,bhut,bht,bohat
+thoda	thora
+thodi	thori
+thode	thore
+accha	acha,achha,achcha
+acchi	achi,achhi,achchi
+acche	ache,achhe,achche
+theek	thik,tik,theekh
+na
+mat
+ji	jee
+liye	lie
+saath	sath
+tak
+baad	bad
+pehle	pahle,pehale,pahele
+phir	fir,fhir
+jab
+tab
+agar	agr
+lekin	lekn,lakin
+magar
+kyunki	kyuki,kyonki,kyunke,kyoki
+ya
+koi	koyi
+kuch	kuchh,kch,kuj
+sab
+sabhi
+sabse
+maine	mene,mainne
+tumne
+aapne
+humne	hamne
+usne
+unhone	unhonne
+kisne
+kisi
+kis
+kisko
+kiska
+kaunsa	konsa
+kaunsi	konsi
+yahi
+wahi	vahi
+jahan	jaha,jahaan
+tabhi
+har
+kai
+dono	donon
+saara	sara
+saari	sari
+saare	sare
+jaisa
+jitna
+kahin	kaheen
+kaun	kon,kown
+kyun	kyon,kyu,kiyon,kyoon
+kahan	kahaan
+kab
+kaise	kese,kaisey,kaisay
+kaisa	kesa
+kaisi	kesi
+kitna	ktna
+kitni
+kitne
+kidhar
+idhar
+udhar
+yahan	yaha,yahaan
+wahan	waha,vahan,wahaan,vaha
+is
+us
+isko	isku
+usko	usku
+ise
+use
+isse
+usse
+iska
+iski
+iske
+uska
+uski
+uske
+unka
+unki
+unke
+unko
+unhe	unhein,unhen
+inhe	inhein
+inka
+inki
+inke
+apna
+apni
+apne
+khud	khudh
+mujhko
+mujhse	mujse
+tujhe	tuje
+tu
+humko	hamko
+humse	hamse
+aapse	apse
+tumse
+jo
+jaise	jaisey,jese
+waise	vaise,wese
+aise	ese,aisey
+aisa	esa
+aisi	esi
+waisa	vaisa
+itna
+itni
+itne
+utna
+zyada	jyada,zada,ziada,jada,zyaada
+kam
+bilkul	bilkool
+zaroor	jarur,zarur,jaroor
+shayad	shaayad,sayad
+sirf	srf
+bas	bus,buss
+sahi
+galat	galt,ghalat
+kaafi	kafi
+poora	pura
+poori	puri
+aadha	adha
+aadhi	adhi
+zara	jara
+lagbhag
+turant	turunt
+achanak
+dobara	dubara,dobaara
+phirse	firse
+isliye	isliya
+warna	varna
+sach
+jhooth	jhuth
+sachmuch
+pakka	paka
+hona
+hota
+hoti
+hote
+hua	huwa
+hui	huyi
+hue	huye
+hoga
+hogi
+honge
+hoke
+hokar
+rehna	rahna
+rehta	rahta
+rehti	rahti
+rehte	rahte
+raho
+rahiye	rahie
+rahunga	rahoonga
+rahungi	rahoongi
+chuka
+chuki
+chuke
+karna	krna
+karta	krta
+karti	krti
+karte	krte
+kiya
+kiye
+karunga	karoonga,krunga
+karungi	karoongi,krungi
+karenge
+karega
+karegi
+karke	krke
+karne	krne
+kariye	karie
+kijiye	kijie,keejiye
+karein	karen
+karwa	karva
+dena
+deta
+deti
+dete
+diya
+diye
+dijiye	dijie,deejiye
+dunga	doonga
+dungi	doongi
+denge
+dega
+degi
+dene
+dein	den
+dedo
+lena
+leta
+leti
+lete
+liya
+lijiye	lijie,leejiye
+lunga	loonga
+lungi	loongi
+lenge
+lega
+legi
+lene
+lein	len
+jana	jaana
+ja	jaa
+jao	jaao
+jaiye	jaie,jaaiye
+jata	jaata
+jati	jaati
+jate	jaate
+gaya	gya
+gayi	gai,gyi
+gaye	gye
+jaunga	jaoonga
+jaungi	jaoongi
+jayenge	jaenge,jaayenge
+jayega	jaega,jaayega
+jayegi	jaegi,jaayegi
+jane	jaane
+jayen	jaayen,jaayein
+aana	ana
+aa
+aao	ao
+aaiye	aaie,aiye
+aata	ata
+aati	ati
+aate	ate
+aaya	aya
+aayi	aai,ayi
+aaye	aye,aae
+aaunga	aunga
+aaungi	aungi
+aayega	ayega,aaega
+aayegi	ayegi,aaegi
+aayenge	ayenge,aaenge
+aaoge	aoge
+aane
+aayen	aayein
+kha	khaa
+khao	khaao
+khaiye	khaie,khaaiye
+khata	khaata
+khati	khaati
+khate	khaate
+khaya	khaaya
+khayi	khaai
+khaunga	khaoonga
+khaungi	khaoongi
+khayega	khaega
+khane	khaane
+khilao	khilaao
+khila
+khilaiye	khilaie
+peena	pina
+pee	pi
+piyo	peeyo,pio
+pijiye	peejiye,pijie
+peeta
+peeti	piti
+peete	pite
+piya
+piyunga	piunga
+piyungi	piungi
+peene	pine
+pilao	pilaao
+pila	pilaa
+pilaiye	pilaie
+sona
+so
+soiye	soie
+sota
+soti
+sote
+soya
+soyi	soi
+sone
+sounga	soonga
+sulao	sulaao
+sula
+jaag	jag
+jaago	jago
+jaagna	jagna
+jaaga	jaga
+jagao	jagaao
+uth
+utho
+uthna
+utha
+uthi
+uthe
+uthao	uthaao
+uthaiye	uthaie
+uthana
+baith	beth,baitth
+baitho	betho
+baithiye	baithie,bethiye
+baithna	bethna
+baitha	betha
+baithi	bethi
+baithe	bethe
+bithao	bithaao,baithao
+bitha
+bithaiye	bithaie
+chal
+chalo
+chaliye	chalie
+chalna
+chalta
+chalti
+chala
+chali
+chale
+chalenge
+chalunga	chaloonga
+chalungi	chaloongi
+chalein	chalen
+chalao	chalaao
+chalu	chaalu
+ruk
+ruko
+rukiye	rukie
+rukna
+ruka
+ruki
+roko
+sun
+suno
+suniye	sunie
+sunna
+suna
+suni
+sunai	sunaayi
+sunao	sunaao
+bol
+bolo
+boliye	bolie
+bolna
+bola
+boli
+bolta
+bolti
+bulao	bulaao,bulaw
+bulaiye	bulaie,bulaaiye
+bulana	bulaana
+bula	bulaa
+bulaya
+keh	kah
+kaho
+kahiye	kahie
+kehna	kahna
+kaha
+kahi
+kehta	kahta
+kehti	kahti
+dekh
+dekho
+dekhiye	dekhie
+dekhna
+dekha
+dekhi
+dekhta
+dekhti
+dekhunga	dekhoonga
+dekhungi	dekhoongi
+dekhein	dekhen
+dikhao	dikhaao
+dikhai	dikhayi
+dikhta
+dikh
+padh	parh
+padho	parho
+padhna	parhna
+padha	parha
+padhi	parhi
+likh
+likho
+likhna
+likha
+likhi
+soch
+socho
+sochna
+socha
+sochi
+samajh	samaj,samjh
+samjho	samajho
+samajhna	samjhna
+samjha	samajha
+samjhi	samajhi
+samjhao	samjhaao,samajhao
+seekh	sikh
+seekhna	sikhna
+sikhao	sikhaao
+jaanta	janta
+jaanti	janti
+jaante	jante
+pata
+chahta	chahata
+chahti	chahati
+chahte	chahate
+chaho
+chahunga	chahoonga
+chahungi	chahoongi
+maang	mang
+maango
+maanga
+rakh
+rakho
+rakhiye	rakhie
+rakhna
+rakha
+nikal
+nikalo
+nikala
+daalo	dalo
+chhod	chhor
+chhodo	chhoro,chodo
+chhoda	chhora
+chhodiye	chhodie
+pakad	pakar
+pakdo	pakado,pakro
+pakda	pakra
+pakdiye	pakadiye
+badal
+badlo	badalo
+badalna
+badla
+badliye	badaliye
+khol
+kholo
+kholiye	kholie
+kholna
+khula
+khuli
+band	bandh
+lag
+lagta
+lagti
+lagte
+laga
+lagi
+lage
+lagega
+lagao	lagaao
+lagaiye	lagaie
+lagana
+mil
+milo
+milna
+mila
+mili
+mile
+milega
+milegi
+milenge
+milao	milaao
+sakta	skta
+sakti	skti
+sakte	skte
+sake
+sako
+saka
+padta	parta
+padega	parega
+pada	para
+padi	pari
+paya
+lao	laao
+laiye	laie,laaiye
+lana	laana
+laya	laaya
+layi	laai
+la	laa
+bhejo
+bhejna
+bheja
+bhejiye	bhejie
+batao	bataao
+bataiye	bataie,bataaiye
+batana	bataana
+bataya
+bata
+pucho	poocho,puchho
+puchna	poochna
+pucha	poocha
+puchiye	poochiye
+rona
+ro
+hasna	hansna
+hasi	hansi
+haso	hanso
+dar	darr
+dara
+dari
+darta
+darti
+ghabrao	ghabraao
+thak
+thaka
+thaki
+thake
+nahana	nahaana
+nahao	nahaao
+nahlao	nehlao,nahlaao
+nahla
+dho
+dhona
+dhulao
+pehen	pahan
+pehno	pahno
+pehnao	pahnao
+pehna	pahna
+ghum	ghoom
+ghumao	ghumaao
+ghumna	ghoomna
+leto
+letna
+litao	litaao
+lita
+palat
+palto
+palatna
+karwat	karvat
+pochho	pocho,poncho
+saaf	saf
+jalao	jalaao
+bujhao	bujhaao
+bujha
+hatao	hataao
+hata
+hato
+dabao	dabaao
+daba
+dabaiye	dabaie
+khujao	khujaao
+kaat	kat
+kaato	kato
+phenko	feko
+gir
+gira
+giri
+girna
+khatam	khatm,khatum
+shuru	suru
+tayyar	taiyar,taiyaar
+bachao	bachaao
+bacha
+sambhalo	sambhaalo
+intezaar	intazar,intzar,intezar,intjar
+yaad	yad
+bhool	bhul
+bhoolna	bhulna
+pasand	psand
+zaroorat	jarurat,zarurat,jaroorat
+koshish	kosish
+dhyaan	dhyan
+khayal	khyal,khayaal
+fikar	fikr
+chinta
+pyaar	pyar
+pyaari	pyari
+pyaara	pyara
+roti
+chawal	chaval,chaawal
+daal	dal
+sabzi	sabji,subzi
+phal	fal
+seb
+kela
+aam
+angoor	angur
+santra
+nimbu	neembu,nimboo
+namak
+cheeni	chini
+shakkar	shakar
+dahi
+ghee	ghi
+makkhan	makhan
+anda
+nashta	naashta
+khichdi	khichri
+dalia	daliya
+mithai	mithaai
+paratha	parantha
+halwa
+kheer	khir
+lassi
+nariyal
+aloo	alu
+pyaaz	pyaj,pyaz
+tamatar
+gobhi
+palak
+matar
+rajma
+chole
+paneer	panir
+achaar	achar
+chutney	chatni
+papad
+raita
+kadhi	kadi
+poha
+idli
+dosa
+samosa
+pakode	pakore,pakoda
+atta
+tel
+masala
+mirch
+haldi
+adrak
+gud
+shahad
+biryani
+pulao
+jalebi
+laddu	ladoo
+thali
+katori
+gilaas	gilas
+chammach	chamach
+botal
+thandi
+thande
+meetha	mitha
+meethi	mithi
+namkeen	namkin
+teekha	tikha
+kadwa	kadva
+dawa	dava
+goli
+sui
+patti
+chot
+zakhm	zakham,jakham
+jaanch	janch
+aspatal	aspataal,haspatal
+ilaaj	ilaj
+bukhar	bukhaar
+khansi	khaansi,khasi
+zukaam	jukam,zukam
+ulti	ultee
+dast
+kabz	kabj
+sardard	sirdard
+chakkar	chakar
+kamzori	kamjori
+thakaan	thakan
+khujli
+jalan
+sujan	soojan
+ghabrahat	ghabrahaat
+bechaini	bechainee
+takleef	taklif
+tabiyat	tabeeyat,tabiyet
+beemar	bimar
+beemari	bimari
+saans	sans
+dhadkan	dharkan
+nabz	nabj
+khoon	khun
+peshab	peshaab
+sandaas
+sar	sir,sarr
+pet
+peeth	pith
+haath	hath
+pair	pairr
+paon	paav,paanv
+aankh	ankh
+aankhen	ankhen,ankhein
+kaan	kan
+naak	nak
+munh	muh,mooh
+daant	dant
+gala	galaa
+gale
+chhati	chati
+kamar
+ghutna	ghutne
+ungli	ungali
+dil
+baal	bal
+kandha	kandhe
+gardan	gardn
+sharir	shareer
+badan
+jeebh	jibh
+hoth	honth
+pitaji	pitaaji
+pita
+mummy	mumy,mammi
+amma
+ammi
+abbu
+baba
+bhai	bhaai
+behen	bahan,behan
+bahu
+damaad	damad
+pati
+patni
+biwi	bivi
+dost
+dadi	daadi
+dada	daada
+nani	naani
+nana	naana
+chacha	chaacha
+chachi	chaachi
+mama	maama
+mami	maami
+bua
+didi
+bhaiya	bhaiyya
+bhabhi
+jija	jeeja
+pota
+poti
+saas
+sasur
+bachcha	bachha
+bachche	bache,bachhe
+ladka	larka
+ladki	larki
+aadmi	admi
+aurat
+log
+parivaar	parivar
+gharwale	gharwaale
+padosi	parosi
+bhagwan	bhagvan
+ishwar
+kamra
+kamre
+bistar	bister
+takiya
+chadar	chaadar
+kambal
+razai	rajai
+kursi
+darwaza	darwaja,darvaja
+khidki	khirki
+batti	bati
+pankha	pankhaa
+bijli
+kapde	kapre
+kapda	kapra
+chashma	chasma
+ghadi	ghari
+kitaab	kitab
+akhbaar	akhbar
+gaana	gana
+bhajan
+chhat
+zameen	jameen,zamin
+sabun	saabun
+tauliya	towliya
+kanghi
+manjan
+chappal	chapal
+joote	jute
+moze	moje,mozey
+topi
+chaabi	chabi
+taala	tala
+ghanti
+awaaz	awaz,avaaz
+shor
+chup
+cheez	chiz,cheej
+kaam
+baat	baath
+baatein	baaten,baatien
+sawaal	sawal,savaal
+jawab	jawaab,javab
+matlab	mtlb
+naam	nam
+tarah	tarha
+jagah	jageh
+taraf
+khabar	khbar
+paisa
+paise
+rupaye	rupay,rupees
+dukaan	dukan
+bazaar	bajar,bazar
+gaadi	gadi,gaari
+safar
+mandir
+pooja	puja
+prarthana	prarthna
+mausam	mosam
+dhoop	dhup
+baarish	barish
+hawa	hava
+sardi
+garmi
+thand	thandd
+barf
+aag
+dhuan	dhuaan
+aasman	asman
+ped	per
+phool	phul
+bagicha	bageecha
+kutta
+billi
+gaay
+chidiya	chiriya
+khel
+baahar	bahar
+andar
+upar	oopar
+neeche	niche
+aage	age
+peeche	piche
+paas	pas
+door	dur
+daayen	dayen,dahine
+baayen	bayen
+beech	bich
+saamne	samne
+seedha	sidha
+seedhe	sidhe
+ulta
+ooncha	uncha
+aaj	aj
+kal
+parso	parson
+subah	subha,subeh
+shaam	sham
+raat	rat
+din
+dopahar	dupahar,dopehar
+samay
+waqt	wakt,vakt
+ghanta
+ghante
+der
+jaldi	jldi
+roz	roj
+hamesha	humesha
+kabhi	kbhi
+hafta	hafte
+mahina	mahine
+saal	sal
+ek
+teen	tin
+char	chaar
+paanch	panch
+chhah	chhe,che,cheh
+saat	sat
+aath	ath
+nau
+das
+bees	bis
+sau
+hazaar	hazar,hajar
+pehla	pahla
+doosra	dusra
+teesra	tisra
+bada	bara
+badi	bari
+bade	bare
+chhota	chota
+chhoti	choti
+chhote	chote
+naya
+nayi	nayee
+naye
+purana	puraana
+purani
+ganda
+gandi
+geela	gila
+geeli	gili
+sookha	sukha
+khushi	khusi
+dukh
+dukhi
+udaas	udas
+pareshaan	pareshan,preshan
+naraz	naraaz,naraj
+gussa
+shanti	shaanti
+sukoon	sukun
+maza	maja,mazaa
+bura
+buri
+bure
+mann	man
+aasaan	asan,aasan
+mushkil	muskil
+zaroori	jaruri,zaruri,jaroori
+tez	tej
+dheere	dhire
+zor	jor
+halka
+bhaari	bhari
+lamba
+sundar
+mazboot	majboot
+kamzor	kamjor
+akela	akelaa
+akeli
+wala	vala
+wali	vali
+wale	vale
+namaste	namaskar
+dhanyavaad	dhanyawad,dhanyavad,dhanyawaad
+shukriya	shukria
+maaf	maf
+kripya	kripaya
+alvida
+haanji
+chalega
+milta
+milti
+darna
+dhoondo	dhundo,dhoondho
+dhoondh	dhund
+kho
+toota	tuta
+tooti	tuti
+kharab	khrab,kharaab
+samjhe	samajhe
+jaanna	janna
+jaano	jano
+pehchan	pehchaan,pahchan
+pehchana	pahchana
+khelna
+nahaya
+ghoomne	ghumne
+milne
+dekhne
+sunne
+bolne
+baithne	bethne
+uthne
+chalne
+lagne
+rakhne
+bulane
+batane
+samajhne	samjhne
+kehne	kahne
+rehne	rahne
+hone
+badalne
+kholne
+pehenne	pahanne
+nahane
+kahani
+shaadi	shadi
+janamdin	janmdin
+tyohaar	tyohar
+diwali	deepawali
+holi
+eid
+chhutti	chutti
+naukri	naukari
+daftar	dafter
+padhai	parhai
+abhitak
+dheeme	dhime
+aahista	ahista
+rozana	rojana
+teeno	tino
+zindagi	jindagi
+duniya	dunia
+sapna
+dua
+ashirwad	aashirwad
+khaas	khas
+asli
+mehmaan	mehman
+sukhi
+yaadein	yaaden
+achhai
+bhookha	bhuka
+bhookhi	bhuki
+pyaasa	pyasa
+pyaasi	pyasi

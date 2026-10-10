@@ -1,5 +1,7 @@
 package com.demo.opencv.textEntry
 
+import com.demo.opencv.personal.PersonalLexicon
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -90,5 +92,99 @@ class BlurryInputTest {
 
         // Null list -> returns null
         assertNull(blurryInput.getWordPage(null, 1, 2))
+    }
+
+    // ------------------------------------------------------------------ Hinglish interleave
+
+    private val assets = BlurryInput.AssetSource { File(HinglishDetectorTest.ASSETS, it).inputStream() }
+    private val hinglish = HinglishDetectorTest.assetLexicon()
+    private val english = File(HinglishDetectorTest.ASSETS, "EnglishWords.txt").readLines()
+
+    private fun latinKeyboard(lastSpoken: String = HinglishDetector.ENGLISH, lexicon: PersonalLexicon? = null) =
+        BlurryInput().apply {
+            initialize("English", assets, hinglish)
+            setLastSpokenLanguage(lastSpoken)
+            setPersonalLexicon(lexicon)
+        }
+
+    private fun englishStarting(prefix: String) = english.filter { it.startsWith(prefix) }.distinct()
+    private fun hinglishStarting(prefix: String) = hinglish.words.filter { it.startsWith(prefix) }
+
+    @Test
+    fun englishTypistGetsTwoEnglishThenOneHinglishPerPage() {
+        val words = latinKeyboard().getExactMatchingWords("pa", emptyList())
+        val e = englishStarting("pa")
+        val h = hinglishStarting("pa").filter { it !in e }
+        assertEquals(listOf(e[0], e[1], h[0], e[2], e[3], h[1]), words.take(6))
+        assertTrue("paani within the first two pages: $words", "paani" in words.take(6))
+    }
+
+    @Test
+    fun hinglishTypistGetsTwoHinglishThenOneEnglishPerPage() {
+        val words = latinKeyboard().getExactMatchingWords("pa", listOf("theek"))
+        val h = hinglishStarting("pa")
+        val e = englishStarting("pa").filter { it !in h }
+        assertEquals(listOf(h[0], h[1], e[0], h[2], h[3], e[1]), words.take(6))
+    }
+
+    @Test
+    fun lastSpokenLanguageOrdersTheFirstWord() {
+        val english = latinKeyboard().getExactMatchingWords("pa", emptyList())
+        val hindiFirst = latinKeyboard(HinglishDetector.HINGLISH).getExactMatchingWords("pa", emptyList())
+        assertEquals(hinglishStarting("pa").take(2), hindiFirst.take(2))
+        assertTrue(english[0] !in hinglishStarting("pa"))
+    }
+
+    @Test
+    fun ambiguousKeyboardInterleavesTooAndOffersPaani() {
+        val keyboard = latinKeyboard(HinglishDetector.HINGLISH)
+        val words = keyboard.getMatchingWords(keyboard.processWord("paani"), emptyList())
+        assertEquals("paani", words.first { it in hinglish.words })
+        val firstPage = keyboard.getMatchingWords(keyboard.processWord("pa"), emptyList()).take(3)
+        assertEquals(2, firstPage.count { it in hinglish.words && it !in english })
+    }
+
+    @Test
+    fun bigramsAndPersonalWordsStayAheadOfTheDictionary() {
+        val store = object : PersonalLexicon.Store {
+            var saved = PersonalLexicon.Snapshot()
+            override fun load() = saved
+            override fun save(snapshot: PersonalLexicon.Snapshot) { saved = snapshot }
+        }
+        var now = 1L
+        val lexicon = PersonalLexicon(store) { now++ }
+        lexicon.recordUtterance(listOf("pakka"))
+        val words = latinKeyboard(lexicon = lexicon).getExactMatchingWords("pa", listOf("mujhe"))
+        // Hinglish bigrams "mujhe paani" and "mujhe pata" first, then the learned word, then the dictionary.
+        assertEquals(listOf("paani", "pata", "pakka"), words.take(3))
+        assertEquals(words.size, words.toSet().size)
+    }
+
+    @Test
+    fun hinglishBigramsAreMergedIntoNextWordPrediction() {
+        val next = latinKeyboard().getExactMatchingWords("", listOf("paani"))
+        assertEquals(listOf("chahiye", "do", "pilao"), next.take(3))
+    }
+
+    @Test
+    fun withoutHinglishTheEnglishOrderIsUnchanged() {
+        val plain = BlurryInput().apply { initialize("English", assets, HinglishLexicon.EMPTY) }
+        assertEquals(englishStarting("pa"), plain.getExactMatchingWords("pa", emptyList()))
+        val code = plain.processWord("wat")
+        val expected = english.filter { plain.processWord(it).startsWith(code) }.distinct()
+        assertEquals(expected, plain.getMatchingWords(code, emptyList()))
+    }
+
+    @Test
+    fun hinglishSettingTypesEnglishLettersWithHinglishFirst() {
+        val keyboard = BlurryInput().apply { initialize("Hinglish", assets, hinglish) }
+        val h = hinglishStarting("pa")
+        val e = englishStarting("pa").filter { it !in h }
+        // Even after an English word the Hinglish words lead, and English stays on every page.
+        assertEquals(listOf(h[0], h[1], e[0], h[2], h[3], e[1]), keyboard.getExactMatchingWords("pa", listOf("water")).take(6))
+        val all = keyboard.getExactMatchingWords("", emptyList()) + keyboard.getMatchingWords(keyboard.processWord("paani"), emptyList())
+        assertTrue(all.isNotEmpty())
+        assertTrue(all.all { w -> w.all { it.code < 128 } })
+        assertEquals("chahiye", keyboard.getExactMatchingWords("", listOf("paani")).first())
     }
 }

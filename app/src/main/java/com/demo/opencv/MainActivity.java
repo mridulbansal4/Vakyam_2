@@ -246,8 +246,8 @@ public class MainActivity extends AppCompatActivity
         String languageCode;
         if (Objects.equals(language, "English")) {
             languageCode = "en-us";
-        } else if (Objects.equals(language, "Hindi")) {
-            languageCode = "hi";
+        } else if (Objects.equals(language, "Hinglish")) {
+            languageCode = "hi"; // values-hi holds the Hinglish (Roman-script) strings
         } else {
             languageCode = "en-us";
         }

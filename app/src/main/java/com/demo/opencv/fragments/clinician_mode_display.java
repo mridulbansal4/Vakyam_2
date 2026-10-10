@@ -142,11 +142,16 @@ public class clinician_mode_display extends Fragment {
         typingTestResults = view.findViewById(R.id.typingTestResults);
         view.findViewById(R.id.typingTestStartButton).setOnClickListener(v -> {
             String language = ((UserDataManager) requireActivity().getApplication()).getLanguage();
-            String[] phrases = TypingTestPhrases.forLanguage(language);
+            String[] own = TypingTestPhrases.forLanguage(language);
+            // Language = English auto-detects Hinglish, so its Hinglish phrases are offered too and logged as Hinglish.
+            String[] hinglish = "English".equals(language) ? TypingTestPhrases.forLanguage("Hinglish") : new String[0];
+            String[] phrases = new String[own.length + hinglish.length];
+            System.arraycopy(own, 0, phrases, 0, own.length);
+            System.arraycopy(hinglish, 0, phrases, own.length, hinglish.length);
             new AlertDialog.Builder(requireContext())
                     .setTitle(R.string.TypingTest_ChoosePhrase)
                     .setItems(phrases, (dialog, which) -> {
-                        TypingTest.arm(phrases[which], language);
+                        TypingTest.arm(phrases[which], which < own.length ? language : "Hinglish");
                         Toast.makeText(requireContext(), R.string.TypingTest_Armed, Toast.LENGTH_LONG).show();
                     })
                     .show();

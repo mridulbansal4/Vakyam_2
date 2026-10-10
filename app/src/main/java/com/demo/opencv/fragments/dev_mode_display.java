@@ -103,7 +103,7 @@ public class dev_mode_display extends Fragment {
         texts[4].setText(String.valueOf(sensitivity));
         textEntrySpinner.setSelection(textEntryMode);
 
-        languageSpinner.setSelection(Objects.equals(language, "Hindi") ? 1 : 0);
+        languageSpinner.setSelection(Objects.equals(language, "Hinglish") ? 1 : 0);
     }
 
     @Override
@@ -163,7 +163,7 @@ public class dev_mode_display extends Fragment {
         languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String language = position == 1 ? "Hindi" : "English";
+                String language = position == 1 ? "Hinglish" : "English";
                 Log.d("SpinnerTesting", "language changed to " + language);
                 userDataManager.setLanguage(language);
             }

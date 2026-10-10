@@ -20,6 +20,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.demo.opencv.UserDataManager
 import com.demo.opencv.emergency.EmergencyController
 import com.demo.opencv.other.AudioManager
+import com.demo.opencv.textEntry.HinglishDetector
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -45,11 +46,17 @@ class BlinkKeyboardActivity : AppCompatActivity(), BlinkKeyboardOverlay.Listener
         emergency = EmergencyController(this)
         hideSystemBars()
 
+        val language = (application as? UserDataManager)?.language
         tts = AudioManager().apply {
             initialize(this@BlinkKeyboardActivity)
-            setLanguage((application as? UserDataManager)?.language)
+            setLanguage(language)
         }
-        overlay.speaker = BlinkKeyboardOverlay.Speaker { tts?.speakText(it) }
+        val detector = HinglishDetector.get(this)
+        overlay.speaker = BlinkKeyboardOverlay.Speaker { text ->
+            val voice = detector.resolveText(language, text, HinglishDetector.lastSpoken(this))
+            tts?.speakText(text, voice)
+            HinglishDetector.rememberSpoken(this, voice)
+        }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = onClose()

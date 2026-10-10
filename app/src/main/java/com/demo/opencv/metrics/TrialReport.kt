@@ -9,13 +9,13 @@ object TypingTestPhrases {
     private val ENGLISH = arrayOf(
         "i need water", "please call the nurse", "i feel some pain", "turn off the light", "thank you very much",
     )
-    private val HINDI = arrayOf(
-        "पानी चाहिए", "डॉक्टर को बुलाओ", "दर्द हो रहा है", "मैं ठीक हूँ", "बहुत धन्यवाद",
+    private val HINGLISH = arrayOf(
+        "paani chahiye", "doctor ko bulao", "dard ho raha hai", "main theek hoon", "bahut dhanyavaad",
     )
 
     @JvmStatic
     fun forLanguage(language: String?): Array<String> = when (language) {
-        "Hindi" -> HINDI
+        "Hinglish" -> HINGLISH
         else -> ENGLISH
     }
 }

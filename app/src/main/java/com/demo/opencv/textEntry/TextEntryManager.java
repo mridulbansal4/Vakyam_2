@@ -6,9 +6,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.util.Log;
 
+import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.demo.opencv.AI.GeminiManager;
+import com.demo.opencv.BuildConfig;
 import com.demo.opencv.UserDataManager;
 import com.demo.opencv.metrics.TypingTest;
 import com.demo.opencv.personal.PersonalLexicon;
@@ -38,6 +40,9 @@ public class TextEntryManager {
     TextInfo current = new TextInfo();
     PersonalLexicon personalLexicon; // the patient's own words and sentences, null without a context
     private String lastLearned = ""; // what was last taught to the lexicon, so repeating a sentence aloud is not counted twice
+    HinglishDetector hinglishDetector = HinglishDetector.get(null);
+    String lastSpokenLanguage = HinglishDetector.ENGLISH; // what Language = English last spoke in: English or Hinglish
+    String llmLanguage = HinglishDetector.ENGLISH; // what the last sentence was generated in
     static final String GENERATING = "Generating...";
 
     String NoMatchString = "NO MATCH";
@@ -78,22 +83,40 @@ public class TextEntryManager {
         if (mContext != null) {
             personalLexicon = PersonalLexicon.get(mContext);
             blurryInput.setPersonalLexicon(personalLexicon);
+            hinglishDetector = HinglishDetector.get(mContext);
+            lastSpokenLanguage = HinglishDetector.lastSpoken(mContext);
+            blurryInput.setLastSpokenLanguage(lastSpokenLanguage);
         }
 
         audioManager.initialize(mContext);
         current.Sentence = "All ALS patients should have a voice in the digital world.";
         if (mContext != null) {
             LocalBroadcastManager.getInstance(mContext).registerReceiver(mMessageReceiver, new IntentFilter("textGenerationEvent"));
+            if (BuildConfig.DEBUG) {
+                ContextCompat.registerReceiver(mContext, debugSpeakReceiver, new IntentFilter(DEBUG_SPEAK_ACTION),
+                        ContextCompat.RECEIVER_EXPORTED);
+            }
         }
 
         geminiManager.init(mContext);
     }
+
+    // Debug builds only: adb shell am broadcast -a com.vakyam.debug.SPEAK --es text "Mujhe paani chahiye"
+    static final String DEBUG_SPEAK_ACTION = "com.vakyam.debug.SPEAK";
+    private final BroadcastReceiver debugSpeakReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String text = intent.getStringExtra("text");
+            Log.i("TextEntryManager", "debug speak: voice=" + speak(text) + " text=\"" + text + "\"");
+        }
+    };
 
     public void updateSettings(Context applicationContext) { // match class settings with the global settings
         if (applicationContext instanceof UserDataManager) {
             UserDataManager userDataManager = (UserDataManager) applicationContext;
             this.language = userDataManager.getLanguage();
             blurryInput.initialize(mContext, language);
+            blurryInput.setLastSpokenLanguage(lastSpokenLanguage);
             audioManager.setLanguage(language);
             this.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
             if (userDataManager.getTextEntryContext() != null) {
@@ -117,11 +140,7 @@ public class TextEntryManager {
             } else if (mode == 0) { // baseline text-entry, mode 0
                 WordMode(selection);
             } else if (mode == 1){ // baseline text-entry, mode 1
-                if ("Hindi".equals(language)) {
-                    hindiMode(selection);
-                } else {
-                    letterMode(selection);
-                }
+                letterMode(selection);
             }
         }
         updateDisplays();
@@ -175,103 +194,6 @@ public class TextEntryManager {
         return current.Sentence;
     }
 
-    int hindiState = 1;
-    int hindiGroupIdx = 0;
-    int hindiBaseIdx = 0;
-    int hindiMatraIdx = 0;
-    
-    String[][] hindiChars = {
-        {"अ", "आ", "इ", "ई", "उ", "ऊ", "ए", "ऐ", "ओ", "औ"}, // 0
-        {"क", "ख", "ग", "घ", "ङ"}, // 1
-        {"च", "छ", "ज", "झ", "ञ", "ट", "ठ", "ड", "ढ", "ण"}, // 2
-        {"त", "थ", "द", "ध", "न"}, // 3
-        {"प", "फ", "ब", "भ", "म"}, // 4
-        {"य", "र", "ल", "व", "श", "ष", "स", "ह", "SPACE"} // 5
-    };
-    String[] matras = {"", "ा", "ि", "ी", "ु", "ू", "े", "ै", "ो", "ौ", "्", "ं", "ँ", "ृ"};
-    String[] hindiState1UI = {"अ-औ", "क-ङ", "च-ण", "त-न", "प-म", "य-ह"};
-
-    void hindiMode(int selection) {
-        if (hindiState == 1) {
-            hindiGroupIdx = selection;
-            hindiBaseIdx = 0;
-            hindiMatraIdx = 0;
-            hindiState = 2;
-        } else if (hindiState == 2) {
-            switch (selection) {
-                case 0: // Delete / Back
-                    TypingTest.onCorrection();
-                    if (current.BlurryInput.length() > 0) {
-                        current.BlurryInput = current.BlurryInput.substring(0, current.BlurryInput.length() - 1);
-                    } else {
-                        current.deleteWord();
-                        sentencePrediction();
-                    }
-                    hindiState = 1;
-                    break;
-                case 1: // Next Matra
-                    hindiMatraIdx = (hindiMatraIdx + 1) % matras.length;
-                    break;
-                case 2: // Next Consonant
-                    hindiBaseIdx = (hindiBaseIdx + 1) % hindiChars[hindiGroupIdx].length;
-                    hindiMatraIdx = 0;
-                    break;
-                case 3: // Confirm Char
-                    String c = hindiChars[hindiGroupIdx][hindiBaseIdx];
-                    if (c.equals("SPACE")) {
-                        if (!current.BlurryInput.isEmpty()) {
-                            current.addWord(current.BlurryInput);
-                            current.clearBlurryInputs();
-                        }
-                        hindiState = 1;
-                        mode = 0;
-                    } else {
-                        if (hindiGroupIdx != 0) c += matras[hindiMatraIdx];
-                        current.addBlurryInput(c);
-                        hindiState = 1;
-                    }
-                    break;
-                case 4: // Word 0
-                    if (wordPredictions.size() > 0) {
-                        current.addWord(wordPredictions.get(0));
-                        current.clearBlurryInputs();
-                        hindiState = 1;
-                        mode = 0;
-                    }
-                    break;
-                case 5: // Word 1
-                    if (wordPredictions.size() > 1) {
-                        current.addWord(wordPredictions.get(1));
-                        current.clearBlurryInputs();
-                        hindiState = 1;
-                        mode = 0;
-                    }
-                    break;
-            }
-        }
-        
-        String prefix = current.BlurryInput;
-        if (hindiState == 2) {
-            String c = hindiChars[hindiGroupIdx][hindiBaseIdx];
-            if (!c.equals("SPACE")) {
-                if (hindiGroupIdx != 0) c += matras[hindiMatraIdx];
-                prefix += c;
-            }
-        }
-        if (!prefix.isEmpty()) {
-            List<String> matched = blurryInput.getExactMatchingWords(prefix, current.Words);
-            wordPredictions = new ArrayList<>();
-            wordPredictions.add(prefix);
-            if (matched != null) {
-                for (String w : matched) {
-                    if (!w.equals(prefix)) wordPredictions.add(w);
-                }
-            }
-        } else {
-            wordPredictions.clear();
-        }
-    }
-
     public void updateDisplays() {
         if (!wordPredictions.isEmpty()) {
             String[] nextPageWords = blurryInput.getWordPage(wordPredictions, currentPage, wordsPerPage);
@@ -283,29 +205,16 @@ public class TextEntryManager {
             resetOptionWords(letterModeUI, wordIndex2);
         }
 
-        if ("Hindi".equals(language) && mode == 1) {
-            if (hindiState == 1) {
-                letterModeUI = new String[]{hindiState1UI[0], hindiState1UI[1], hindiState1UI[2], hindiState1UI[3], hindiState1UI[4], hindiState1UI[5], NoMatchString, NoMatchString, NoMatchString, NoMatchString};
-            } else {
-                String currentChar = hindiChars[hindiGroupIdx][hindiBaseIdx];
-                if (!currentChar.equals("SPACE") && hindiGroupIdx != 0) currentChar += matras[hindiMatraIdx];
-                String w0 = wordPredictions.size() > 0 ? wordPredictions.get(0) : NoMatchString;
-                String w1 = wordPredictions.size() > 1 ? wordPredictions.get(1) : NoMatchString;
-                letterModeUI = new String[]{DeleteString, "Next Matra", "Next Char", "Confirm " + currentChar, w0, w1, NoMatchString, NoMatchString, NoMatchString, NoMatchString};
-            }
-            keyboardData.setOptions(letterModeUI);
-        } else {
-            switch (mode) {
-                case 0 -> keyboardData.setOptions(wordModeUI);
-                case 1 -> keyboardData.setOptions(letterModeUI);
-            }
+        switch (mode) {
+            case 0 -> keyboardData.setOptions(wordModeUI);
+            case 1 -> keyboardData.setOptions(letterModeUI);
         }
-        
+
         // creating the text box for final output
         StringBuilder textBox = current.buildText();
         keyboardData.setTextInput(textBox.toString());
         if (LLMEnabled) {
-            keyboardData.sentence = "LLM: " + current.Sentence;
+            keyboardData.sentence = (HinglishDetector.HINGLISH.equals(llmLanguage) ? "LLM (Hinglish): " : "LLM: ") + current.Sentence;
         } else {
             keyboardData.sentence = (mContext != null) ? mContext.getString(R.string.TextEntry_EnableLLM) : "Enable LLM to generate";
         }
@@ -339,7 +248,8 @@ public class TextEntryManager {
     private void sentencePrediction() { // predicting the sentences based on keywords
         if (!LLMEnabled || current.Words.isEmpty()) return; // LLM enabled, at least one word
         String finalString = current.getWords();
-        geminiManager.generate(finalString, context, language);
+        llmLanguage = hinglishDetector.resolve(language, current.Words, context, lastSpokenLanguage);
+        geminiManager.generate(finalString, context, llmLanguage);
         current.Sentence = GENERATING;
     }
 
@@ -452,11 +362,23 @@ public class TextEntryManager {
         } else {
             text = current.getWords();
         }
-        if (audioManager != null) {
-            audioManager.speakText(text); // on-device speech
-        }
+        speak(text);
         learnUtterance(text);
         TypingTest.onSpoken(text, LLMEnabled ? TypingTest.MODE_GAZE_LLM : TypingTest.MODE_GAZE_AMBIGUOUS);
+    }
+
+    // The voice follows the sentence: Hinglish is spoken by the Hindi voice even with Language = English.
+    private String speak(String text) {
+        String voice = hinglishDetector.resolveText(language, text, lastSpokenLanguage);
+        if (audioManager != null) {
+            audioManager.speakText(text, voice); // on-device speech
+        }
+        if (text != null && !text.trim().isEmpty() && !GENERATING.equals(text)) {
+            lastSpokenLanguage = voice;
+            blurryInput.setLastSpokenLanguage(voice);
+            HinglishDetector.rememberSpoken(mContext, voice);
+        }
+        return voice;
     }
 
     // Speaking is the confirmation that the words were right, so that is when they are learned.
@@ -474,7 +396,6 @@ public class TextEntryManager {
         keyboardData.finished = false;
         mode = 1;
         currentPage = 1;
-        hindiState = 1;
         updateDisplays();
     }
 
@@ -500,6 +421,7 @@ public class TextEntryManager {
         if (mContext != null && mMessageReceiver != null) {
             try {
                 LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mMessageReceiver);
+                if (BuildConfig.DEBUG) mContext.unregisterReceiver(debugSpeakReceiver);
             } catch (Exception e) {
                 Log.w("TextEntryManager", "Error unregistering receiver", e);
             }

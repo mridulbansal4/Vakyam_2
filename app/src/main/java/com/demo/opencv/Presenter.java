@@ -94,6 +94,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         textEntryManager.initialize(mContext); // text prediction initialization with language setting
         textEntryManager.updateSettings(applicationContext); // update settings for text entry
         quickChatManager.initialize(mContext);
+        quickChatManager.setLanguage(userDataManager.getLanguage());
 
         clinicalData = new ClinicalData();
         appliveData.calibrationInstruction = "Eye Calibration";
@@ -263,6 +264,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     @Override
     public void setMode(String value) {
         mode = value;
+        if (userDataManager != null) quickChatManager.setLanguage(userDataManager.getLanguage());
         if (Objects.equals(mode, "Text")) { // when the mode is text entry
             textEntryManager.updateSettings(applicationContext); // always update settings when opened
             if (userDataManager.getTextEntryMode() == 0) {

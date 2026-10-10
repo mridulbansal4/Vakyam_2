@@ -34,7 +34,7 @@ class PersonalLexicon @JvmOverloads constructor(
             fun of(word: String): Script {
                 val first = word.firstOrNull(Char::isLetter) ?: return LATIN
                 return when {
-                    first in 'ऀ'..'ॿ' -> DEVANAGARI
+                    first in '\u0900'..'\u097F' -> DEVANAGARI
                     else -> LATIN
                 }
             }
@@ -184,7 +184,7 @@ class PersonalLexicon @JvmOverloads constructor(
         private const val MAX_PHRASE_LENGTH = 200
         private val WHITESPACE = Regex("\\s+")
         // Devanagari vowel signs are not letters to Char.isLetterOrDigit but end many Hindi words.
-        private val COMBINING_MARKS = 'ऀ'..'ॿ'
+        private val COMBINING_MARKS = '\u0900'..'\u097F'
         private val STRONGEST_FIRST = compareByDescending<Entry> { it.count }.thenByDescending { it.lastUsed }
 
         @Volatile

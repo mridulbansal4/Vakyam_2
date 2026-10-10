@@ -1,13 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Hindi so far covers only the emergency alarm and the learned-phrases page; everything else falls back to English. -->
+<!-- Language = Hinglish: Hindi written in English letters, never Devanagari. Covers what the patient says and hears;
+     menus and buttons fall back to English. -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="QuickChat_MyPhrases">मेरे वाक्य</string>
-    <string name="Emergency_Title">मदद चाहिए</string>
-    <string name="Emergency_Subtitle">मरीज़ मदद के लिए बुला रहा है</string>
-    <string name="Emergency_Dismiss">मैं आ गया — अलार्म बंद करें</string>
-    <string name="Emergency_Spoken">मदद! मुझे मदद चाहिए। कृपया तुरंत आइए।</string>
-    <string name="Emergency_SmsText">आपातकाल: मुझे अभी मदद चाहिए। कृपया आइए या फ़ोन कीजिए। Vakyam द्वारा अपने आप भेजा गया।</string>
-    <string name="Emergency_Holding">आँखें बंद %1$.1f से</string>
-    <string name="Emergency_Progress">मदद का संकेत %1$d / %2$d — लंबी पलकें झपकाते रहें</string>
-    <string name="Emergency_NotVisible">कैमरे को आपकी आँखें नहीं दिख रहीं — कृपया फ़ोन ठीक करें</string>
+    <string name="Calibration_StatusListen">Instruction suniye…</string>
+    <string name="Calibration_StatusNoFace">Chehra nahi dikh raha. Camera ke saamne aaiye.</string>
+    <string name="Calibration_StatusNoEyes">Aankhein nahi dikh rahi. Chehra camera ke saamne laaiye.</string>
+    <string name="Calibration_StatusEyesClosed">Aankhein khuli rakhiye.</string>
+    <string name="Calibration_StatusPhoneMoving">Phone ko hilne mat dijiye.</string>
+    <string name="Calibration_StatusHoldGaze">Nazar ek jagah rakhiye.</string>
+    <string name="Calibration_StatusLookFurther">Aankhein us taraf aur zyada le jaaiye.</string>
+    <string name="Calibration_StatusHolding">Rukiye… capture ho raha hai</string>
+    <string name="Calibration_LookStraight">Seedha dekhiye</string>
+    <string name="Calibration_LookLeft">Left dekhiye</string>
+    <string name="Calibration_LookRight">Right dekhiye</string>
+    <string name="Calibration_LookUp">Upar dekhiye</string>
+    <string name="Calibration_LookLeftUp">Left aur upar dekhiye</string>
+    <string name="Calibration_LookRightUp">Right aur upar dekhiye</string>
+    <string name="Calibration_Finished">Calibration ho gaya!</string>
+
+    <string name="QuickChat_BackButton">Peeche</string>
+    <string name="QuickChat_BackMenuButton">Home page par wapas</string>
+    <string name="QuickChat_Category1">Zaroorat</string>
+    <string name="QuickChat_Category2">Bhavnayein</string>
+    <string name="QuickChat_Category3">Kamra</string>
+    <string name="QuickChat_Category4">Manoranjan</string>
+    <string name="QuickChat_Category5">Dawai aur ilaaj</string>
+
+    <string name="QuickChat_Category1_1">Mujhe kuch khana hai.</string>
+    <string name="QuickChat_Category1_2">Mujhe sona hai.</string>
+    <string name="QuickChat_Category1_3">Mujhe bathroom jana hai.</string>
+    <string name="QuickChat_Category1_4">Mujhe paani peena hai.</string>
+    <string name="QuickChat_Category1_5">Mujhe aaram karna hai.</string>
+
+    <string name="QuickChat_Category2_1">Main khush hoon.</string>
+    <string name="QuickChat_Category2_2">Main udaas hoon.</string>
+    <string name="QuickChat_Category2_3">Mujhe gussa aa raha hai.</string>
+    <string name="QuickChat_Category2_4">Mujhe darr lag raha hai.</string>
+    <string name="QuickChat_Category2_5">Mujhe samajh nahi aa raha.</string>
+
+    <string name="QuickChat_Category3_1">Mujhe garmi lag rahi hai.</string>
+    <string name="QuickChat_Category3_2">Mujhe thand lag rahi hai.</string>
+    <string name="QuickChat_Category3_3">Bahut shor ho raha hai.</string>
+    <string name="QuickChat_Category3_4">Roshni bahut tez hai.</string>
+    <string name="QuickChat_Category3_5">Bahut andhera hai.</string>
+
+    <string name="QuickChat_Category4_1">Mujhe bahar jana hai.</string>
+    <string name="QuickChat_Category4_2">Mujhe akhbaar padhna hai.</string>
+    <string name="QuickChat_Category4_3">Mujhe gaane sunne hain.</string>
+    <string name="QuickChat_Category4_4">Mujhe TV dekhna hai.</string>
+    <string name="QuickChat_Category4_5">Mujhe radio sunna hai.</string>
+
+    <string name="QuickChat_Category5_1">Mujhe thoda dard ho raha hai.</string>
+    <string name="QuickChat_Category5_2">Mujhe bahut zyada dard ho raha hai.</string>
+    <string name="QuickChat_Category5_3">Mujhe dawai leni hai.</string>
+    <string name="QuickChat_Category5_4">Mujhe hospital jana hai.</string>
+    <string name="QuickChat_Category5_5">Main theek hoon.</string>
+
+    <string name="QuickChat_MyPhrases">Mere vaakya</string>
+    <string name="QuickChat_MyPhrasesEmpty">Text ya Spell mein bole gaye vaakya yahan dikhenge.</string>
+
+    <string name="Sensor_ChargingHotSpoken">Phone bahut garam ho gaya hai. Kripya charger nikaal dijiye.</string>
+
+    <string name="Emergency_Title">MADAD CHAHIYE</string>
+    <string name="Emergency_Subtitle">Mareez madad ke liye bula raha hai</string>
+    <string name="Emergency_Dismiss">MAIN AA GAYA — ALARM BAND KARO</string>
+    <string name="Emergency_Spoken">Madad! Mujhe madad chahiye. Kripya turant aaiye.</string>
+    <string name="Emergency_SmsText">EMERGENCY: Mujhe abhi madad chahiye. Kripya aaiye ya phone kijiye. Vakyam dwara apne aap bheja gaya.</string>
+    <string name="Emergency_Holding">Aankhein band %1$.1f s se</string>
+    <string name="Emergency_Progress">Madad ka signal %1$d / %2$d — lambi palkein jhapkate rahiye</string>
+    <string name="Emergency_NotVisible">Camera ko aapki aankhein nahi dikh rahi — kripya phone theek kijiye</string>
 </resources>

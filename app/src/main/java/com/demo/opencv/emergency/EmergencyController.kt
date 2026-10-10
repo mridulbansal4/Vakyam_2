@@ -202,7 +202,7 @@ class EmergencyController(private val activity: Activity) {
     }
 
     private fun localeFor(language: String?): Locale = when (language) {
-        "Hindi" -> Locale("hi", "IN")
+        "Hinglish" -> Locale("hi", "IN") // Roman-script strings, read by the Hindi voice
         else -> Locale.US
     }
 

@@ -30,6 +30,27 @@ adb push Models/gemma-4-E2B-it.litertlm /data/local/tmp/
 
 ---
 
+## Offline Speech-to-Text Setup (Whisper via sherpa-onnx)
+
+The record button uses Android's `SpeechRecognizer` when the phone is online. When it is offline, has no system recognizer, or the system recognizer reports a network/server/language failure, the app records locally and transcribes on-device with a Whisper model (English and Hindi). Without the model on the device the app behaves as before.
+
+The app looks for `*encoder(.int8).onnx`, `*decoder(.int8).onnx` and `*tokens.txt` in:
+1. `/sdcard/Android/data/com.vakyam.app/files/models/asr/` (recommended)
+2. `context.filesDir/models/asr/`
+3. `/sdcard/Models/asr/`
+4. `/data/local/tmp/asr/`
+
+### Download and push the model (~150 MB on device)
+```bash
+mkdir -p Models/asr && cd Models/asr
+curl -L -O https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-base.tar.bz2
+tar -xjf sherpa-onnx-whisper-base.tar.bz2 --strip-components=1 --wildcards '*/base-encoder.int8.onnx' '*/base-decoder.int8.onnx' '*/base-tokens.txt'
+adb push base-encoder.int8.onnx base-decoder.int8.onnx base-tokens.txt /sdcard/Android/data/com.vakyam.app/files/models/asr/
+```
+`sherpa-onnx-whisper-small.tar.bz2` is a drop-in replacement with better Hindi accuracy at about 3x the size and decode time.
+
+---
+
 ## Building the Project
 
 ### Build Debug APK

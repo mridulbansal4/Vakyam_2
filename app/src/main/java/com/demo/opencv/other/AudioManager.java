@@ -20,6 +20,9 @@ import java.util.Locale;
 public class AudioManager {
     MediaPlayer mediaPlayer = new MediaPlayer();
     private SpeechRecognizer speechRecognizer;
+    private final OfflineSpeechRecognizer offlineSpeechRecognizer = new OfflineSpeechRecognizer(); // on-device fallback
+    private Context appContext;
+    private boolean offlineListening = false;
     TextToSpeech textToSpeech;
     MediaRecorder recorder;
     private String fileName;
@@ -69,6 +72,27 @@ public class AudioManager {
         }
 
         setSpeechRecognizer(mContext); // set speech to text
+
+        appContext = mContext.getApplicationContext();
+        offlineSpeechRecognizer.init(mContext); // cheap: the model is only loaded on first offline use
+        offlineSpeechRecognizer.setListener(new OfflineSpeechRecognizer.Listener() {
+            @Override
+            public void onResult(String text) {
+                offlineListening = false;
+                finalText = text;
+                if (audioManagerListener != null) {
+                    audioManagerListener.onAudioUpdated("Context", finalText);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                offlineListening = false;
+                if (audioManagerListener != null) {
+                    audioManagerListener.onAudioUpdated("Error", error);
+                }
+            }
+        });
     }
 
     public void setLanguage(String language) {
@@ -155,8 +179,15 @@ public class AudioManager {
     }
 
     public void startListening() {
+        // Online keeps the system recognizer; offline (or a phone with no system recognizer) uses the on-device model
+        boolean useOffline = offlineSpeechRecognizer.isAvailable()
+                && (speechRecognizer == null || !NetworkUtils.isOnline(appContext));
+        if (useOffline) {
+            startOfflineListening();
+            return;
+        }
         if (speechRecognizer == null) return;
-        Log.d("AudioManager", "Began recording");
+        Log.d("AudioManager", "Online mode detected: Using standard Android SpeechRecognizer");
         try {
             Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -167,7 +198,28 @@ public class AudioManager {
         }
     }
 
+    private void startOfflineListening() {
+        Log.d("AudioManager", "Routing to on-device ASR");
+        offlineListening = true;
+        offlineSpeechRecognizer.setLanguage(speechLang);
+        offlineSpeechRecognizer.startListening();
+    }
+
+    // The system recognizer could not reach its service or has no language pack, as opposed to simply hearing nothing
+    private static boolean isServiceFailure(int error) {
+        return error == SpeechRecognizer.ERROR_NETWORK
+                || error == SpeechRecognizer.ERROR_NETWORK_TIMEOUT
+                || error == SpeechRecognizer.ERROR_SERVER
+                || error == SpeechRecognizer.ERROR_SERVER_DISCONNECTED
+                || error == SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED
+                || error == SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE;
+    }
+
     public void stopListening() {
+        if (offlineListening) {
+            offlineSpeechRecognizer.stopListening(); // the captured audio is still transcribed
+            return;
+        }
         if (speechRecognizer != null) {
             try {
                 speechRecognizer.stopListening();
@@ -201,6 +253,11 @@ public class AudioManager {
                     @Override
                     public void onError(int error) {
                         Log.e("AudioManager", "Speech recognition error: " + error);
+                        if (isServiceFailure(error) && offlineSpeechRecognizer.isAvailable()) {
+                            speechRecognizer.cancel(); // make sure the microphone is free before recording locally
+                            startOfflineListening();
+                            return;
+                        }
                         if (audioManagerListener != null) {
                             audioManagerListener.onAudioUpdated("Error", String.valueOf(error));
                         }
@@ -252,6 +309,8 @@ public class AudioManager {
         } catch (Exception e) {
             Log.e("AudioManager", "Error destroying speech recognizer", e);
         }
+        offlineSpeechRecognizer.destroy();
+        offlineListening = false;
         try {
             if (mediaPlayer != null) {
                 mediaPlayer.release();

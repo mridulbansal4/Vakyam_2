@@ -12,3 +12,6 @@ captures/
 # The Gemma model is ~2.6 GB and is pushed to the device with adb, never bundled or committed.
 Models/*.litertlm
 *.litertlm
+
+# The offline speech model (~150 MB) is pushed to the device with adb as well.
+Models/asr/

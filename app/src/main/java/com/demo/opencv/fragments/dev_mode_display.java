@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -21,18 +20,15 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.R;
 import com.demo.opencv.UIViewModel;
 import com.demo.opencv.UserDataManager;
-import com.demo.opencv.emergency.CaregiverSms;
 import com.demo.opencv.sensors.SensorSimulation;
 
 import org.opencv.android.Utils;
@@ -213,24 +209,13 @@ public class dev_mode_display extends Fragment {
             }
         });
 
-        EditText caregiverPhone = view.findViewById(R.id.caregiverPhoneInput);
-        caregiverPhone.setText(userDataManager.getCaregiverPhone());
-        view.findViewById(R.id.caregiverPhoneSave).setOnClickListener(v -> {
-            String number = caregiverPhone.getText().toString().trim();
-            userDataManager.setCaregiverPhone(number);
-            caregiverPhone.clearFocus();
-            Toast.makeText(ctx, number.isEmpty() ? R.string.Settings_CaregiverCleared : R.string.Settings_CaregiverSaved, Toast.LENGTH_LONG).show();
-            if (!number.isEmpty() && !CaregiverSms.hasPermission(ctx)) { // the alarm cannot ask for this in the middle of an emergency
-                ActivityCompat.requestPermissions(requireActivity(), new String[]{android.Manifest.permission.SEND_SMS}, REQUEST_SEND_SMS);
-            }
-        });
-
         TextView sensorHealthText = view.findViewById(R.id.sensorHealthText);
         Map<SensorSimulation, Button> simButtons = new EnumMap<>(SensorSimulation.class);
         simButtons.put(SensorSimulation.DARK_ROOM, view.findViewById(R.id.simDarkRoomButton));
         simButtons.put(SensorSimulation.HOT_PHONE, view.findViewById(R.id.simHotPhoneButton));
         simButtons.put(SensorSimulation.CHARGING_HOT, view.findViewById(R.id.simChargingHotButton));
         simButtons.put(SensorSimulation.WARM_LIGHT, view.findViewById(R.id.simWarmLightButton));
+        simButtons.put(SensorSimulation.TIRED_EYES, view.findViewById(R.id.simTiredEyesButton));
         Button simReset = view.findViewById(R.id.simResetButton);
         SensorTestHost host = (requireActivity() instanceof SensorTestHost) ? (SensorTestHost) requireActivity() : null;
 
@@ -269,7 +254,6 @@ public class dev_mode_display extends Fragment {
     }
 
     private static final int SIM_ON_COLOR = 0xFF9A5A36;
-    private static final int REQUEST_SEND_SMS = 300;
 
     private void styleSimButton(Button button, boolean on) {
         if (button == null) return;

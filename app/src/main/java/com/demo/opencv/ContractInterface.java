@@ -17,6 +17,7 @@ public interface ContractInterface {
         void openClinician();
         void openCalibration();
         void openQuickChat();
+        void onSentenceForPatient(String sentence); // said into the microphone or typed as context
     }
 
     interface Model {
@@ -40,6 +41,8 @@ public interface ContractInterface {
         void onRecordButtonClicked();
         void setFaceRoiDetection(boolean enabled);
         void speakCaregiverMessage(String text);
+        void speakPatientText(String text); // in the voice of the patient's language
+        void setGazeInputPaused(boolean paused); // eye gestures stop selecting while another screen reads the eyes
         void finishTypingTest();
         void clearText(); // empty the text box of every gaze text-entry mode
     }

@@ -18,7 +18,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.demo.opencv.UserDataManager
-import com.demo.opencv.emergency.EmergencyController
 import com.demo.opencv.other.AudioManager
 import com.demo.opencv.textEntry.HinglishDetector
 import java.util.concurrent.ExecutorService
@@ -32,7 +31,6 @@ import java.util.concurrent.Executors
 class BlinkKeyboardActivity : AppCompatActivity(), BlinkKeyboardOverlay.Listener {
 
     private lateinit var overlay: BlinkKeyboardOverlay
-    private lateinit var emergency: EmergencyController
     private var analyzer: EyeAspectRatioAnalyzer? = null
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private var tts: AudioManager? = null
@@ -43,7 +41,6 @@ class BlinkKeyboardActivity : AppCompatActivity(), BlinkKeyboardOverlay.Listener
         overlay = BlinkKeyboardOverlay(this)
         overlay.listener = this
         setContentView(overlay)
-        emergency = EmergencyController(this)
         hideSystemBars()
 
         val language = (application as? UserDataManager)?.language
@@ -72,18 +69,15 @@ class BlinkKeyboardActivity : AppCompatActivity(), BlinkKeyboardOverlay.Listener
     override fun onResume() {
         super.onResume()
         overlay.start()
-        emergency.start()
     }
 
     override fun onPause() {
         overlay.stop()
-        emergency.stop()
         super.onPause()
     }
 
     override fun onDestroy() {
         overlay.release()
-        emergency.release()
         analyzer?.close()
         cameraExecutor.shutdown()
         tts?.destroy()
@@ -94,11 +88,7 @@ class BlinkKeyboardActivity : AppCompatActivity(), BlinkKeyboardOverlay.Listener
 
     override fun onWordCompleted(word: String) = BlinkKeyboard.deliverWord(word)
 
-    override fun onClose() {
-        if (!emergency.isAlarmActive) finish() // leaving would silence the alarm before anyone has come
-    }
-
-    override fun onHelpRequested() = emergency.trigger("HELP key")
+    override fun onClose() = finish()
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.keyCode in SWITCH_KEYS) {
@@ -127,10 +117,7 @@ class BlinkKeyboardActivity : AppCompatActivity(), BlinkKeyboardOverlay.Listener
                     .setTargetResolution(Size(640, 480))
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
-                val eyeAnalyzer = EyeAspectRatioAnalyzer(overlay.config) {
-                    overlay.onEyeSample(it)
-                    emergency.onEyeSample(it.faceFound, it.eyesClosed)
-                }
+                val eyeAnalyzer = EyeAspectRatioAnalyzer(overlay.config) { overlay.onEyeSample(it) }
                 analysis.setAnalyzer(cameraExecutor, eyeAnalyzer)
                 analyzer = eyeAnalyzer
                 provider.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, analysis)

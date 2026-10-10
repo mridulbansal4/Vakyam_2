@@ -69,6 +69,7 @@ public class text_mode_display extends Fragment {
     public interface TextModeListener {
         void onTextModeButtonClicked(int input);
         void recordButtonClicked();
+        void contextTyped(String context);
     }
     TextModeListener textModeListener;
 
@@ -214,6 +215,7 @@ public class text_mode_display extends Fragment {
             contextBox.setOnEditorActionListener((v, actionId, event) -> {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
                     userDataManager.setTextEntryContext(v.getText().toString());
+                    textModeListener.contextTyped(v.getText().toString());
                 }
                 return false;
             });

@@ -44,7 +44,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.demo.opencv.emergency.EmergencyController;
 import com.demo.opencv.features.blinkkeyboard.BlinkKeyboard;
 import com.demo.opencv.features.blinkkeyboard.EyeClosureEstimator;
 import com.demo.opencv.fragments.calibration_display;
@@ -63,6 +62,8 @@ import com.demo.opencv.sensors.SensorSimulation;
 import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.ImageFormatUtils;
 import com.demo.opencv.vision.Model;
+import com.demo.opencv.yesno.YesNoController;
+import com.demo.opencv.yesno.YesNoQuestion;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.json.JSONException;
@@ -108,7 +109,7 @@ public class MainActivity extends AppCompatActivity
     private ImageAnalysis boundAnalysis;
     private boolean lowLightCamera = false;
 
-    private volatile EmergencyController emergency;
+    private volatile YesNoController yesNo;
     private final EyeClosureEstimator eyeClosure = new EyeClosureEstimator(); // camera thread only
     private View typingTestBar;
     private TextView typingTestText;
@@ -129,6 +130,7 @@ public class MainActivity extends AppCompatActivity
             setSensorChipCompact(false);
             sensorBanner.setText(banner.getLabelRes());
             sensorBanner.setContentDescription(getString(banner.getLabelRes()));
+            sensorBanner.setCompoundDrawablesRelativeWithIntrinsicBounds(banner.getIconRes(), 0, 0, 0);
             sensorBanner.setBackgroundResource(banner.getUrgent() ? R.drawable.bg_status_chip_urgent : R.drawable.bg_status_chip);
             TextViewCompat.setCompoundDrawableTintList(sensorBanner, ColorStateList.valueOf(banner.getUrgent()
                     ? ContextCompat.getColor(MainActivity.this, R.color.vk_on_emergency)
@@ -156,7 +158,7 @@ public class MainActivity extends AppCompatActivity
         userDataManager.getSettings();
         setLocale(userDataManager.getLanguage());
         setContentView(R.layout.activity_main);
-        // The screen timing out would pause the camera, and with it every eye input including the help signal.
+        // The screen timing out would pause the camera, and with it every eye input.
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         // instantiating object of Presenter Interface
         presenter = new Presenter(this, new Model());
@@ -189,7 +191,7 @@ public class MainActivity extends AppCompatActivity
         ringLightOverlay = findViewById(R.id.ringLightOverlay);
         sensorController = new SensorHealthController(this, presenter, sensorListener);
 
-        emergency = new EmergencyController(this);
+        yesNo = new YesNoController(this, presenter);
         typingTestBar = findViewById(R.id.typingTestBar);
         typingTestText = findViewById(R.id.typingTestText);
         typingTestDone = findViewById(R.id.typingTestDone);
@@ -318,14 +320,14 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void updateLiveData(AppLiveData appLiveData) {
-        EmergencyController help = emergency;
-        if (help != null) {
-            DetectionOutput detection = appLiveData.DetectionOutput;
-            boolean faceVisible = detection != null && detection.faceDetected;
-            // detection.eyesOpen is too strict for this: it needs both eyes scored nearly shut in every single frame.
-            boolean eyesClosed = faceVisible && eyeClosure.update(detection.eyeAspectRatio, detection.eyeOpenProbability);
-            help.onEyeSample(faceVisible, eyesClosed);
-        }
+        DetectionOutput detection = appLiveData.DetectionOutput;
+        boolean faceVisible = detection != null && detection.faceDetected;
+        // detection.eyesOpen is too strict for this: it needs both eyes scored nearly shut in every single frame.
+        boolean eyesClosed = faceVisible && eyeClosure.update(detection.eyeAspectRatio, detection.eyeOpenProbability);
+        SensorHealthController sensors = sensorController;
+        if (sensors != null) sensors.onEyeSample(faceVisible, eyesClosed);
+        YesNoController ask = yesNo;
+        if (ask != null && detection != null) ask.onGesture(detection.gestureOutput);
         Runnable myRunnable = () -> viewModel.selectItem(appLiveData);
         mainHandler.post(myRunnable);
     }
@@ -411,7 +413,6 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         if (sensorController != null) sensorController.start();
-        if (emergency != null) emergency.start();
         renderTypingTest(); // a test may have been armed or finished while the blink keyboard was open
     }
 
@@ -440,7 +441,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         if (sensorController != null) sensorController.stop();
-        if (emergency != null) emergency.stop();
+        if (yesNo != null) yesNo.close();
         mainHandler.removeCallbacks(typingTestClock);
         dismissSensorMessage();
         super.onPause();
@@ -450,7 +451,6 @@ public class MainActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         if (sensorController != null) sensorController.release();
-        if (emergency != null) emergency.release();
         TypingTest.removeListener(typingTestListener);
         mainHandler.removeCallbacks(typingTestClock);
         if (presenter != null) {
@@ -605,6 +605,21 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void recordButtonClicked() {
         presenter.onRecordButtonClicked();
+    }
+
+    @Override
+    public void contextTyped(String context) {
+        onSentenceForPatient(context);
+    }
+
+    /** A yes/no question put to the patient in Type is answered on the Yes / No screen instead of by spelling. */
+    @Override
+    public void onSentenceForPatient(String sentence) {
+        if (!YesNoQuestion.isYesNo(sentence)) return;
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed() || yesNo == null || !Objects.equals(presenter.getMode(), "Text")) return;
+            yesNo.open(sentence);
+        });
     }
 
 

@@ -63,17 +63,16 @@
     <string name="Sensor_ChipChargingWarm">Charging garam</string>
     <string name="Sensor_ChipChargingHot">Charger nikaalein</string>
     <string name="Sensor_ChargingHotSpoken">Phone bahut garam ho gaya hai. Kripya charger nikaal dijiye.</string>
+    <string name="Sensor_ChipRestEyes">Aankhon ko aaram dijiye</string>
+    <string name="Sensor_RestEyes">Aap thake hue lag rahe hain — thoda aaram kijiye. Aap palkein kam jhapka rahe hain, isse aankhein sookhti hain. Kuch second aankhein band rakhiye.</string>
 
-    <string name="Emergency_Title">MADAD CHAHIYE</string>
-    <string name="Emergency_Subtitle">Mareez madad ke liye bula raha hai</string>
-    <string name="Emergency_Dismiss">MAIN AA GAYA — ALARM BAND KARO</string>
-    <string name="Emergency_Spoken">Madad! Mujhe madad chahiye. Kripya turant aaiye.</string>
+    <string name="YesNo_Yes">Haan</string>
+    <string name="YesNo_No">Nahi</string>
+    <string name="YesNo_Back">Typing par wapas</string>
+    <string name="YesNo_NoAnswer">Koi jawab nahi</string>
+
     <string name="TextEntry_HintTyped">Aapke chune akshar yahan dikhenge</string>
     <string name="TextEntry_HintSentence">Aapka vaakya yahan dikhega</string>
     <string name="TextEntry_HeardContext">Suna: %1$s</string>
     <string name="TextEntry_HintContext">Context, jaise aapse poocha gaya sawaal</string>
-    <string name="Emergency_SmsText">EMERGENCY: Mujhe abhi madad chahiye. Kripya aaiye ya phone kijiye. Vakyam dwara apne aap bheja gaya.</string>
-    <string name="Emergency_Holding">Aankhein band %1$.1f s se</string>
-    <string name="Emergency_Progress">Madad ka signal %1$d / %2$d — lambi palkein jhapkate rahiye</string>
-    <string name="Emergency_NotVisible">Camera ko aapki aankhein nahi dikh rahi — kripya phone theek kijiye</string>
 </resources>

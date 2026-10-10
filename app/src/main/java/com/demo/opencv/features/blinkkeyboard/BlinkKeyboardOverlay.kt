@@ -41,8 +41,6 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     interface Listener {
         fun onWordCompleted(word: String)
         fun onClose()
-        /** The patient picked the HELP key. */
-        fun onHelpRequested()
     }
 
     fun interface Speaker {
@@ -70,7 +68,6 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     private val selectingSoft = (selecting and 0x00FFFFFF) or (0x59 shl 24)
     private val outline = color(R.color.vk_outline)
     private val warning = color(R.color.vk_warning)
-    private val emergencyRed = color(R.color.vk_emergency)
 
     private val audio = AudioFeedbackService()
     private val lexicon = PersonalLexicon.get(context)
@@ -94,7 +91,6 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             KeyItem("space", "Space", KeyType.ACTION, KeyActions.SPACE),
             KeyItem("speak", "Speak & save", KeyType.ACTION, KeyActions.SPEAK_AND_SAVE),
             KeyItem("cancel", "Cancel", KeyType.ACTION, KeyActions.CANCEL),
-            KeyItem("help", "Help", KeyType.ACTION, KeyActions.HELP),
         ),
         style = RowStyle.ACTIONS,
     )
@@ -340,10 +336,6 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
                     listener?.onClose()
                     return
                 }
-                KeyActions.HELP -> {
-                    listener?.onHelpRequested()
-                    return
-                }
             }
         }
         onBufferChanged()
@@ -434,7 +426,7 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
     private fun keyWeight(item: KeyItem): Float = when (item.value) {
         KeyActions.SPACE -> 3f
         KeyActions.SPEAK_AND_SAVE -> 2.5f
-        KeyActions.BACKSPACE, KeyActions.CANCEL, KeyActions.HELP -> 1.5f
+        KeyActions.BACKSPACE, KeyActions.CANCEL -> 1.5f
         else -> 1f
     }
 
@@ -464,19 +456,17 @@ class BlinkKeyboardOverlay @JvmOverloads constructor(
             keyViews[r].forEachIndexed { c, key ->
                 val isActiveKey = isActiveRow && engine.tier == ScanTier.COLUMN && c == engine.activeColIdx
                 val value = row.items[c].value
-                val isHelp = value == KeyActions.HELP
                 val isSpeak = value == KeyActions.SPEAK_AND_SAVE
                 val isSuggestion = row.style == RowStyle.SUGGESTIONS
                 key.background = when {
                     isActiveKey && isSuggestion -> rounded(selecting, dp(10).toFloat(), ink, dp(3))
                     isActiveKey -> keyFace(selecting, stroke = ink)
                     isSuggestion -> null
-                    isHelp -> keyFace(emergencyRed)
                     isSpeak -> keyFace(accent)
                     row.style == RowStyle.LETTERS || value == KeyActions.SPACE -> keyFace(keyFlat)
                     else -> keyFace(keyFunction)
                 }
-                key.setTextColor(if ((isHelp || isSpeak) && !isActiveKey) onChrome else ink)
+                key.setTextColor(if (isSpeak && !isActiveKey) onChrome else ink)
             }
         }
     }

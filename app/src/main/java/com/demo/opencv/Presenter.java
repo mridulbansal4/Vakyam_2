@@ -32,6 +32,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public boolean presenterBusy = false;
     public String mode = ""; // Calibration, Text, Dev, Clinician, QuickChat
     boolean recording = false;
+    private volatile boolean gazeInputPaused = false;
     private final ContractInterface.View mainView; // creating object of View Interface
     private final ContractInterface.Model model; // creating object of Model Interface
     private final KeyboardManager keyboardManager = new KeyboardManager();
@@ -328,6 +329,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             Log.d("AudioManager", "Context received by presenter: " + value);
             userDataManager.setTextEntryContext(value);
             textEntryManager.updateContext(value);
+            mainView.onSentenceForPatient(value);
         }
     }
 
@@ -357,6 +359,12 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public void speakCaregiverMessage(String text) { audioManager.speakText(text); }
 
     @Override
+    public void speakPatientText(String text) { audioManager.speakText(text, userDataManager.getLanguage()); }
+
+    @Override
+    public void setGazeInputPaused(boolean paused) { gazeInputPaused = paused; }
+
+    @Override
     public void clearText() {
         keyboardManager.reset();
         textEntryManager.clearText();
@@ -383,11 +391,11 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             clinicalData.addNICPoint((float) detectionOutput.leftNIC.x, (float) detectionOutput.leftNIC.y);
         }
 
-        if (Objects.equals(mode, "Calibration")) {
+        if (Objects.equals(mode, "Calibration") && !gazeInputPaused) {
             autoCaptureCalibration(detectionOutput);
         }
 
-        if (detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid
+        if (!gazeInputPaused && detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid
             if (Objects.equals(mode, "Text") || Objects.equals(mode, "Dev") || Objects.equals(mode, "QuickChat")) { // not calibrating or in clinician mode, process the input
                 int gazeType = detectionOutput.gestureOutput;
 

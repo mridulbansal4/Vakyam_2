@@ -1,6 +1,5 @@
 package com.demo.opencv.features.blinkkeyboard
 
-import com.demo.opencv.emergency.HelpSignalDetector
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -49,27 +48,13 @@ class EyeClosureEstimatorTest {
     }
 
     @Test
-    fun noisyLongBlinksStillRaiseTheAlarm() {
-        // What the gaze camera really delivers: ~20 fps, and a shut eye whose probability wobbles
-        // above 0.15 every few frames, which the old "both eyes <= 0.15" test split into short blinks.
-        val detector = HelpSignalDetector()
-        var triggered = false
-        var now = 0L
-        fun frames(ms: Long, sample: (Int) -> Pair<Float, Float>) {
-            val end = now + ms
-            var i = 0
-            while (now < end) {
-                val (ear, probability) = sample(i++)
-                val closed = estimator.update(ear, probability)
-                if (detector.update(true, closed, now) == HelpSignalDetector.Event.TRIGGERED) triggered = true
-                now += 50L
-            }
-        }
-        frames(2_000L) { 0.32f to 0.95f }
-        repeat(3) {
-            frames(2_000L) { i -> 0.09f to if (i % 4 == 3) 0.30f else 0.08f }
-            frames(1_000L) { 0.32f to 0.95f }
-        }
-        assertTrue(triggered)
+    fun aShutEyeWithAWobblingProbabilityStaysOneClosure() {
+        // What the gaze camera really delivers: a shut eye whose probability wobbles above the
+        // cut-off every few frames. That must not split one closure into several blinks.
+        openEyes()
+        var reopened = false
+        repeat(40) { i -> if (!estimator.update(0.09f, if (i % 4 == 3) 0.30f else 0.08f)) reopened = true }
+        assertFalse(reopened)
+        assertFalse(estimator.update(0.32f, 0.95f))
     }
 }

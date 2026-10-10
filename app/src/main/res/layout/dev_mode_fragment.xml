@@ -123,52 +123,6 @@
                         android:gravity="end"
                         tools:text="15" />
                 </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:minHeight="56dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/Vk.Text.Label"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="0.4"
-                        android:text="@string/Settings_CaregiverPhone" />
-
-                    <EditText
-                        android:id="@+id/caregiverPhoneInput"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="0.6"
-                        android:autofillHints="phone"
-                        android:background="@drawable/text_rounded_light_green"
-                        android:hint="@string/Settings_CaregiverPhoneHint"
-                        android:imeOptions="actionDone"
-                        android:inputType="phone"
-                        android:paddingStart="@dimen/vk_space_l"
-                        android:paddingEnd="@dimen/vk_space_l"
-                        android:textColor="@color/vk_ink"
-                        android:textColorHint="@color/vk_ink_muted"
-                        android:textSize="@dimen/vk_text_label" />
-
-                    <Button
-                        android:id="@+id/caregiverPhoneSave"
-                        android:layout_width="wrap_content"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="@dimen/vk_space_s"
-                        android:minHeight="48dp"
-                        android:text="@string/Settings_Save" />
-                </LinearLayout>
-
-                <TextView
-                    style="@style/Vk.Text.Caption"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/vk_space_s"
-                    android:text="@string/Settings_HelpSignalHint" />
             </LinearLayout>
 
             <!-- Camera and detection -->
@@ -271,6 +225,11 @@
                     android:id="@+id/simWarmLightButton"
                     style="@style/SensorTestButton"
                     android:text="@string/Sensor_TestWarmLight" />
+
+                <Button
+                    android:id="@+id/simTiredEyesButton"
+                    style="@style/SensorTestButton"
+                    android:text="@string/Sensor_TestTiredEyes" />
 
                 <Button
                     android:id="@+id/simResetButton"

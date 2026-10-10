@@ -1,5 +1,6 @@
 package com.demo.opencv.sensors
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.demo.opencv.R
 import java.util.Locale
@@ -17,14 +18,20 @@ enum class ChargingHeat { NORMAL, WARM, HOT }
  * Shown as a chip in the top bar ([labelRes]) with [messageRes] as the expanded explanation.
  * Only [urgent] conditions are red; the rest inform the caregiver without alarming the patient.
  */
-enum class SensorBanner(@StringRes val labelRes: Int, @StringRes val messageRes: Int, val urgent: Boolean) {
+enum class SensorBanner(
+    @StringRes val labelRes: Int,
+    @StringRes val messageRes: Int,
+    val urgent: Boolean,
+    @DrawableRes val iconRes: Int = R.drawable.ic_thermometer
+) {
     CHARGING_HOT(R.string.Sensor_ChipChargingHot, R.string.Sensor_ChargingHot, true),
     THERMAL_CRITICAL(R.string.Sensor_ChipThermal, R.string.Sensor_ThermalCritical, false),
-    CHARGING_WARM(R.string.Sensor_ChipChargingWarm, R.string.Sensor_ChargingWarm, false)
+    CHARGING_WARM(R.string.Sensor_ChipChargingWarm, R.string.Sensor_ChargingWarm, false),
+    REST_EYES(R.string.Sensor_ChipRestEyes, R.string.Sensor_RestEyes, false, R.drawable.ic_eye_rest)
 }
 
 /** Conditions the Settings-screen test panel can fake without the real environment. */
-enum class SensorSimulation { DARK_ROOM, HOT_PHONE, CHARGING_HOT, WARM_LIGHT }
+enum class SensorSimulation { DARK_ROOM, HOT_PHONE, CHARGING_HOT, WARM_LIGHT, TIRED_EYES }
 
 data class SensorHealthSnapshot(
     val thermalStatus: Int = -1,
@@ -42,6 +49,9 @@ data class SensorHealthSnapshot(
     val roomLux: Float = Float.NaN,
     val ringContributionLux: Float = 0f,
     val ringLight: Boolean = false,
+    /** NaN until the patient has been watched for a full minute. */
+    val blinksPerMin: Float = Float.NaN,
+    val restDue: Boolean = false,
     val simulations: Set<SensorSimulation> = emptySet(),
     val uptimeMin: Float = 0f,
     /** Minutes of use before real heat first slowed the camera down; NaN while that has not happened. */
@@ -53,6 +63,7 @@ data class SensorHealthSnapshot(
         appendLine("Tier      : $tier  target=${tier.targetFps} fps  measured=${fmt(measuredFps)} fps  frame=${fmt(frameMs)} ms")
         appendLine("Light     : CCT=${fmt(cctKelvin, 0)} K  lux=${fmt(ambientLux, 0)}  tint=${fmt(warmTintAlpha, 2)}")
         appendLine("Low light : front=${fmt(frontLux, 0)} lux  room≈${fmt(roomLux, 0)} lux  ring=${if (ringLight) "ON" else "off"}  self=${fmt(ringContributionLux, 0)} lux")
+        appendLine("Blinks    : ${fmt(blinksPerMin, 0)} /min${if (restDue) "  rest due" else ""}")
         append(
             if (firstSlowdownMin.isNaN()) "Endurance : no heat slow-down in ${fmt(uptimeMin)} min of use"
             else "Endurance : first heat slow-down after ${fmt(firstSlowdownMin)} min of use"

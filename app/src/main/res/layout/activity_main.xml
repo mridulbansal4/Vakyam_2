@@ -72,7 +72,7 @@
             style="@style/TopTab"
             android:text="@string/Settings_Title" />
 
-        <!-- Phone heat and charging status: a chip, so the screen below never shifts. Tap for the full message.
+        <!-- Phone heat, charging status and the rest reminder: a chip, so the screen below never shifts. Tap for the full message.
              It takes whatever room the brand and tabs leave, so neither of those ever has to give way. -->
         <FrameLayout
             android:layout_width="0dp"

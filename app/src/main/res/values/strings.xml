@@ -129,28 +129,18 @@
     <string name="Sensor_TestChargingHot">Charging hot</string>
     <string name="Sensor_TestWarmLight">Warm light</string>
     <string name="Sensor_TestReset">Reset all</string>
+    <string name="Sensor_TestTiredEyes">Tired eyes</string>
+    <string name="Sensor_ChipRestEyes">Rest your eyes</string>
+    <string name="Sensor_RestEyes">You look tired — have a rest. You are blinking less than usual, which dries the eyes. Close your eyes for a few seconds.</string>
+
+    <!-- Yes / No -->
+    <string name="YesNo_Yes">Yes</string>
+    <string name="YesNo_No">No</string>
+    <string name="YesNo_Back">Back to typing</string>
+    <string name="YesNo_NoAnswer">No answer</string>
 
     <string name="QuickChat_MyPhrases">My phrases</string>
     <string name="QuickChat_MyPhrasesEmpty">Sentences you speak in Text or Spell will appear here.</string>
-    <string name="Emergency_Title">HELP NEEDED</string>
-    <string name="Emergency_Subtitle">The patient is calling for help</string>
-    <string name="Emergency_Dismiss">I AM HERE — STOP ALARM</string>
-    <string name="Emergency_Spoken">Help! I need help. Please come now.</string>
-    <string name="Emergency_SmsText">EMERGENCY: I need help now. Please come or call. Sent automatically by Vakyam.</string>
-    <string name="Emergency_SmsSending">Sending a text message to %1$s…</string>
-    <string name="Emergency_SmsSent">Text message sent to %1$s</string>
-    <string name="Emergency_SmsFailed">The text message to %1$s could not be sent</string>
-    <string name="Emergency_SmsNoNumber">No text message sent: no caregiver phone number is saved in Settings</string>
-    <string name="Emergency_SmsNoPermission">No text message sent: Vakyam is not allowed to send SMS</string>
-    <string name="Emergency_Holding">Eyes closed %1$.1f s</string>
-    <string name="Emergency_Progress">Help signal %1$d of %2$d — keep going with long blinks</string>
-    <string name="Emergency_NotVisible">The camera cannot see your eyes — please move the phone</string>
-    <string name="Settings_CaregiverPhone">Caregiver phone</string>
-    <string name="Settings_CaregiverPhoneHint">For emergency text messages</string>
-    <string name="Settings_Save">Save</string>
-    <string name="Settings_CaregiverSaved">Caregiver number saved. Use the Help key in Spell once to check that the text message arrives.</string>
-    <string name="Settings_CaregiverCleared">Caregiver number removed. The alarm will still sound, but no text message is sent.</string>
-    <string name="Settings_HelpSignalHint">Calling for help, on any screen: close your eyes for about two seconds, three times in a row. The phone sounds an alarm, speaks, and texts the caregiver number above. The Help key in Spell does the same.</string>
     <string name="TypingTest_Title">Typing speed test</string>
     <string name="TypingTest_Start">New test</string>
     <string name="TypingTest_Share">Share results</string>

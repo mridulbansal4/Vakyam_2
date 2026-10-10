@@ -39,7 +39,6 @@ public class UserDataManager extends Application {
     public final int calibrationTemplateNum = 6;
     private int sensitivity = 20;
     private String language = "English";
-    private String caregiverPhone = ""; // receives a text message when the patient calls for help
 
     private Bitmap[] leftCalibrationData;
     private Bitmap[] rightCalibrationData;
@@ -57,7 +56,6 @@ public class UserDataManager extends Application {
         defaultSettings.put("LightingThreshold", "0");
         defaultSettings.put("TextEntryMode", "2");
         defaultSettings.put("Sensitivity", "20");
-        defaultSettings.put("CaregiverPhone", "");
 
         TypingTest.attach(this);
     }
@@ -81,7 +79,6 @@ public class UserDataManager extends Application {
         lightingThreshold = parseIntOrDefault(getString("LightingThreshold"), 0);
         textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
         sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);
-        caregiverPhone = getString("CaregiverPhone");
 
         // get calibration files
         if (getCalibrationFiles(mContext, leftEyeFileNames) != null) {
@@ -205,12 +202,6 @@ public class UserDataManager extends Application {
     public void setLanguage(String language) {
         this.language = language;
         setString("Language", language);
-    }
-
-    public String getCaregiverPhone() {return caregiverPhone; }
-    public void setCaregiverPhone(String caregiverPhone) {
-        this.caregiverPhone = (caregiverPhone != null) ? caregiverPhone.trim() : "";
-        setString("CaregiverPhone", this.caregiverPhone);
     }
 
     public int getCalibrationState() {

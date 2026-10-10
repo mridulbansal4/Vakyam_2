@@ -93,12 +93,16 @@ class SensorHealthController(
         }
     )
 
+    // 06 — blink rate
+    private val blinkRate = BlinkRateMonitor()
+
     private val processedFrames = AtomicInteger()
     private var lastTickMs = 0L
     private val ticker = object : Runnable {
         override fun run() {
             reevaluateTier() // lets ThermalPolicy step back down after its recovery hold
             evaluateLowLight() // lux is on-change; the hold timers still need to advance
+            if (blinkRate.tick(SystemClock.elapsedRealtime())) evaluateRest()
             if (SensorSimulation.WARM_LIGHT in simulations && colorMonitor.cctSensor == null) {
                 onColorReading(SIM_WARM_KELVIN, lastLux)
             }
@@ -106,7 +110,12 @@ class SensorHealthController(
             val elapsed = if (lastTickMs == 0L) TICK_MS else (now - lastTickMs).coerceAtLeast(1L)
             lastTickMs = now
             val fps = processedFrames.getAndSet(0) * 1000f / elapsed
-            publish { it.copy(measuredFps = fps, frameMs = lastFrameMs, uptimeMin = minutesSinceStart(now)) }
+            publish {
+                it.copy(
+                    measuredFps = fps, frameMs = lastFrameMs, uptimeMin = minutesSinceStart(now),
+                    blinksPerMin = blinkRate.blinksPerMin(now)
+                )
+            }
             main.postDelayed(this, TICK_MS)
         }
     }
@@ -147,6 +156,8 @@ class SensorHealthController(
         lastTickMs = 0L
         thermalMonitor.stop()
         colorMonitor.stop()
+        blinkRate.reset()
+        evaluateRest()
         if (debugRegistered) {
             appContext.unregisterReceiver(debugReceiver)
             debugRegistered = false
@@ -164,6 +175,12 @@ class SensorHealthController(
         processedFrames.incrementAndGet()
         val prev = lastFrameMs
         lastFrameMs = if (prev.isNaN()) processingMs.toFloat() else prev + 0.1f * (processingMs - prev)
+    }
+
+    /** Any thread, once per analysed camera frame. */
+    fun onEyeSample(faceVisible: Boolean, eyesClosed: Boolean) {
+        val now = SystemClock.elapsedRealtime()
+        main.post { if (started && blinkRate.update(faceVisible, eyesClosed, now)) evaluateRest() }
     }
 
     // ---------------------------------------------------------------- test panel
@@ -200,6 +217,7 @@ class SensorHealthController(
                     if (!ringOn) listener.onWarmTintChanged(tintPolicy.alpha)
                 }
             }
+            SensorSimulation.TIRED_EYES -> evaluateRest()
         }
     }
 
@@ -301,6 +319,15 @@ class SensorHealthController(
         listener.onRingLightChanged(on)
         // An amber tint over the ring would cut the light reaching the face.
         listener.onWarmTintChanged(if (on) 0f else tintPolicy.alpha)
+    }
+
+    // ---------------------------------------------------------------- 06
+    private fun evaluateRest() {
+        val due = blinkRate.restDue || SensorSimulation.TIRED_EYES in simulations
+        if (due == snapshot.restDue) return
+        Log.i(TAG, "rest reminder -> ${if (due) "ON" else "off"}")
+        setBanner(SensorBanner.REST_EYES, due)
+        publish { it.copy(restDue = due) }
     }
 
     // ---------------------------------------------------------------- shared

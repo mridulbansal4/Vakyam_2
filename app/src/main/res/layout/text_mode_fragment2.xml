@@ -250,9 +250,24 @@
         android:id="@+id/textInput2"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:visibility="gone"
+        android:layout_marginTop="@dimen/vk_space_s"
+        android:layout_marginBottom="@dimen/vk_space_xs"
+        android:background="@drawable/text_rounded_dark"
+        android:fontFamily="sans-serif-medium"
+        android:gravity="center_vertical|start"
+        android:paddingStart="@dimen/vk_space_m"
+        android:paddingEnd="@dimen/vk_space_m"
+        android:textColor="@color/vk_ink"
+        android:textSize="@dimen/vk_text_label"
+        app:autoSizeMaxTextSize="@dimen/vk_text_label"
+        app:autoSizeMinTextSize="12sp"
+        app:autoSizeTextType="uniform"
+        app:layout_constraintBottom_toTopOf="@id/sentenceBox2"
+        app:layout_constraintEnd_toEndOf="@id/centerColumn"
         app:layout_constraintStart_toStartOf="@id/centerColumn"
-        app:layout_constraintTop_toTopOf="@id/centerColumn" />
+        app:layout_constraintTop_toBottomOf="@id/closedGazeText2"
+        app:layout_constraintVertical_weight="0.45"
+        tools:text="Text: A-F" />
 
     <ImageButton
         android:id="@+id/recordButton"
@@ -310,7 +325,8 @@
         app:layout_constraintBottom_toTopOf="@id/bottomRowTop"
         app:layout_constraintEnd_toEndOf="@id/centerColumn"
         app:layout_constraintStart_toStartOf="@id/centerColumn"
-        app:layout_constraintTop_toBottomOf="@id/closedGazeText2"
+        app:layout_constraintTop_toBottomOf="@id/textInput2"
+        app:layout_constraintVertical_weight="0.55"
         tools:text="I want to drink some water." />
 
     <!-- Finish overlay -->

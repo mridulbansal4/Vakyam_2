@@ -301,7 +301,10 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
                 KeyboardData keyboardData = keyboardManager.getDisplays();
                 appliveData.setKeyboardDisplays(keyboardData);
             } else {
+                textEntryManager.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
                 textEntryManager.manageUserInput(input, false);
+                KeyboardData keyboardData = textEntryManager.getDisplays();
+                appliveData.setKeyboardDisplays(keyboardData);
             }
         } else if (Objects.equals(mode, "QuickChat")) {
             Log.d("QuickChatFragment", "Button Pressed: " + input);

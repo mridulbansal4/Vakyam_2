@@ -38,7 +38,7 @@ class GemmaLLMSimulationTest {
         val keywords = "water"
         val prompt = GemmaManager.buildUserTurn(keywords, "")
         
-        assertEquals("Keywords: water", prompt)
+        assertEquals("Keywords: water. Context: ", prompt)
         assertTrue(prompt.contains(keywords))
     }
 
@@ -115,7 +115,7 @@ class GemmaLLMSimulationTest {
                             assertTrue(prompt.contains(simulatedCtx))
                             assertTrue(prompt.startsWith("Keywords: "))
                         } else {
-                            assertEquals("Keywords: $simulatedKw", prompt)
+                            assertEquals("Keywords: $simulatedKw. Context: ", prompt)
                         }
                         
                         // 2. Validate Fallback Generation

@@ -3,7 +3,6 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import com.demo.opencv.R;
-import com.demo.opencv.AI.AIManager;
 import com.demo.opencv.personal.PersonalLexicon;
 
 import java.util.Collections;
@@ -11,7 +10,6 @@ import java.util.List;
 
 public class QuickChatManager {
 
-    AIManager AIManager = new AIManager();
     com.demo.opencv.other.AudioManager audioManager = new com.demo.opencv.other.AudioManager();
     public QuickChatData quickChatData = new QuickChatData();
     Context mContext;
@@ -35,7 +33,6 @@ public class QuickChatManager {
     public void initialize(Context mContext) {
         this.mContext = mContext;
         if (mContext != null) personalLexicon = PersonalLexicon.get(mContext);
-        AIManager.initialize(mContext);
         audioManager.initialize(mContext);
         if (quickChatData == null) {
             quickChatData = new QuickChatData();
@@ -118,7 +115,6 @@ public class QuickChatManager {
             if (audioManager != null) {
                 audioManager.speakText(data);
             }
-            AIManager.speechGenerationService(data);
         }
     }
 

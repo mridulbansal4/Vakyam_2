@@ -13,7 +13,6 @@ import com.demo.opencv.UserDataManager;
 import com.demo.opencv.metrics.TypingTest;
 import com.demo.opencv.personal.PersonalLexicon;
 import com.demo.opencv.other.AudioManager;
-import com.demo.opencv.AI.AIManager;
 import com.demo.opencv.R;
 
 import java.io.IOException;
@@ -28,13 +27,11 @@ public class TextEntryManager {
     int wordsPerPage = 3;
     int NWPWords = 6;
     int currentPage = 1;
-    int sentenceGenerationModel = 1; // 0: openAI 3.5, 1: Gemma 4 E2B (Local LLM)
     String language = "English"; // default language
     int mode = 1; // 0: word mode, 1: blurry input
     String context = ""; // the context content for context-based predictions
     KeyboardData keyboardData = new KeyboardData(); // data structure for UI display
     Context mContext;
-    AIManager AIManager = new AIManager(); // openAI services
     GeminiManager geminiManager = new GeminiManager(); // gemini services
     AudioManager audioManager = new AudioManager(); // text-to-speech
     BlurryInput blurryInput = new BlurryInput();
@@ -83,7 +80,6 @@ public class TextEntryManager {
             blurryInput.setPersonalLexicon(personalLexicon);
         }
 
-        AIManager.initialize(mContext);
         audioManager.initialize(mContext);
         current.Sentence = "All ALS patients should have a voice in the digital world.";
         if (mContext != null) {
@@ -99,7 +95,6 @@ public class TextEntryManager {
             this.language = userDataManager.getLanguage();
             blurryInput.initialize(mContext, language);
             audioManager.setLanguage(language);
-            this.sentenceGenerationModel = userDataManager.getSentenceGenerationModel();
             this.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
             if (userDataManager.getTextEntryContext() != null) {
                 updateContext(userDataManager.getTextEntryContext());
@@ -344,56 +339,35 @@ public class TextEntryManager {
     private void sentencePrediction() { // predicting the sentences based on keywords
         if (!LLMEnabled || current.Words.isEmpty()) return; // LLM enabled, at least one word
         String finalString = current.getWords();
-        if (sentenceGenerationModel == 0 && com.demo.opencv.BuildConfig.MY_OPENAI_KEY != null && !com.demo.opencv.BuildConfig.MY_OPENAI_KEY.isEmpty()) { // openAI model
-            AIManager.generateText("SP", "Keywords: " + finalString + ". Context: " + context, language);
-        } else { // Gemma 4 E2B on-device model
-            geminiManager.generate(finalString, context, language);
-        }
+        geminiManager.generate(finalString, context, language);
         current.Sentence = GENERATING;
     }
 
     public void nextWordPrediction(int num) { // predicting the next word based on current keywords
-        if (!LLMEnabled || Objects.equals(language, "Chinese")) return;
+        if (!LLMEnabled) return;
         if (!current.Words.isEmpty() && Objects.equals(current.BlurryInput, "")) { // no blurry input, at least one word
-            if (sentenceGenerationModel == 1 || com.demo.opencv.BuildConfig.MY_OPENAI_KEY == null || com.demo.opencv.BuildConfig.MY_OPENAI_KEY.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
-                for (int i = 0; i < num && i < fallbackWords.size(); i++) {
-                    sb.append(fallbackWords.get(i)).append(i == Math.min(num, fallbackWords.size()) - 1 ? "" : ", ");
-                }
-                Intent intent = new Intent("textGenerationEvent");
-                intent.putExtra("message", "NWP-" + sb.toString());
-                if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-            } else {
-                AIManager.generateText("NWP",
-                        "Given the word '" + current.Words.get(current.Words.size() - 1) +
-                                "Predict " + num + " " + language + "words that will mostly follow that word in a sentence" +
-                                "Only output in the format: word, word, word.", language
-                );
+            StringBuilder sb = new StringBuilder();
+            List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
+            for (int i = 0; i < num && i < fallbackWords.size(); i++) {
+                sb.append(fallbackWords.get(i)).append(i == Math.min(num, fallbackWords.size()) - 1 ? "" : ", ");
             }
+            Intent intent = new Intent("textGenerationEvent");
+            intent.putExtra("message", "NWP-" + sb.toString());
+            if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
     }
 
     public void contextWordPrediction(int number) {
-        if (!LLMEnabled || Objects.equals(language, "Chinese")) return;
+        if (!LLMEnabled) return;
         if (!Objects.equals(context, "")) { // if there is context
-            if (sentenceGenerationModel == 1 || com.demo.opencv.BuildConfig.MY_OPENAI_KEY == null || com.demo.opencv.BuildConfig.MY_OPENAI_KEY.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
-                List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
-                for (int i = 0; i < number && i < fallbackWords.size(); i++) {
-                    sb.append(fallbackWords.get(i)).append(i == Math.min(number, fallbackWords.size()) - 1 ? "" : ", ");
-                }
-                Intent intent = new Intent("textGenerationEvent");
-                intent.putExtra("message", "CWP-" + sb.toString());
-                if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
-            } else {
-                AIManager.generateText("CWP",
-                        "You are predicting words for a " + language + " motor neuron disease patient. " +
-                                "Give me " + number + " specific or proper nouns in " + language + " that might be part of a response to the " + language + " phrase:" + context +
-                                "during a conversation. " +
-                                "ONLY output in the format: word, word, word.", language
-                );
+            StringBuilder sb = new StringBuilder();
+            List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
+            for (int i = 0; i < number && i < fallbackWords.size(); i++) {
+                sb.append(fallbackWords.get(i)).append(i == Math.min(number, fallbackWords.size()) - 1 ? "" : ", ");
             }
+            Intent intent = new Intent("textGenerationEvent");
+            intent.putExtra("message", "CWP-" + sb.toString());
+            if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
         }
     }
 
@@ -481,7 +455,6 @@ public class TextEntryManager {
         if (audioManager != null) {
             audioManager.speakText(text); // on-device speech
         }
-        AIManager.speechGenerationService(text); // optional secondary
         learnUtterance(text);
         TypingTest.onSpoken(text, LLMEnabled ? TypingTest.MODE_GAZE_LLM : TypingTest.MODE_GAZE_AMBIGUOUS);
     }

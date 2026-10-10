@@ -220,10 +220,6 @@ public class MainActivity extends AppCompatActivity
         String languageCode;
         if (Objects.equals(language, "English")) {
             languageCode = "en-us";
-        } else if (Objects.equals(language, "Spanish")) {
-            languageCode = "es";
-        } else if (Objects.equals(language, "Chinese")) {
-            languageCode = "zh";
         } else if (Objects.equals(language, "Hindi")) {
             languageCode = "hi";
         } else {

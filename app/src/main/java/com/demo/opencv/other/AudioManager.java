@@ -74,13 +74,7 @@ public class AudioManager {
     public void setLanguage(String language) {
         Locale locale = Locale.US;
         String speechLang = "en-US";
-        if ("Spanish".equals(language)) {
-            locale = new Locale("es", "ES");
-            speechLang = "es-ES";
-        } else if ("Chinese".equals(language)) {
-            locale = Locale.CHINESE;
-            speechLang = "zh-CN";
-        } else if ("Hindi".equals(language)) {
+        if ("Hindi".equals(language)) {
             locale = new Locale("hi", "IN");
             speechLang = "hi-IN";
         }

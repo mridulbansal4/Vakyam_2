@@ -51,7 +51,7 @@ public class dev_mode_display extends Fragment {
     Handler handler;
     Runnable updateUI;
     SeekBar sensitivitySeekBar;
-    Spinner textEntrySpinner, languageSpinner, sentenceGenerationModelSpinner;
+    Spinner textEntrySpinner, languageSpinner;
     UserDataManager userDataManager;
 
     public dev_mode_display() {
@@ -95,7 +95,6 @@ public class dev_mode_display extends Fragment {
     public void updateSettings() {
         int sensitivity = userDataManager.getSensitivity();
         int textEntryMode = userDataManager.getTextEntryMode();
-        int sentenceGenerationModel = userDataManager.getSentenceGenerationModel();
         String language = userDataManager.getLanguage();
 
 
@@ -103,17 +102,8 @@ public class dev_mode_display extends Fragment {
         sensitivitySeekBar.setProgress(sensitivity);
         texts[4].setText(String.valueOf(sensitivity));
         textEntrySpinner.setSelection(textEntryMode);
-        sentenceGenerationModelSpinner.setSelection(sentenceGenerationModel);
 
-        if (Objects.equals(language, "English")) {
-            languageSpinner.setSelection(0);
-        } else if (Objects.equals(language, "Spanish")) {
-            languageSpinner.setSelection(1);
-        } else if (Objects.equals(language, "Chinese")) {
-            languageSpinner.setSelection(2);
-        } else if (Objects.equals(language, "Hindi")) {
-            languageSpinner.setSelection(3);
-        }
+        languageSpinner.setSelection(Objects.equals(language, "Hindi") ? 1 : 0);
     }
 
     @Override
@@ -136,7 +126,6 @@ public class dev_mode_display extends Fragment {
         sensitivitySeekBar = view.findViewById(R.id.seekBar);
         textEntrySpinner = view.findViewById(R.id.textEntrySpinner);
         languageSpinner = view.findViewById(R.id.languageSpinner);
-        sentenceGenerationModelSpinner = view.findViewById(R.id.sentenceGenerationModelSpinner);
 
         Context ctx = getContext() != null ? getContext() : requireActivity();
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(ctx, R.array.language_options, R.layout.custom_spinner_item);
@@ -146,10 +135,6 @@ public class dev_mode_display extends Fragment {
         ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(ctx, R.array.textEntry_options, R.layout.custom_spinner_item);
         adapter2.setDropDownViewResource(R.layout.custom_spinner_item);
         textEntrySpinner.setAdapter(adapter2);
-
-        ArrayAdapter<CharSequence> adapter3 = ArrayAdapter.createFromResource(ctx, R.array.sentenceGenerationModel_options, R.layout.custom_spinner_item);
-        adapter3.setDropDownViewResource(R.layout.custom_spinner_item);
-        sentenceGenerationModelSpinner.setAdapter(adapter3);
 
         updateSettings();
         // set seek bars
@@ -178,13 +163,7 @@ public class dev_mode_display extends Fragment {
         languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String language = "";
-                switch (position) {
-                    case 0 -> language = "English";
-                    case 1 -> language = "Spanish";
-                    case 2 -> language = "Chinese";
-                    case 3 -> language = "Hindi";
-                }
+                String language = position == 1 ? "Hindi" : "English";
                 Log.d("SpinnerTesting", "language changed to " + language);
                 userDataManager.setLanguage(language);
             }
@@ -199,18 +178,6 @@ public class dev_mode_display extends Fragment {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 Log.d("SpinnerTesting", "text entry mode changed to " + position);
                 userDataManager.setTextEntryMode(position);
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Another interface callback
-            }
-        });
-
-        sentenceGenerationModelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Log.d("SpinnerTesting", "sentence generation model changed to " + position);
-                userDataManager.setSentenceGenerationModel(position);
             }
             @Override
             public void onNothingSelected(AdapterView<?> parent) {

@@ -23,8 +23,6 @@ android {
         versionCode 2
         versionName "2.0"
 
-        buildConfigField "String", "MY_OPENAI_KEY", "${findProperty('MY_OPENAI_KEY') ?: '\"\"'}"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -62,11 +60,6 @@ dependencies {
     // LiteRT-LM runtime for on-device Gemma 4 E2B
     implementation("com.google.ai.edge.litertlm:litertlm-android:0.17.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'

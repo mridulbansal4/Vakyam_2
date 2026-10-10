@@ -61,7 +61,7 @@ class PersonalLexiconTest {
         assertEquals(setOf("पानी", "चाहिए"), lexicon.words(Script.DEVANAGARI).toSet())
         assertEquals(listOf("चाहिए"), lexicon.followers("पानी", Script.DEVANAGARI))
         assertEquals(Script.DEVANAGARI, Script.forLanguage("Hindi"))
-        assertEquals(Script.LATIN, Script.forLanguage("Spanish"))
+        assertEquals(Script.LATIN, Script.forLanguage("English"))
     }
 
     @Test

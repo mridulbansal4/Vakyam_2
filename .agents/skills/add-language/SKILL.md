@@ -16,7 +16,7 @@ You have been invoked to add a new language to the Vakyam AAC App. This is a com
 
 ### 1. Research & Dictionary Scraping (DeepInvestigator)
 Delegate a `DeepInvestigator` to research the target language on the internet:
-1. **Phonetics & Typology:** Determine if the language requires a 1-step phonetic map (e.g., English, Spanish) or a 2-step Base-Consonant + Modifier state machine (e.g., Hindi, Marathi, Kannada).
+1. **Phonetics & Typology:** Determine if the language requires a 1-step phonetic map (e.g., English) or a 2-step Base-Consonant + Modifier state machine (e.g., Hindi, Marathi, Kannada).
 2. **Alphabet & Modifiers:** Identify all necessary characters, including essential modifiers (e.g., matras, halants, anusvaras) required to form complete native words without breakage.
 3. **Dictionary Building:** Scrape the web or use LLM generation to build a native-script dictionary of at least 1,000 highly common, frequency-sorted words for the AAC context (e.g., family, food, feelings, questions). 
 
@@ -33,8 +33,8 @@ Delegate a `DeepCoder` to integrate the researched language into the app:
 1. **State Machine (`TextEntryManager.java` & `BlurryInput.java`):**
    - Implement the specific 4-bucket grouping or 2-step base+modifier logic for the language.
    - Ensure the predictive engine triggers immediately (no artificial `characterThreshold`).
-2. **Generative LLM (`GemmaManager.kt` & `AIManager.java`):**
-   - Inject target-language system prompts for on-device and cloud generation.
+2. **Generative LLM (`GemmaManager.kt`):**
+   - Inject target-language system prompts for on-device generation.
    - Add 3 native-script few-shot examples (keywords + context).
    - Ensure offline fallbacks correctly parse and append language-specific punctuation without breaking format.
 

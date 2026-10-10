@@ -27,7 +27,7 @@ class PersonalLexicon @JvmOverloads constructor(
     )
 
     enum class Script {
-        LATIN, DEVANAGARI, HAN;
+        LATIN, DEVANAGARI;
 
         companion object {
             @JvmStatic
@@ -35,7 +35,6 @@ class PersonalLexicon @JvmOverloads constructor(
                 val first = word.firstOrNull(Char::isLetter) ?: return LATIN
                 return when {
                     first in 'ऀ'..'ॿ' -> DEVANAGARI
-                    Character.UnicodeScript.of(first.code) == Character.UnicodeScript.HAN -> HAN
                     else -> LATIN
                 }
             }
@@ -43,7 +42,6 @@ class PersonalLexicon @JvmOverloads constructor(
             @JvmStatic
             fun forLanguage(language: String?): Script = when (language) {
                 "Hindi" -> DEVANAGARI
-                "Chinese" -> HAN
                 else -> LATIN
             }
         }

@@ -299,22 +299,6 @@ class GemmaManager {
 
     private fun getPromptAndExamples(language: String): Pair<String, List<Pair<String, String>>> {
         return when (language) {
-            "Chinese" -> Pair(
-                "你是运动神经元疾病患者的人工智能助手，用来帮助他们进行对话交流。你的目标是使用对话的语境和用户输入的关键字来生成语法连贯的第一人称句子。只输出生成的句子，不要包含引号或多余的解释。",
-                listOf(
-                    "Keywords: 水, 喝, 请. Context: " to "请帮我倒一杯水，谢谢。",
-                    "Keywords: 鸡肉. Context: 你晚餐想吃什么" to "我晚餐想吃鸡肉。",
-                    "Keywords: 疼, 背部. Context: " to "我的背部有点疼。"
-                )
-            )
-            "Spanish" -> Pair(
-                "Eres un asistente de IA para pacientes con enfermedades de la motoneurona para comunicarse en una conversación. Tu objetivo es generar una oración gramatical y coherente en primera persona con las palabras clave que escribieron y que se ajuste al contexto de la conversación. Responde solo con la oración, sin comillas ni explicaciones.",
-                listOf(
-                    "Keywords: agua, por favor. Context: " to "¿Podrías traerme un poco de agua, por favor?",
-                    "Keywords: pollo. Context: Qué quieres cenar" to "Quiero cenar pollo.",
-                    "Keywords: dolor, espalda. Context: " to "Tengo dolor en la espalda."
-                )
-            )
             "Hindi" -> Pair(
                 "You are an AI assistant for a person who cannot speak or move. The user communicates by selecting Hindi keywords. Generate ONE natural, grammatical, first-person Hindi sentence in Devanagari script using the keywords that fits the conversation context. Reply with the sentence only.",
                 listOf(

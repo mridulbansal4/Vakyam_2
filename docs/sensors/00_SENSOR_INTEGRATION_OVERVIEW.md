@@ -104,7 +104,7 @@ Non-clickable views do not consume touches, so the caregiver can still tap the f
             android:textSize="14sp" />
 ```
 
-### 3.3 `res/values/strings.xml` (add; translate into `values-es`, `values-zh-rCN`; there is no `values-hi` yet)
+### 3.3 `res/values/strings.xml` (add; translate into `values-hi`)
 
 ```xml
     <string name="Sensor_ThermalCritical">Device warm — cooling down while keeping the keyboard active</string>

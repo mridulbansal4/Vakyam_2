@@ -37,7 +37,6 @@ public class UserDataManager extends Application {
     private int textEntryMode = 2;
     private int calibrationState = -1; // -1 = idle
     public final int calibrationTemplateNum = 6;
-    private int sentenceGenerationModel = 1; // Default to Gemma 4 E2B (Local LLM)
     private int sensitivity = 20;
     private String language = "English";
     private String caregiverPhone = ""; // receives a text message when the patient calls for help
@@ -58,7 +57,6 @@ public class UserDataManager extends Application {
         defaultSettings.put("LightingThreshold", "0");
         defaultSettings.put("TextEntryMode", "2");
         defaultSettings.put("Sensitivity", "20");
-        defaultSettings.put("SentenceGenerationModel", "1");
         defaultSettings.put("CaregiverPhone", "");
 
         TypingTest.attach(this);
@@ -77,10 +75,10 @@ public class UserDataManager extends Application {
     public void getSettings() {
         // get string values
         language = getString("Language");
+        if (!"Hindi".equals(language)) language = "English"; // a saved language that is no longer offered
         lightingThreshold = parseIntOrDefault(getString("LightingThreshold"), 0);
         textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
         sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);
-        sentenceGenerationModel = parseIntOrDefault(getString("SentenceGenerationModel"), 1);
         caregiverPhone = getString("CaregiverPhone");
 
         // get calibration files
@@ -201,11 +199,6 @@ public class UserDataManager extends Application {
     }
 
     // Getter and Setter
-    public int getSentenceGenerationModel() {return sentenceGenerationModel; }
-    public void setSentenceGenerationModel(int sentenceGenerationModel) {
-        this.sentenceGenerationModel = sentenceGenerationModel;
-        setString("SentenceGenerationModel", Integer.toString(sentenceGenerationModel));
-    }
     public String getLanguage() {return language; }
     public void setLanguage(String language) {
         this.language = language;

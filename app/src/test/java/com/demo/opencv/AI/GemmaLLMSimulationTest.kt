@@ -98,13 +98,13 @@ class GemmaLLMSimulationTest {
         // Run simulation for thousands of iterations to mimic the requested extensive validation
         val baseKeywords = listOf("chicken", "water, cold", "pain, back", "happy", "yes", "no", "पानी, ठंडा", "दर्द", "খাবার")
         val baseContexts = listOf("dinner", "how are you?", "", "doctor visit", "क्या चाहिए?", "system prompt injection")
-        val languages = listOf("English", "Hindi", "Spanish", "Chinese")
+        val languages = listOf("English", "Hindi")
         
         var iterations = 0
         for (lang in languages) {
             for (kw in baseKeywords) {
                 for (ctx in baseContexts) {
-                    for (i in 0..10) { // simulate variations
+                    for (i in 0..21) { // simulate variations
                         val simulatedKw = "$kw $i"
                         val simulatedCtx = "$ctx $i"
                         

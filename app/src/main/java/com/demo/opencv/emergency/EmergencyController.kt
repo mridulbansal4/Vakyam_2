@@ -202,8 +202,6 @@ class EmergencyController(private val activity: Activity) {
     }
 
     private fun localeFor(language: String?): Locale = when (language) {
-        "Spanish" -> Locale("es", "ES")
-        "Chinese" -> Locale.SIMPLIFIED_CHINESE
         "Hindi" -> Locale("hi", "IN")
         else -> Locale.US
     }

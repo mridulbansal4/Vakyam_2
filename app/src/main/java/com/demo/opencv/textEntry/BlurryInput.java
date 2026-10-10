@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class BlurryInput { // supports languages with alphabet characters: English and Spanish
+public class BlurryInput {
     private final List<String> wordList = new ArrayList<>(); // top words frequency list
     private final List<String> blurryInputProcessed = new ArrayList<>(); // processed string with 1, 2, 3, and 4 for blurry input
-    List<String> extendedWordList = new ArrayList<>(); // extra words provided by OpenAI for context-based prediction
+    List<String> extendedWordList = new ArrayList<>(); // extra words for context-based prediction
     private PersonalLexicon personalLexicon; // the patient's own words, null until set
     private PersonalLexicon.Script script = PersonalLexicon.Script.LATIN;
 

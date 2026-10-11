@@ -22,14 +22,13 @@
         android:paddingEnd="@dimen/vk_screen_margin"
         android:visibility="visible">
 
+        <!-- The brand is the way back to the home screen. -->
         <TextView
             android:id="@+id/brandTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/vk_space_l"
-            android:fontFamily="sans-serif-medium"
+            style="@style/TopTab"
+            android:layout_marginEnd="@dimen/vk_space_s"
             android:text="@string/app_name"
-            android:textColor="@color/vk_on_chrome"
+            android:textColor="@color/brand_title_text"
             android:textSize="20sp" />
 
         <TextView

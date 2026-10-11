@@ -30,7 +30,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     Context applicationContext;
     UserDataManager userDataManager;
     public boolean presenterBusy = false;
-    public String mode = ""; // Calibration, Text, Dev, Clinician, QuickChat
+    public String mode = ""; // Home, Calibration, Text, Dev, Clinician, QuickChat
     boolean recording = false;
     private volatile boolean gazeInputPaused = false;
     private final ContractInterface.View mainView; // creating object of View Interface

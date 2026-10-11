@@ -49,6 +49,7 @@ import com.demo.opencv.features.blinkkeyboard.EyeClosureEstimator;
 import com.demo.opencv.fragments.calibration_display;
 import com.demo.opencv.fragments.clinician_mode_display;
 import com.demo.opencv.fragments.dev_mode_display;
+import com.demo.opencv.fragments.home_page_display;
 import com.demo.opencv.fragments.quick_chat_display;
 import com.demo.opencv.fragments.text_mode_display;
 import com.demo.opencv.metrics.TrialResult;
@@ -209,7 +210,13 @@ public class MainActivity extends AppCompatActivity
 
         fragmentManager = getSupportFragmentManager();
 
-        openSettings();
+        openHome();
+        findViewById(R.id.brandTitle).setOnClickListener(v -> {
+            if (!Objects.equals(presenter.getMode(), "Home")) {
+                setLocale(userDataManager.getLanguage());
+                openHome();
+            }
+        });
         clinicianButton.setOnClickListener(v -> {
             if (!Objects.equals(presenter.getMode(), "Clinician")) {
                 setLocale(userDataManager.getLanguage());
@@ -332,6 +339,19 @@ public class MainActivity extends AppCompatActivity
         mainHandler.post(myRunnable);
     }
 
+
+    private void openHome() {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) return;
+            presenter.setMode("Home");
+            selectTopTab(R.id.brandTitle);
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainerView, home_page_display.class, null)
+                    .setReorderingAllowed(true)
+                    .addToBackStack("home_fragment")
+                    .commitAllowingStateLoss();
+        });
+    }
 
     @Override
     public void openTextEntry() {

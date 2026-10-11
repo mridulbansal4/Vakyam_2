@@ -141,6 +141,11 @@
     </style>
 
     <!-- Top bar: one row, sentence case; the current screen is a light pill. -->
+    <style name="HomeLogo" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">22%</item>
+    </style>
+
     <style name="TopTab">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">44dp</item>

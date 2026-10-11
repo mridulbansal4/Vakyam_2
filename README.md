@@ -223,8 +223,8 @@ flowchart LR
     D --> I["Phone speaks"]
     H --> I
     I --> J["Sentence and words<br/>learned for next time"]
-    style G fill:#000000,stroke:#ffffff,color:#ffffff
-    style I fill:#000000,stroke:#ffffff,color:#ffffff
+    style G fill:#34463F,stroke:#F4F1E8,color:#F4F1E8
+    style I fill:#34463F,stroke:#F4F1E8,color:#F4F1E8
 ```
 
 1. The caregiver presses record and asks a question; the transcript appears as `Heard: …`.
@@ -383,8 +383,8 @@ flowchart LR
     JERK -- steady --> DW
     JERK -- shaking --> X["hold cancelled,<br/>typing state kept"]
     DW --> OUT["one selection<br/>→ Presenter"]
-    style JERK fill:#000000,stroke:#ffffff,color:#ffffff
-    style OUT fill:#000000,stroke:#ffffff,color:#ffffff
+    style JERK fill:#34463F,stroke:#F4F1E8,color:#F4F1E8
+    style OUT fill:#34463F,stroke:#F4F1E8,color:#F4F1E8
 ```
 
 Before calibration, a second path keeps the app usable: the iris centre is located in the eye

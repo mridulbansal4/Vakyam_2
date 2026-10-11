@@ -1,6 +1,10 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="Vakyam - eye-gesture communication with an on-device LLM" width="100%"/>
+<img src="app/src/main/ic_launcher-playstore.png" alt="Vakyam logo" width="180"/>
+
+# Vakyam
+
+<sub>वाक्यम् · <i>sentence</i></sub>
 
 <br/>
 
@@ -186,8 +190,8 @@ flowchart LR
     D --> I["Phone speaks"]
     H --> I
     I --> J["Sentence and words<br/>learned for next time"]
-    style G fill:#10332b,stroke:#3ddc97,color:#f3fbf7
-    style I fill:#10332b,stroke:#7cf0c0,color:#f3fbf7
+    style G fill:#000000,stroke:#ffffff,color:#ffffff
+    style I fill:#000000,stroke:#ffffff,color:#ffffff
 ```
 
 1. The caregiver presses record and asks a question; the transcript appears as `Heard: …`.
@@ -300,14 +304,14 @@ Vakyam/
 │       │   │   ├── personal/                 # PersonalLexicon · PrefsLexiconStore
 │       │   │   ├── other/                    # AudioManager (TTS) · OfflineSpeechRecognizer
 │       │   │   └── fragments/                # one fragment per screen
-│       │   └── res/                          # layouts, gaze icons, values + values-hi
+│       │   ├── res/                          # layouts, gaze icons, values + values-hi
+│       │   └── ic_launcher-playstore.png     # the app logo
 │       ├── test/                             # JVM unit tests (no device needed)
 │       └── androidTest/                      # on-device Gemma inference test
 ├── opencv/                           # vendored OpenCV Android SDK 4.7.0
 ├── docs/
 │   ├── user-manual.pdf
-│   ├── sensors/                      # design notes for each sensor safeguard
-│   └── assets/banner.svg
+│   └── sensors/                      # design notes for each sensor safeguard
 ├── tools/telemetry/                  # ADB scripts for reading device sensors
 └── Models/                           # local staging for on-device models (git-ignored)
 ```
@@ -345,8 +349,8 @@ flowchart LR
     JERK -- steady --> DW
     JERK -- shaking --> X["hold cancelled,<br/>typing state kept"]
     DW --> OUT["one selection<br/>→ Presenter"]
-    style JERK fill:#10332b,stroke:#3ddc97,color:#f3fbf7
-    style OUT fill:#10332b,stroke:#7cf0c0,color:#f3fbf7
+    style JERK fill:#000000,stroke:#ffffff,color:#ffffff
+    style OUT fill:#000000,stroke:#ffffff,color:#ffffff
 ```
 
 Before calibration, a second path keeps the app usable: the iris centre is located in the eye

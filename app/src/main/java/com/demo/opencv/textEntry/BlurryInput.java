@@ -25,7 +25,8 @@ public class BlurryInput {
     private final List<String> blurryInputProcessed = new ArrayList<>(); // processed string with 1, 2, 3, and 4 for blurry input
     private final List<String> hinglishWordList = new ArrayList<>(); // Roman-script Hindi, offered alongside English
     private final List<String> hinglishProcessed = new ArrayList<>();
-    List<String> extendedWordList = new ArrayList<>(); // extra words for context-based prediction
+    // Answer words for what the caregiver just said; replaced whole, never edited, as the LLM fills it from another thread
+    volatile List<String> extendedWordList = new ArrayList<>();
     private PersonalLexicon personalLexicon; // the patient's own words, null until set
     private final PersonalLexicon.Script script = PersonalLexicon.Script.LATIN; // older Devanagari entries stay hidden
     private String languageSetting = HinglishDetector.ENGLISH;
@@ -113,6 +114,14 @@ public class BlurryInput {
         this.lastSpokenLanguage = language;
     }
 
+    public void setContextWords(List<String> words) {
+        extendedWordList = (words == null) ? new ArrayList<>() : new ArrayList<>(words);
+    }
+
+    public List<String> getContextWords() {
+        return extendedWordList;
+    }
+
     // The language the patient is typing in gets two of every three dictionary slots, the other language one.
     private void addDictionaryMatches(List<String> englishMatches, List<String> hinglishMatches, List<String> currentWords, List<String> wordPredictions) {
         boolean hinglishFirst = HinglishDetector.HINGLISH.equals(
@@ -195,6 +204,9 @@ public class BlurryInput {
 
         addCodeMatches(personalFollowers(currentWords), codeA, wordPredictions);
 
+        // The caregiver's question outranks generic word frequency: typing "r" after "what do you want to eat" offers rice
+        addCodeMatches(extendedWordList, codeA, wordPredictions);
+
         // bigram map prediction based on context
         if (currentWords != null && !currentWords.isEmpty()) {
             String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
@@ -219,21 +231,6 @@ public class BlurryInput {
 
         addCodeMatches(personalWords(), codeA, wordPredictions);
 
-        // extended word bank prediction (smaller, maybe around 500 words max)
-        for (int i = 0; i < extendedWordList.size(); i++) {
-            String word = extendedWordList.get(i);
-            if (word == null) continue;
-            String codeB = processWord(word);
-            if (codeB.length() >= codeA.length()) { // any prefix match
-                String subString = codeB.substring(0, codeA.length());
-                if (subString.equals(codeA)) {
-                    if (!wordPredictions.contains(word)) {
-                        wordPredictions.add(word);
-                    }
-                }
-            }
-        }
-
         // normal 5000 word bank prediction, interleaved with the Hinglish words
         addDictionaryMatches(codeMatches(blurryInputProcessed, wordList, codeA),
                 codeMatches(hinglishProcessed, hinglishWordList, codeA), currentWords, wordPredictions);
@@ -245,6 +242,10 @@ public class BlurryInput {
         if (prefix == null) return wordPredictions;
 
         addPrefixMatches(personalFollowers(currentWords), prefix, wordPredictions);
+
+        // With letters typed the question decides; with none, the next word is grammar, so bigrams lead
+        List<String> contextWords = extendedWordList;
+        if (!prefix.isEmpty()) addPrefixMatches(contextWords, prefix, wordPredictions);
 
         if (currentWords != null && !currentWords.isEmpty()) {
             String lastWord = currentWords.get(currentWords.size() - 1).toLowerCase();
@@ -261,11 +262,7 @@ public class BlurryInput {
         }
 
         addPrefixMatches(personalWords(), prefix, wordPredictions);
-        for (String word : extendedWordList) {
-            if (word != null && word.startsWith(prefix) && !wordPredictions.contains(word)) {
-                wordPredictions.add(word);
-            }
-        }
+        if (prefix.isEmpty()) addPrefixMatches(contextWords, prefix, wordPredictions);
         addDictionaryMatches(prefixMatches(wordList, prefix), prefixMatches(hinglishWordList, prefix), currentWords, wordPredictions);
         return wordPredictions;
     }

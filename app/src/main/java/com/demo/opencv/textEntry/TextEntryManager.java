@@ -32,6 +32,9 @@ public class TextEntryManager {
     String language = "English"; // default language
     int mode = 1; // 0: word mode, 1: blurry input
     String context = ""; // the context content for context-based predictions
+    List<String> contextTopicWords = new ArrayList<>(); // instant answer words for the context, from ContextVocabulary
+    List<String> llmContextWords = new ArrayList<>(); // answer words Gemma suggested for the same context
+    String llmWordsRequestedFor = ""; // the context Gemma was last asked about, so it is asked once per question
     KeyboardData keyboardData = new KeyboardData(); // data structure for UI display
     Context mContext;
     GeminiManager geminiManager = new GeminiManager(); // gemini services
@@ -241,8 +244,11 @@ public class TextEntryManager {
 
     public void updateContext(String newContext) {
         Log.d("TextGeneration", "Context updated: " + newContext);
-        context = (newContext != null) ? newContext : "";
-        contextWordPrediction(50);
+        String updated = (newContext != null) ? newContext.trim() : "";
+        boolean changed = !updated.equals(context);
+        context = updated;
+        contextWordPrediction(changed);
+        refreshMatchingWords();
         updateDisplays();
     }
 
@@ -272,18 +278,29 @@ public class TextEntryManager {
         }
     }
 
-    public void contextWordPrediction(int number) {
-        if (!LLMEnabled) return;
-        if (!Objects.equals(context, "")) { // if there is context
-            StringBuilder sb = new StringBuilder();
-            List<String> fallbackWords = blurryInput.getExactMatchingWords("", current.Words);
-            for (int i = 0; i < number && i < fallbackWords.size(); i++) {
-                sb.append(fallbackWords.get(i)).append(i == Math.min(number, fallbackWords.size()) - 1 ? "" : ", ");
-            }
-            Intent intent = new Intent("textGenerationEvent");
-            intent.putExtra("message", "CWP-" + sb.toString());
-            if (mContext != null) LocalBroadcastManager.getInstance(mContext).sendBroadcast(intent);
+    // Built-in answer words apply at once and without the LLM; Gemma's are merged in when its reply arrives
+    void contextWordPrediction(boolean contextChanged) {
+        if (contextChanged) llmContextWords = new ArrayList<>();
+        String contextLanguage = hinglishDetector.resolve(language, current.Words, context, lastSpokenLanguage);
+        contextTopicWords = ContextVocabulary.wordsFor(context, HinglishDetector.HINGLISH.equals(contextLanguage));
+        applyContextWords();
+        if (context.isEmpty()) {
+            llmWordsRequestedFor = "";
+        } else if (LLMEnabled && !context.equals(llmWordsRequestedFor)) {
+            llmWordsRequestedFor = context;
+            geminiManager.generateContextWords(context, contextLanguage);
         }
+    }
+
+    private void applyContextWords() {
+        blurryInput.setContextWords(ContextVocabulary.merge(contextTopicWords, llmContextWords));
+    }
+
+    // Re-ranks letters already typed with the new context words, unless the patient is paging through them
+    private void refreshMatchingWords() {
+        if (mode != 1 || currentPage != 1 || Objects.equals(current.BlurryInput, "")) return;
+        List<String> matched = blurryInput.getMatchingWords(current.BlurryInput, current.Words);
+        wordPredictions = (matched != null) ? matched : new ArrayList<>();
     }
 
     private final BroadcastReceiver mMessageReceiver = new BroadcastReceiver() { // tag 1: SP = sentence prediction, NWP = next word prediction, CWP = context word prediction
@@ -312,10 +329,19 @@ public class TextEntryManager {
                         wordPredictions.add(wordChoices[i]);
                     }
 
-                } else if (Objects.equals(tag, "CWP")) { // context word prediction
-                    String[] wordChoices = content.split(", ");
-                    blurryInput.extendedWordList.clear();
-                    blurryInput.extendedWordList.addAll(Arrays.asList(wordChoices));
+                } else if (Objects.equals(tag, "CWP")) { // context word prediction from Gemma
+                    String forContext = intent.getStringExtra("context");
+                    if (forContext == null || !forContext.equals(TextEntryManager.this.context)) {
+                        Log.d("TextGeneration", "Ignoring context words for an older context: " + forContext);
+                        return;
+                    }
+                    List<String> words = new ArrayList<>();
+                    for (String word : content.split(", ")) {
+                        if (!word.trim().isEmpty()) words.add(word.trim());
+                    }
+                    llmContextWords = words;
+                    applyContextWords();
+                    refreshMatchingWords();
                 }
                 updateDisplays();
             } else {

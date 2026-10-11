@@ -161,6 +161,25 @@ class BlurryInputTest {
     }
 
     @Test
+    fun contextWordsLeadTypedLettersButNotTheNextWord() {
+        val keyboard = latinKeyboard()
+        keyboard.setContextWords(ContextVocabulary.wordsFor("What do you want to eat?", false))
+        val rice = keyboard.processWord("rice")
+        for (n in 1..rice.length) {
+            assertEquals("rice", keyboard.getMatchingWords(rice.take(n), emptyList()).first())
+            assertEquals("rice", keyboard.getMatchingWords(rice.take(n), listOf("I", "want")).first())
+        }
+        assertTrue("nice" in keyboard.getMatchingWords(rice, emptyList())) // the dictionary still follows
+        assertEquals("rice", keyboard.getExactMatchingWords("r", emptyList()).first())
+        // With nothing typed the next word stays grammatical
+        assertEquals(listOf("chahiye", "do", "pilao"), keyboard.getExactMatchingWords("", listOf("paani")).take(3))
+
+        keyboard.setContextWords(ContextVocabulary.wordsFor("Where do you want to go?", false))
+        val park = keyboard.processWord("park")
+        for (n in 1..park.length) assertEquals("park", keyboard.getMatchingWords(park.take(n), emptyList()).first())
+    }
+
+    @Test
     fun hinglishBigramsAreMergedIntoNextWordPrediction() {
         val next = latinKeyboard().getExactMatchingWords("", listOf("paani"))
         assertEquals(listOf("chahiye", "do", "pilao"), next.take(3))

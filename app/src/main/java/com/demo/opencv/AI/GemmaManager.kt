@@ -273,11 +273,14 @@ class GemmaManager {
         language: String
     ): String = engineMutex.withLock {
         val conversation = createConversation(activeEngine, language)
-        val prompt = buildUserTurn(keywords, context)
-        val builder = StringBuilder()
+        return cleanSentence(decode(conversation, buildUserTurn(keywords, context), GENERATION_TIMEOUT_MS))
+    }
 
+    // Streams the reply, then always closes the conversation; a timeout returns what was generated so far
+    private suspend fun decode(conversation: Conversation, prompt: String, timeoutMs: Long): String {
+        val builder = StringBuilder()
         try {
-            val finished = withTimeoutOrNull(GENERATION_TIMEOUT_MS) {
+            val finished = withTimeoutOrNull(timeoutMs) {
                 conversation.sendMessageAsync(prompt).collect { chunk ->
                     val chunkText = chunk.contents.contents
                         .filterIsInstance<Content.Text>()
@@ -289,7 +292,7 @@ class GemmaManager {
 
             if (finished == null) {
                 runCatching { conversation.cancelProcess() }
-                Log.w(TAG, "Gemma generation timed out after ${GENERATION_TIMEOUT_MS}ms")
+                Log.w(TAG, "Gemma generation timed out after ${timeoutMs}ms")
             }
         } catch (e: CancellationException) {
             runCatching { conversation.cancelProcess() }
@@ -299,12 +302,56 @@ class GemmaManager {
         } finally {
             runCatching { conversation.close() }
         }
+        return builder.toString()
+    }
 
-        return cleanSentence(builder.toString())
+    /**
+     * Asks Gemma which words the patient is likely to answer [context] with and broadcasts them as "CWP-",
+     * tagged with the context so a reply to an older question is ignored. Without the model nothing is sent
+     * and the built-in topic words stay in place.
+     */
+    fun generateContextWords(context: String?, language: String?) {
+        val ctx = context?.trim().orEmpty()
+        if (ctx.isEmpty()) return
+        if (llmDeferred) {
+            Log.i(TAG, "Thermal POWER_SAVER: skipping Gemma context words")
+            return
+        }
+        val lang = language?.trim() ?: "English"
+        scope.launch {
+            try {
+                if (sharedEngine == null) initializeEngine()
+                val activeEngine = sharedEngine
+                if (activeEngine == null) {
+                    Log.w(TAG, "Gemma engine unavailable, keeping built-in context words")
+                    return@launch
+                }
+                val startMs = System.currentTimeMillis()
+                val raw = engineMutex.withLock {
+                    val (systemPrompt, examples) = wordListPromptAndExamples(lang)
+                    val conversation = createConversation(activeEngine, systemPrompt, examples, WORD_LIST_OUTPUT_TOKENS)
+                    decode(conversation, buildWordListTurn(ctx), WORD_LIST_TIMEOUT_MS)
+                }
+                val words = parseWordList(raw)
+                Log.i(TIMING_TAG, "words lang=$lang ms=${System.currentTimeMillis() - startMs} context=\"$ctx\" -> $words")
+                if (words.isNotEmpty()) sendContextWords(ctx, words)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Error generating context words with Gemma: ${e.message}", e)
+            }
+        }
     }
 
     private fun createConversation(engine: Engine, language: String): Conversation {
         val (systemPrompt, examples) = getPromptAndExamples(language)
+        return createConversation(engine, systemPrompt, examples, outputTokenBudget(language))
+    }
+
+    private fun createConversation(
+        engine: Engine,
+        systemPrompt: String,
+        examples: List<Pair<String, String>>,
+        maxOutputTokens: Int
+    ): Conversation {
         return engine.createConversation(
             ConversationConfig(
                 systemInstruction = Contents.of(systemPrompt),
@@ -312,9 +359,17 @@ class GemmaManager {
                     listOf(Message.user(user), Message.model(model))
                 },
                 samplerConfig = SamplerConfig(topK = 20, topP = 0.9, temperature = 0.3),
-                maxOutputToken = outputTokenBudget(language)
+                maxOutputToken = maxOutputTokens
             )
         )
+    }
+
+    private fun sendContextWords(context: String, words: List<String>) {
+        val ctx = mContext ?: return
+        val intent = Intent("textGenerationEvent")
+        intent.putExtra("message", "CWP-" + words.joinToString(", "))
+        intent.putExtra("context", context)
+        LocalBroadcastManager.getInstance(ctx).sendBroadcast(intent)
     }
 
     private fun sendMessage(sentence: String) {
@@ -338,6 +393,9 @@ class GemmaManager {
         private const val MAX_OUTPUT_TOKENS = 64
         private const val REDUCED_OUTPUT_TOKENS = 20
         private const val GENERATION_TIMEOUT_MS = 25_000L
+        private const val WORD_LIST_OUTPUT_TOKENS = 128
+        private const val WORD_LIST_TIMEOUT_MS = 15_000L
+        private const val MAX_CONTEXT_WORDS = 40
 
         private val engineMutex = Mutex()
         @Volatile
@@ -383,6 +441,49 @@ class GemmaManager {
             return defaultInstance ?: synchronized(this) {
                 defaultInstance ?: GemmaManager().also { defaultInstance = it }
             }
+        }
+
+        private const val WORD_LIST_TASK = "You help a person with ALS/motor neuron disease who answers a caregiver by spelling one word at a time with their eyes. Given what the caregiver just said, list the single words the person is most likely to choose for the answer: the specific foods, drinks, places, people, body parts, feelings, activities or times that fit the question, most likely first."
+        private const val WORD_LIST_FORMAT = "Reply with about 30 lowercase single words separated by commas and nothing else: no sentences, numbering or explanation, no repeats, and no filler words such as i, want, the or to."
+
+        internal fun wordListPromptAndExamples(language: String): Pair<String, List<Pair<String, String>>> = when (language) {
+            "Hinglish" -> Pair(
+                "$WORD_LIST_TASK The person types Hindi in English letters (Hinglish) mixed with English, so list words of both kinds, Hindi only in English (Roman) letters, never in Devanagari script. $HINGLISH_CONTEXT_NOTE $WORD_LIST_FORMAT",
+                listOf(
+                    "Context: aapko khane me kya chahiye" to "roti, chawal, dal, khichdi, sabzi, paratha, dahi, anda, rice, poha, upma, idli, dosa, soup, kela, seb, phal, paneer, biscuit, mithai, bread, egg, curry, nashta, salad, halwa, pulao, raita, aloo, fruit",
+                    "Context: kahan jaana hai" to "ghar, bahar, park, mandir, bazaar, hospital, bagicha, chhat, kamra, market, garden, temple, masjid, gurudwara, dukaan, gaon, office, school, mall, beach, room, bathroom, balcony, terrace, station, doctor, dost, walk, village, river"
+                )
+            )
+            else -> Pair(
+                "$WORD_LIST_TASK $HINGLISH_CONTEXT_NOTE $WORD_LIST_FORMAT",
+                listOf(
+                    "Context: What do you want to eat" to "rice, roti, dal, soup, bread, egg, chicken, curry, fruit, banana, apple, idli, dosa, khichdi, curd, paratha, sandwich, biscuit, salad, noodles, fish, vegetables, porridge, oats, pasta, pizza, sweet, cake, paneer, toast",
+                    "Context: Where do you want to go" to "park, home, garden, temple, market, hospital, outside, beach, mall, balcony, terrace, church, mosque, office, village, shop, restaurant, cinema, room, bathroom, bed, walk, friend, school, lake, river, station, city, doctor, airport"
+                )
+            )
+        }
+
+        fun buildWordListTurn(context: String): String = "Context: ${context.trim()}"
+
+        private val WORD_LIST_SEPARATORS = Regex("[,;\\n]+")
+        private val LIST_WORD = Regex("[a-z][a-z'-]{1,19}")
+        private val FILLER_WORDS = setOf(
+            "i", "me", "my", "you", "your", "want", "wants", "would", "like", "need", "the", "a", "an", "to", "of",
+            "and", "or", "is", "am", "are", "be", "it", "some", "please", "with", "for", "in", "on", "at", "do"
+        )
+
+        /** Gemma's comma list as clean single words: no numbering, filler, phrases, Devanagari or repeats. */
+        fun parseWordList(raw: String, limit: Int = MAX_CONTEXT_WORDS): List<String> {
+            val out = LinkedHashSet<String>()
+            for (part in raw.split(WORD_LIST_SEPARATORS)) {
+                val word = part.trim()
+                    .trimStart { it.isDigit() || it == '.' || it == ')' || it == '-' || it == '*' || it.isWhitespace() }
+                    .trim('"', '“', '”', '\'', '`', '*', '.', ' ')
+                    .lowercase()
+                if (LIST_WORD.matches(word) && word !in FILLER_WORDS) out.add(word)
+                if (out.size >= limit) break
+            }
+            return out.toList()
         }
 
         // Must match the few-shot examples, which always carry ". Context: "

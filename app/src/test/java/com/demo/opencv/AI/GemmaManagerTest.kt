@@ -75,6 +75,35 @@ class GemmaManagerTest {
     }
 
     @Test
+    fun testParseWordListKeepsCleanSingleWords() {
+        val raw = "Rice, roti,\n1. dal, the, ice cream, \"soup\", rice, \u092A\u093E\u0928\u0940, *chicken*, I, want, khichdi."
+        assertEquals(listOf("rice", "roti", "dal", "soup", "chicken", "khichdi"), GemmaManager.parseWordList(raw))
+        assertEquals(listOf("rice", "roti"), GemmaManager.parseWordList("rice, roti, dal", limit = 2))
+        assertTrue(GemmaManager.parseWordList("").isEmpty())
+        assertTrue(GemmaManager.parseWordList("I would like to eat rice.").isEmpty()) // a sentence is not a list
+    }
+
+    @Test
+    fun testWordListPromptsAndExamples() {
+        assertEquals("Context: where do you want to go", GemmaManager.buildWordListTurn("  where do you want to go "))
+        for (lang in listOf("English", "Hinglish")) {
+            val (system, examples) = GemmaManager.wordListPromptAndExamples(lang)
+            assertTrue(lang, system.contains("comma"))
+            assertFalse(lang, GemmaManager.hasDevanagari(system))
+            assertEquals(2, examples.size)
+            for ((user, model) in examples) {
+                assertTrue(user, user.startsWith("Context: "))
+                val words = GemmaManager.parseWordList(model)
+                assertTrue("$lang example parses to ${words.size} words", words.size >= 25)
+                assertFalse(GemmaManager.hasDevanagari(model))
+            }
+        }
+        assertTrue(GemmaManager.wordListPromptAndExamples("Hinglish").first.contains("never in Devanagari"))
+        assertEquals("rice", GemmaManager.parseWordList(GemmaManager.wordListPromptAndExamples("English").second[0].second).first())
+        assertEquals("park", GemmaManager.parseWordList(GemmaManager.wordListPromptAndExamples("English").second[1].second).first())
+    }
+
+    @Test
     fun testPromptsForbidBareKeywordReplies() {
         for (lang in listOf("English", "Hinglish")) {
             val (system, _) = GemmaManager.promptAndExamples(lang)

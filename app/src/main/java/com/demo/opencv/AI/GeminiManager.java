@@ -16,4 +16,8 @@ public class GeminiManager {
     public void generate(String keywords, String context, String language) {
         gemmaManager.generate(keywords, context, language);
     }
+
+    public void generateContextWords(String context, String language) {
+        gemmaManager.generateContextWords(context, language);
+    }
 }

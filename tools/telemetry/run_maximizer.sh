@@ -5,7 +5,6 @@
 ACTION="${1:-start}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
 
 case "$ACTION" in
     start|stop|status)

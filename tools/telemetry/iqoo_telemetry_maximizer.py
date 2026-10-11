@@ -443,7 +443,7 @@ def start_loop():
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    print("[+] Continuous Chaos Loop Active. To stop, run 'python iqoo_telemetry_maximizer.py stop' or press Ctrl+C.")
+    print("[+] Continuous Chaos Loop Active. To stop, run 'python tools/telemetry/iqoo_telemetry_maximizer.py stop' or press Ctrl+C.")
     while True:
         try:
             engine.step()
@@ -521,6 +521,6 @@ if __name__ == "__main__":
             import read_sensors
             read_sensors.main()
         else:
-            print("Usage: python iqoo_telemetry_maximizer.py [start|stop|status|sensors]")
+            print("Usage: python tools/telemetry/iqoo_telemetry_maximizer.py [start|stop|status|sensors]")
     else:
         start_loop()

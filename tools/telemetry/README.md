@@ -26,26 +26,26 @@
 2. Click the **Terminal** tab at the bottom toolbar.
 3. Run:
    ```bash
-   python iqoo_telemetry_maximizer.py start
+   python tools/telemetry/iqoo_telemetry_maximizer.py start
    ```
 
 ### Option B: In VS Code / Cursor / PyCharm
 1. Open the integrated terminal (`Ctrl + \`` or ``Cmd + \```).
 2. Run:
    ```bash
-   python iqoo_telemetry_maximizer.py start
+   python tools/telemetry/iqoo_telemetry_maximizer.py start
    ```
 
 ### Option C: In Windows PowerShell / CMD
 ```powershell
-python iqoo_telemetry_maximizer.py start
-# Or double-click: run_maximizer.bat
+python tools/telemetry/iqoo_telemetry_maximizer.py start
+# Or double-click: tools/telemetry/run_maximizer.bat
 ```
 
 ### Option D: In macOS / Linux Terminal
 ```bash
-python3 iqoo_telemetry_maximizer.py start
-# Or: ./run_maximizer.sh start
+python3 tools/telemetry/iqoo_telemetry_maximizer.py start
+# Or: ./tools/telemetry/run_maximizer.sh start
 ```
 
 ---
@@ -54,13 +54,13 @@ python3 iqoo_telemetry_maximizer.py start
 
 When you need to make changes, build APKs, or test manually, simply run:
 ```bash
-python iqoo_telemetry_maximizer.py stop
+python tools/telemetry/iqoo_telemetry_maximizer.py stop
 ```
 *(Or press `Ctrl + C` in the running terminal window)*.
 
 To check if it is running or verify telemetry:
 ```bash
-python iqoo_telemetry_maximizer.py status
+python tools/telemetry/iqoo_telemetry_maximizer.py status
 ```
 
 ---

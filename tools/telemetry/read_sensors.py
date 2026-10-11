@@ -8,8 +8,8 @@
   Magnetometer, Light, Proximity, Temperature, and HackTracker status.
 
   Usage:
-      python read_sensors.py          # Run continuous live sensor monitor
-      python read_sensors.py --once   # Print single sensor snapshot
+      python tools/telemetry/read_sensors.py          # Run continuous live sensor monitor
+      python tools/telemetry/read_sensors.py --once   # Print single sensor snapshot
 ================================================================================
 """
 

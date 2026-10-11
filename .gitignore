@@ -18,3 +18,13 @@ Models/asr/
 
 # Serena MCP tool metadata
 .serena/
+
+# JVM crash dumps and editor settings
+hs_err_pid*.log
+replay_pid*.log
+.vscode/
+
+# Python tooling
+__pycache__/
+*.pyc
+.iqoo_maximizer.pid

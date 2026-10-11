@@ -27,15 +27,15 @@ This skill autonomously drives the physical iQOO phone to maximize on-device tel
 
 ### To Start the Maximizer:
 ```bash
-python iqoo_telemetry_maximizer.py start
+python tools/telemetry/iqoo_telemetry_maximizer.py start
 ```
 
 ### To Stop the Maximizer:
 ```bash
-python iqoo_telemetry_maximizer.py stop
+python tools/telemetry/iqoo_telemetry_maximizer.py stop
 ```
 
 ### To Check Live Status & Telemetry:
 ```bash
-python iqoo_telemetry_maximizer.py status
+python tools/telemetry/iqoo_telemetry_maximizer.py status
 ```

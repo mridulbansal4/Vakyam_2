@@ -68,17 +68,32 @@ The APK will be generated at:
 
 ---
 
-## Architecture & Codebase Structure
+## Repository Layout
+
+```
+app/                    Android application module (package com.demo.opencv, applicationId com.vakyam.app)
+  src/main/java/...     AI/ (Gemma), vision/ (gaze tracking), textEntry/, features/blinkkeyboard/,
+                        sensors/, yesno/, metrics/, personal/, fragments/
+  src/main/assets/      Word and bigram lists for English and Hinglish prediction
+  src/test/             JVM unit tests
+  libs/                 Vendored sherpa-onnx AAR (offline speech-to-text)
+opencv/                 Vendored OpenCV Android SDK 4.7.0 (Java sources and native libraries)
+docs/                   User manual and sensor design notes
+tools/telemetry/        ADB scripts for reading device sensors and driving the phone
+Models/                 Local staging folder for on-device models (git-ignored, pushed with adb)
+```
+
+Key entry points:
 
 - `app/src/main/java/com/demo/opencv/AI/GemmaManager.kt`: LiteRT-LM on-device Gemma 4 E2B engine manager. Performs local inference with GPU/CPU backends and broadcasts expanded sentences via `LocalBroadcastManager`.
 - `app/src/main/java/com/demo/opencv/AI/GeminiManager.java`: Compatibility adapter delegating sentence generation directly to `GemmaManager`.
 - `app/src/main/java/com/demo/opencv/textEntry/TextEntryManager.java`: Manages eye-controlled keyboard text entry, word prediction, and calls sentence generation.
 - `app/src/main/java/com/demo/opencv/vision/`: Real-time eye detection, OpenCV eye tracking, and calibration.
-- `opencv/`: OpenCV Android SDK 4.7.0 integration.
 
 ---
 
-## Useful Links
-- User Manual: [Vakyam Manual.pdf](Vakyam%20Manual.pdf)
-- Original User Manual Doc: https://docs.google.com/document/d/1Fz6OAjbDfIS6dwi93-o9HvRD_0RV0ealPnbN5Y_3fEQ/edit
-
+## Documentation
+- User manual: [docs/user-manual.pdf](docs/user-manual.pdf)
+- Sensor safeguards (thermal, battery, colour temperature): [docs/sensors/](docs/sensors/00_SENSOR_INTEGRATION_OVERVIEW.md)
+- Telemetry and sensor scripts: [tools/telemetry/](tools/telemetry/README.md)
+- Original user manual doc: https://docs.google.com/document/d/1Fz6OAjbDfIS6dwi93-o9HvRD_0RV0ealPnbN5Y_3fEQ/edit

@@ -9,12 +9,12 @@ if "%CMD%"=="" set CMD=start
 
 if "%CMD%"=="start" (
     echo [*] Starting iQOO Telemetry Maximizer...
-    python iqoo_telemetry_maximizer.py start
+    python "%~dp0iqoo_telemetry_maximizer.py" start
 ) else if "%CMD%"=="stop" (
     echo [*] Stopping iQOO Telemetry Maximizer...
-    python iqoo_telemetry_maximizer.py stop
+    python "%~dp0iqoo_telemetry_maximizer.py" stop
 ) else if "%CMD%"=="status" (
-    python iqoo_telemetry_maximizer.py status
+    python "%~dp0iqoo_telemetry_maximizer.py" status
 ) else (
     echo Usage: run_maximizer.bat [start^|stop^|status]
 )

@@ -18,7 +18,7 @@ Hard requirements. If any of these is missing, the entry is not eligible.
 | 3 | Technical report: problem, users, architecture, OpenCV 5 implementation, AWS deployment, evaluation, limitations, responsible use | The README covers most of it except AWS and evaluation | Write the report |
 | 4 | Judge-accessible repo with pinned dependencies and build/deploy/test instructions | Repo exists; Gradle versions are pinned | Add AWS deploy steps (IaC) |
 | 5 | Architecture diagram that shows the OpenCV 5 **and** AWS components | Mermaid diagrams with no AWS | Redraw |
-| 6 | **A working web endpoint** or an arranged live screen-share demo | Android APK only | Web endpoint (recommended) |
+| 6 | **A working web endpoint** or an arranged live screen-share demo | **Built (17 Oct), not deployed yet:** [Eye Lab](../../eyelab/README.md), CDK stack synthesises | `aws login`, enable Claude on Bedrock, `cdk deploy` |
 | 7 | A video of 5 minutes or less showing the team, the app working, the architecture and the results | None | Record it |
 | 8 | Evaluation evidence, **including failure cases** | The typing-speed test exists, but there is no eye-direction accuracy benchmark | Build the benchmark |
 

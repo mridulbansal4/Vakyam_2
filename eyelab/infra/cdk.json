@@ -1,0 +1,8 @@
+{
+  "app": "python app.py",
+  "watch": { "include": ["**"], "exclude": ["cdk.out", "**/__pycache__"] },
+  "context": {
+    "@aws-cdk/aws-ecs:enableImdsBlockingDeprecatedFeature": false,
+    "@aws-cdk/core:target-partitions": ["aws"]
+  }
+}

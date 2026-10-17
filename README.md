@@ -346,6 +346,11 @@ Vakyam/
 │   ├── user-manual.pdf
 │   ├── sensors/                      # design notes for each sensor safeguard
 │   └── assets/screenshots/           # README screenshots, captured from the device
+├── eyelab/                           # Eye Lab: the eye pipeline in Python + OpenCV 5 as a web service on AWS
+│   ├── eyecore/                      #   YuNet · quality gate · CLAHE · warpAffine · matchTemplate · dwell
+│   ├── server/                       #   FastAPI WebSocket service, Claude on Bedrock, Polly, web page
+│   ├── infra/                        #   AWS CDK: Fargate (Graviton) · ALB · CloudFront · CloudWatch
+│   └── tests/                        #   pytest, including a drawn face driven through every look
 ├── eval/                             # desktop OpenCV 5 checks of the vision pipeline (pinned requirements)
 ├── tools/telemetry/                  # ADB scripts for reading device sensors
 └── Models/                           # local staging for on-device models (git-ignored)
@@ -434,10 +439,13 @@ calibration captures, since a template stored from a bad frame misfires for the 
 After two re-prompts only the blocking issue still refuses a capture, so limits that are wrong
 for a particular phone can never stall calibration.
 
-**Why the crop follows the eyelids, not YuNet's eye points.** YuNet's eye landmarks sit near
-the iris, which moves with the look; a crop centred on them would make every direction look the
-same. They are also a few degrees off for head roll (a 15° tilt measured as 11° on a test
+**Why the crop follows the eyelids, not YuNet's eye points.** The eyelid contour stays put
+on the face whatever the look, while YuNet's eye landmarks sit near the iris and drift with it.
+YuNet's points are also a few degrees off for head roll (a 15° tilt measured as 11° on a test
 photo), so roll comes from ML Kit's two 16-point eyelid contours, with YuNet as the fallback.
+(On synthetic faces in [`eyelab/`](eyelab), crops centred on pupil-following points still
+classified every look correctly, because the lids and brows shift round the pupil; anchoring on
+the lids is the more stable choice, not the only workable one.)
 
 **Measured on desktop OpenCV 5** with [`eval/alignment_check.py`](eval/alignment_check.py),
 which runs the same steps and matrix maths as the app on a face photo tilted by several

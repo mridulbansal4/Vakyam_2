@@ -1,0 +1,7 @@
+# Only the Eye Lab service and the YuNet model go into a Docker build context (see eyelab/Dockerfile)
+**
+!eyelab/requirements.txt
+!eyelab/eyecore/**
+!eyelab/server/**
+!app/src/main/assets/face_detection_yunet_2023mar.onnx
+**/__pycache__

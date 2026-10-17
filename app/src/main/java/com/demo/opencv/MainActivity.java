@@ -148,7 +148,9 @@ public class MainActivity extends AppCompatActivity
         }
         @Override public void onSnapshot(@NonNull SensorHealthSnapshot snapshot) {
             if (viewModel != null) viewModel.postSensorHealth(snapshot);
-            if (TypingTest.isActive()) TypingTest.setConditions(snapshot.toConditionText());
+            // The pipeline goes into each typing-test result so the classic and OpenCV 5 runs can be compared
+            if (TypingTest.isActive()) TypingTest.setConditions(snapshot.toConditionText()
+                    + " pipeline=" + ((UserDataManager) getApplication()).getVisionPipeline().getSettingValue());
         }
     };
 

@@ -17,6 +17,7 @@ import com.demo.opencv.textEntry.TextEntryManager;
 import com.demo.opencv.vision.CalibrationStabilityGate;
 import com.demo.opencv.vision.CalibrationTemplateCheck;
 import com.demo.opencv.vision.DetectionOutput;
+import com.demo.opencv.vision.QualityIssue;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
@@ -51,6 +52,8 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             CalibrationStabilityGate.Direction.LEFT_UP, CalibrationStabilityGate.Direction.RIGHT_UP};
     private final CalibrationStabilityGate calibrationGate = new CalibrationStabilityGate();
     private static final long CALIBRATION_REPROMPT_MS = 4000L;
+    // After this many re-prompts only a blocking quality issue still refuses a capture, so untuned limits can't stall calibration
+    private static final int QUALITY_STRICT_UNTIL_LENIENCY = 2;
     private long lastCalibrationPromptMs = 0L;
     private long lastCalibrationLogMs = 0L;
     // Eye images of the steps captured in this calibration run, to reject a step that looks like an earlier one
@@ -209,6 +212,18 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             lastCalibrationLogMs = now;
         }
 
+        // OpenCV 5 quality gate: a template stored from a dark, blurred or turned-away frame misfires for the whole session
+        boolean qualityRefuses = !detectionOutput.qualityOkForCalibration
+                && (calibrationGate.getLeniency() < QUALITY_STRICT_UNTIL_LENIENCY
+                    || detectionOutput.qualityIssues.contains(QualityIssue.TURNED_AWAY));
+        if (qualityRefuses) {
+            if (capture) Log.i("AutoCalibration", "Rejected step " + state + ": image quality " + detectionOutput.qualityIssues);
+            capture = false;
+            appliveData.calibrationProgress = 0f;
+            int qualityMessage = qualityStatusMessage(detectionOutput.qualityPrimary);
+            if (qualityMessage != 0) appliveData.calibrationStatusRes = qualityMessage;
+        }
+
         float[] leftEye = eyesVisible ? grayPixels(eyeMats[0]) : null;
         float[] rightEye = eyesVisible ? grayPixels(eyeMats[1]) : null;
         if (capture) {
@@ -235,6 +250,20 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             calibrationGate.escalate(); // each re-prompt loosens the capture rules so a step can't block forever
             Log.i("AutoCalibration", "Re-prompted step " + state + ", leniency now " + calibrationGate.getLeniency());
             lastCalibrationPromptMs = now;
+        }
+    }
+
+    private static int qualityStatusMessage(QualityIssue issue) {
+        if (issue == null) return 0;
+        switch (issue) {
+            case TURNED_AWAY: return R.string.Calibration_QualityTurnedAway;
+            case TOO_FAR: return R.string.Calibration_QualityTooFar;
+            case TOO_DARK: return R.string.Calibration_QualityTooDark;
+            case BACKLIT: return R.string.Calibration_QualityBacklit;
+            case OVEREXPOSED: return R.string.Calibration_QualityOverexposed;
+            case BLURRY: return R.string.Calibration_QualityBlurry;
+            case TILTED: return R.string.Calibration_QualityTilted;
+            default: return 0;
         }
     }
 

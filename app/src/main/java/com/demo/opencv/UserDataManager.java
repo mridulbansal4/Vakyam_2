@@ -16,6 +16,7 @@ import androidx.datastore.preferences.rxjava2.RxPreferenceDataStoreBuilder;
 import androidx.datastore.rxjava2.RxDataStore;
 
 import com.demo.opencv.metrics.TypingTest;
+import com.demo.opencv.vision.VisionPipeline;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,6 +40,7 @@ public class UserDataManager extends Application {
     public final int calibrationTemplateNum = 6;
     private int sensitivity = 20;
     private String language = "English";
+    private VisionPipeline visionPipeline = VisionPipeline.DEFAULT;
 
     private Bitmap[] leftCalibrationData;
     private Bitmap[] rightCalibrationData;
@@ -56,6 +58,7 @@ public class UserDataManager extends Application {
         defaultSettings.put("LightingThreshold", "0");
         defaultSettings.put("TextEntryMode", "2");
         defaultSettings.put("Sensitivity", "20");
+        defaultSettings.put("VisionPipeline", VisionPipeline.DEFAULT.getSettingValue());
 
         TypingTest.attach(this);
     }
@@ -79,18 +82,22 @@ public class UserDataManager extends Application {
         lightingThreshold = parseIntOrDefault(getString("LightingThreshold"), 0);
         textEntryMode = parseIntOrDefault(getString("TextEntryMode"), 2);
         sensitivity = parseIntOrDefault(getString("Sensitivity"), 20);
+        visionPipeline = VisionPipeline.fromSetting(getString("VisionPipeline"));
+        loadCalibrationData();
+    }
 
-        // get calibration files
-        if (getCalibrationFiles(mContext, leftEyeFileNames) != null) {
-            leftCalibrationData = getCalibrationFiles(mContext, leftEyeFileNames);
-        } else {
-            leftCalibrationData = new Bitmap[6];
-        }
-        if (getCalibrationFiles(mContext, rightEyeFileNames) != null) {
-            rightCalibrationData = getCalibrationFiles(mContext, rightEyeFileNames);
-        } else {
-            rightCalibrationData = new Bitmap[6];
-        }
+    // Each vision pipeline has its own calibration images, because each cuts the eye crops differently
+    private void loadCalibrationData() {
+        Bitmap[] left = getCalibrationFiles(mContext, calibrationFileNames(leftEyeFileNames));
+        Bitmap[] right = getCalibrationFiles(mContext, calibrationFileNames(rightEyeFileNames));
+        leftCalibrationData = left != null ? left : new Bitmap[calibrationTemplateNum];
+        rightCalibrationData = right != null ? right : new Bitmap[calibrationTemplateNum];
+    }
+
+    String[] calibrationFileNames(String[] baseNames) {
+        String[] names = new String[baseNames.length];
+        for (int i = 0; i < baseNames.length; i++) names[i] = visionPipeline.calibrationFileName(baseNames[i]);
+        return names;
     }
 
     public String getString(String name) { // read
@@ -243,6 +250,18 @@ public class UserDataManager extends Application {
         setString("Sensitivity", Integer.toString(sensitivity));
     }
 
+    public VisionPipeline getVisionPipeline() {
+        return visionPipeline;
+    }
+    /** Switches pipeline and loads its own calibration; returns false when it was already active. */
+    public boolean setVisionPipeline(VisionPipeline pipeline) {
+        if (pipeline == null || pipeline == visionPipeline) return false;
+        visionPipeline = pipeline;
+        setString("VisionPipeline", pipeline.getSettingValue());
+        if (mContext != null) loadCalibrationData();
+        return true;
+    }
+
     public Bitmap[] getLeftCalibrationData() {
         return leftCalibrationData;
     }
@@ -250,7 +269,7 @@ public class UserDataManager extends Application {
         if (this.leftCalibrationData == null || index < 0 || index >= this.leftCalibrationData.length) return;
         this.leftCalibrationData[index] = leftCalibrationData;
         if (leftEyeFileNames != null && index < leftEyeFileNames.length && leftCalibrationData != null && mContext != null) {
-            storeCalibrationFile(mContext, leftEyeFileNames[index], leftCalibrationData);
+            storeCalibrationFile(mContext, visionPipeline.calibrationFileName(leftEyeFileNames[index]), leftCalibrationData);
         }
     }
 
@@ -262,7 +281,7 @@ public class UserDataManager extends Application {
         if (this.rightCalibrationData == null || index < 0 || index >= this.rightCalibrationData.length) return;
         this.rightCalibrationData[index] = rightCalibrationData;
         if (rightEyeFileNames != null && index < rightEyeFileNames.length && rightCalibrationData != null && mContext != null) {
-            storeCalibrationFile(mContext, rightEyeFileNames[index], rightCalibrationData);
+            storeCalibrationFile(mContext, visionPipeline.calibrationFileName(rightEyeFileNames[index]), rightCalibrationData);
         }
     }
 }

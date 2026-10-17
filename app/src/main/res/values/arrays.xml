@@ -4,6 +4,11 @@
         <item>English</item>
         <item>Hinglish</item>
     </string-array>
+    <!-- Same order as VisionPipeline -->
+    <string-array name="visionPipeline_options">
+        <item>Classic</item>
+        <item>OpenCV 5</item>
+    </string-array>
     <string-array name="textEntry_options">
         <item>Letter-by-letter</item>
         <item>Ambiguous Keyboard Only</item>

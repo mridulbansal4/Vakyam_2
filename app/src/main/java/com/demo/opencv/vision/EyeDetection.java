@@ -9,6 +9,7 @@ import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
+import org.opencv.core.Rect;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
@@ -30,10 +31,16 @@ public class EyeDetection {
     public boolean lastIrisFound = false;
     public float sensitivity = 0.015f;
     static int IMAGE_WIDTH = 40, IMAGE_HEIGHT = 14;
+    // OpenCV 5 pipeline: templates keep a 2 px margin cut off each side, so matchTemplate can slide them over the
+    // full 44x18 live crop and absorb a couple of pixels of crop jitter (a 5x5 search).
+    static final int CROP_WIDTH = 44, CROP_HEIGHT = 18, TEMPLATE_MARGIN = 2;
+    VisionPipeline pipeline = VisionPipeline.DEFAULT;
+    private Mat matchResult; // made on first use, so EyeDetection still builds in JVM tests
 
     public void updateCalibrationTemplates(Context applicationContext, boolean left) {
         if (applicationContext == null) return;
         userDataManager = (UserDataManager) applicationContext;
+        pipeline = userDataManager.getVisionPipeline();
         if (userDataManager.getSensitivity() > 0) {
             sensitivity = userDataManager.getSensitivity() / 1000.0f;
         }
@@ -57,7 +64,11 @@ public class EyeDetection {
             templates[i] = new Mat(bm[i].getHeight(), bm[i].getWidth(), CvType.CV_8UC4);
             Utils.bitmapToMat(bm[i], templates[i]);
             Imgproc.cvtColor(templates[i], templates[i], Imgproc.COLOR_BGR2GRAY);
-            Imgproc.resize(templates[i], templates[i], new Size(IMAGE_WIDTH,IMAGE_HEIGHT), Imgproc.INTER_AREA);
+            if (pipeline.getUsesOpenCv5Stages()) {
+                templates[i] = matchTemplateCore(templates[i]);
+            } else {
+                Imgproc.resize(templates[i], templates[i], new Size(IMAGE_WIDTH,IMAGE_HEIGHT), Imgproc.INTER_AREA);
+            }
         }
         if (left) {
             leftTemplates = templates;
@@ -91,6 +102,36 @@ public class EyeDetection {
         destSquared.release();
         return sum;
     }
+    // The stored calibration crop minus its margin; it is already CLAHE-normalised, as the live crops are
+    private static Mat matchTemplateCore(Mat storedCrop) {
+        Mat crop = storedCrop;
+        if (crop.cols() != CROP_WIDTH || crop.rows() != CROP_HEIGHT) {
+            crop = new Mat();
+            Imgproc.resize(storedCrop, crop, new Size(CROP_WIDTH, CROP_HEIGHT), 0, 0, Imgproc.INTER_AREA);
+        }
+        Mat core = crop.submat(new Rect(TEMPLATE_MARGIN, TEMPLATE_MARGIN,
+                CROP_WIDTH - 2 * TEMPLATE_MARGIN, CROP_HEIGHT - 2 * TEMPLATE_MARGIN)).clone();
+        if (crop != storedCrop) crop.release();
+        storedCrop.release();
+        return core;
+    }
+
+    /**
+     * OpenCV 5 template error: 1 minus the best normalised cross-correlation (TM_CCOEFF_NORMED) found while sliding
+     * the template over the live crop. Mean-removed and contrast-normalised, so exposure and contrast drift cancel
+     * out. 0 = identical, 1 = unrelated.
+     */
+    double matchTemplateError(Mat liveCrop, Mat template) {
+        if (liveCrop == null || template == null || liveCrop.empty() || template.empty()
+                || liveCrop.cols() < template.cols() || liveCrop.rows() < template.rows()) {
+            return 1000000.0;
+        }
+        if (matchResult == null) matchResult = new Mat();
+        Imgproc.matchTemplate(liveCrop, template, matchResult, Imgproc.TM_CCOEFF_NORMED);
+        double best = Core.minMaxLoc(matchResult).maxVal;
+        return Double.isNaN(best) ? 1.0 : 1.0 - best; // a flat crop has no correlation
+    }
+
     static final double CLEAR_MATCH_RATIO = 0.9;
 
     // The best template must beat the runner-up by a margin; a look halfway between two templates is not an input
@@ -99,6 +140,9 @@ public class EyeDetection {
     }
 
     float effectiveSensitivity() { // the setting can change in dev mode after the templates were loaded
+        if (pipeline.getUsesOpenCv5Stages()) {
+            return pipeline.matchThreshold(userDataManager != null ? userDataManager.getSensitivity() : 0);
+        }
         return (userDataManager != null && userDataManager.getSensitivity() > 0)
                 ? (userDataManager.getSensitivity() / 1000.0f)
                 : sensitivity;
@@ -110,6 +154,10 @@ public class EyeDetection {
         double[] templateError = new double[userDataManager != null ? userDataManager.calibrationTemplateNum : 6];
         if (eyeROI == null || eyeROI.empty() || detectionOutput == null) {
             return templateError;
+        }
+
+        if (pipeline.getUsesOpenCv5Stages()) {
+            return runMatchTemplateModel(detectionOutput, eyeROI, type, templateError);
         }
 
         // resize the eyeROI to the correct image size/format
@@ -151,6 +199,32 @@ public class EyeDetection {
 
         return templateError;
 
+    }
+
+    // OpenCV 5 pipeline: eyeROI is the 44x18 aligned, CLAHE-normalised crop. It stays in testingMats unchanged,
+    // because calibration stores whatever is there and the templates must be cut from the same full-size crop.
+    private double[] runMatchTemplateModel(DetectionOutput detectionOutput, Mat eyeROI, int type, double[] templateError) {
+        Mat[] compareTemplates = (type == 0) ? leftTemplates : rightTemplates;
+        double minError = 10000000, secondError = 10000000;
+        int index = 0;
+        for (int i = 0; i < templateError.length; i++) {
+            double error = 1000000.0;
+            if (compareTemplates != null && i < compareTemplates.length && compareTemplates[i] != null) {
+                error = matchTemplateError(eyeROI, compareTemplates[i]);
+            }
+            templateError[i] = error;
+            if (error < minError) {
+                secondError = minError;
+                minError = error;
+                index = i;
+            } else if (error < secondError) {
+                secondError = error;
+            }
+        }
+        boolean success = minError <= effectiveSensitivity() && isClearMatch(minError, secondError);
+        int lookTag = (index >= 0 && index < tags.length) ? tags[index] : 0;
+        detectionOutput.setEyeData(type, success, lookTag, 1, (float) minError);
+        return templateError;
     }
 
     // Intensity below which the given fraction of pixels fall; keeps the iris blob present in any lighting.

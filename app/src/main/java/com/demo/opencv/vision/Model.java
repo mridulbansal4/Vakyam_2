@@ -25,6 +25,7 @@ import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.imgproc.CLAHE;
 import org.opencv.imgproc.Imgproc;
 
 import java.io.IOException;
@@ -74,6 +75,20 @@ public class Model implements ContractInterface.Model {
     // Experimental, default off: green-weighted grayscale for the iris detector only (never the template path)
     private volatile boolean warmLightIrisGray = false;
     private Mat warmGrayWeights;
+
+    // OpenCV 5 pipeline (VisionPipeline.OPENCV5); the classic path never touches these
+    private VisionPipeline activePipeline = VisionPipeline.DEFAULT;
+    // Native OpenCV objects are made in initialize(), never at construction, so Model still builds in JVM tests
+    private YuNetFaceDetector yunet;
+    private FaceQualityMeter qualityMeter;
+    final FaceQualityGate qualityGate = new FaceQualityGate();
+    private final OneEuroFilter rollFilter = new OneEuroFilter(1.5, 1.0, 1.0); // steadies landmark jitter, follows a real tilt
+    private CLAHE clahe;
+    private Mat grayFrame, claheFace, cropTransform;
+    private boolean faceFound = false; // this frame, by whichever detector found it
+    private long lastBenchLogMs = 0;
+    static final double CLAHE_CLIP_LIMIT = 2.0;
+    static final int CLAHE_TILES = 4;
 
     @Override
     public void setFaceRoiDetection(boolean enabled) { faceRoiDetection = enabled; }
@@ -131,6 +146,14 @@ public class Model implements ContractInterface.Model {
         } else {
             Log.d("OpenCVDebug", "success");
         }
+        clahe = Imgproc.createCLAHE(CLAHE_CLIP_LIMIT, new Size(CLAHE_TILES, CLAHE_TILES));
+        grayFrame = new Mat();
+        claheFace = new Mat();
+        cropTransform = new Mat(2, 3, CvType.CV_64F);
+        qualityMeter = new FaceQualityMeter();
+        yunet = new YuNetFaceDetector();
+        yunet.initialize(applicationContext);
+        activePipeline = userDataManager.getVisionPipeline();
         updateCalibrationTemplates();
         prevInputs = new ArrayList<>();
         lookCount = new int[lookNum]; // change based on how many detections there are
@@ -327,15 +350,33 @@ public class Model implements ContractInterface.Model {
         return rotated;
     }
 
+    // The pipeline can be switched in Settings while the camera runs; each one has its own templates
+    private void syncPipeline() {
+        if (userDataManager == null) return;
+        VisionPipeline wanted = userDataManager.getVisionPipeline();
+        if (wanted == activePipeline) return;
+        Log.i("LookCamera", "Vision pipeline " + activePipeline + " -> " + wanted);
+        activePipeline = wanted;
+        updateCalibrationTemplates();
+        dwellSelector.cancel();
+        qualityGate.reset();
+        rollFilter.reset();
+    }
+
     @Override
     public DetectionOutput classifyLook(Mat cameraMat) {
+        long startNs = System.nanoTime();
+        syncPipeline();
         int rotation = FRAME_ROTATIONS[rotationIndex];
         Mat upright = rotateFrame(cameraMat, rotation);
         try {
             DetectionOutput output = classifyUprightFrame(upright);
-            output.faceDetected = faceDetector.faceDetected;
+            output.faceDetected = faceFound;
             output.frameRotation = rotation;
-            if (faceDetector.faceDetected) {
+            output.pipeline = activePipeline;
+            output.processingMs = (System.nanoTime() - startNs) / 1e6f;
+            logBenchmark(output);
+            if (faceFound) {
                 if (!rotationConfirmed) Log.i("LookCamera", "Face found at frame rotation " + rotation);
                 rotationConfirmed = true;
                 framesWithoutFace = 0;
@@ -351,13 +392,82 @@ public class Model implements ContractInterface.Model {
         }
     }
 
+    // One line a second, tagged VisionBench, so a benchmark run can be read straight off logcat
+    private void logBenchmark(DetectionOutput out) {
+        long now = System.currentTimeMillis();
+        if (now - lastBenchLogMs < 1000) return;
+        lastBenchLogMs = now;
+        LookData a = out.AnalyzedData;
+        Log.i("VisionBench", String.format(java.util.Locale.US,
+                "pipeline=%s ms=%.1f face=%b yunet=%b look=%d ok=%b err=%.4f gesture=%d issues=%s %s",
+                out.pipeline.getSettingValue(), out.processingMs, out.faceDetected, out.yunetFace,
+                a != null ? a.LookType : -1, a != null && a.Success, a != null ? a.LookProbability : Float.NaN,
+                out.gestureOutput, out.qualityIssues, out.quality != null ? out.quality.summary() : "quality=--"));
+    }
+
+    // Face box grown to cover brows and cheeks, clipped to the frame; null when there is no usable face box
+    private static Rect grownFaceRect(Rect face, int cols, int rows, double grow) {
+        if (face == null) return null;
+        int dx = (int) Math.round(face.width * grow), dy = (int) Math.round(face.height * grow);
+        int x0 = Math.max(0, face.x - dx), y0 = Math.max(0, face.y - dy);
+        int x1 = Math.min(cols, face.x + face.width + dx), y1 = Math.min(rows, face.y + face.height + dy);
+        return (x1 - x0 >= 32 && y1 - y0 >= 32) ? new Rect(x0, y0, x1 - x0, y1 - y0) : null;
+    }
+
+    private static Rect toCvRect(android.graphics.Rect r) {
+        return r == null ? null : new Rect(r.left, r.top, r.width(), r.height());
+    }
+
+    private static Rect toCvRect(YuNetFaceDetector.Face f) {
+        return f == null ? null : new Rect(Math.round(f.x), Math.round(f.y), Math.round(f.width), Math.round(f.height));
+    }
+
+    private static float[] interleaved(List<PointF> points) {
+        if (points == null) return null;
+        float[] xy = new float[points.size() * 2];
+        for (int i = 0; i < points.size(); i++) { xy[2 * i] = points.get(i).x; xy[2 * i + 1] = points.get(i).y; }
+        return xy;
+    }
+
+    // Head roll from the centres of ML Kit's two eyelid contours (16 points each), else from YuNet's eye
+    // landmarks, which are a few degrees less accurate; smoothed over frames
+    private double headRoll(YuNetFaceDetector.Face yFace, long nowMs) {
+        double roll = Double.NaN;
+        double[] a = EyeCropGeometry.centroid(interleaved(faceDetector.leftEyePoints));
+        double[] b = EyeCropGeometry.centroid(interleaved(faceDetector.rightEyePoints));
+        if (a != null && b != null) {
+            roll = EyeCropGeometry.rollFromEyeCenters(a[0], a[1], b[0], b[1]);
+        } else if (yFace != null) {
+            roll = yFace.rollRad();
+        }
+        if (Double.isNaN(roll)) { rollFilter.reset(); return 0; }
+        return rollFilter.filter(roll, nowMs);
+    }
+
+    // One warpAffine cuts, rotates and scales the eye out of the CLAHE-normalised face region
+    private Mat alignedEyeCrop(EyeCropGeometry geometry, Mat source, int originX, int originY) {
+        if (geometry == null) return null;
+        cropTransform.put(0, 0, geometry.forwardMatrix(originX, originY));
+        Mat crop = new Mat();
+        Imgproc.warpAffine(source, crop, cropTransform, new Size(IMAGE_WIDTH, IMAGE_HEIGHT),
+                Imgproc.INTER_LINEAR, Core.BORDER_REPLICATE);
+        return crop;
+    }
+
     private DetectionOutput classifyUprightFrame(Mat rgbMat) { @OptIn(markerClass = ExperimentalGetImage.class)
 
         Mat leftEye = null, rightEye = null;
         Bitmap bmp;
 
+        boolean cv5 = activePipeline.getUsesOpenCv5Stages() && clahe != null; // clahe is null until initialize()
+        long nowMs = System.currentTimeMillis();
+        // OpenCV 5: YuNet finds the face and ML Kit only reads the eyelids inside it. If YuNet misses, ML Kit
+        // scans the whole frame, so this path never finds fewer faces than the classic one.
+        YuNetFaceDetector.Face yFace = cv5 ? yunet.detect(rgbMat) : null;
+
         // google ml kit detection
-        Rect roi = detectionRoi(rgbMat);
+        Rect roi = cv5 ? grownFaceRect(toCvRect(yFace), rgbMat.cols(), rgbMat.rows(), 0.3) : detectionRoi(rgbMat);
+        if (cv5 && roi != null && (roi.width < 96 || roi.height < 96)) roi = null;
         Mat detectSrc = (roi != null) ? rgbMat.submat(roi) : rgbMat;
         Mat rgbaMat = new Mat();
         Imgproc.cvtColor(detectSrc, rgbaMat, Imgproc.COLOR_RGB2RGBA);
@@ -372,6 +482,27 @@ public class Model implements ContractInterface.Model {
         detectionOutput.gestureOutput = 0;
         detectionOutput.eyeOpenProbability = Math.max(faceDetector.leftEyeOpenProb, faceDetector.rightEyeOpenProb);
         detectionOutput.eyeAspectRatio = moreOpenEyeAspectRatio();
+        faceFound = faceDetector.faceDetected || yFace != null;
+        detectionOutput.yunetFace = yFace != null;
+
+        // OpenCV 5: grey frame, face quality, and a CLAHE-normalised face region to cut the eyes from
+        Rect claheRegion = null;
+        if (cv5) {
+            Imgproc.cvtColor(rgbMat, grayFrame, Imgproc.COLOR_RGB2GRAY);
+            Rect faceRect = yFace != null ? toCvRect(yFace) : toCvRect(faceDetector.faceBound);
+            FaceQuality quality = faceRect != null ? qualityMeter.measure(grayFrame, faceRect, yFace) : null;
+            qualityGate.update(quality, nowMs);
+            detectionOutput.quality = quality;
+            detectionOutput.qualityIssues = qualityGate.getActive();
+            detectionOutput.qualityPrimary = qualityGate.getPrimary();
+            detectionOutput.qualityOkForCalibration = quality != null && qualityGate.getOkForCalibration();
+
+            claheRegion = grownFaceRect(faceRect, grayFrame.cols(), grayFrame.rows(), 0.15);
+            if (claheRegion == null) claheRegion = new Rect(0, 0, grayFrame.cols(), grayFrame.rows());
+            Mat face = grayFrame.submat(claheRegion);
+            clahe.apply(face, claheFace);
+            face.release();
+        }
 
         if (!faceDetector.faceDetected && faceDetector.leftEyeContour == null && faceDetector.rightEyeContour == null) { // no face/eye detection
             return detectionOutput;
@@ -387,7 +518,27 @@ public class Model implements ContractInterface.Model {
 
         Rect leftEyeBound = null;
         Mat leftEyeIris = null, rightEyeIris = null;
-        if (faceDetector.leftEyePoints != null) { // left eye available
+        EyeCropGeometry leftGeometry = null, rightGeometry = null;
+        if (cv5) {
+            boolean calibrated = userDataManager != null && userDataManager.checkCalibrationFiles();
+            double roll = headRoll(yFace, nowMs);
+            if (faceDetector.leftEyePoints != null) {
+                leftGeometry = EyeCropGeometry.fromContour(interleaved(faceDetector.leftEyePoints), roll,
+                        IMAGE_WIDTH, IMAGE_HEIGHT, rgbMat.cols(), rgbMat.rows());
+                leftEye = alignedEyeCrop(leftGeometry, claheFace, claheRegion.x, claheRegion.y);
+                if (leftEye != null && !bothEyesClosed && calibrated) {
+                    leftTemplateError = detector.runEyeModel(detectionOutput, leftEye, 0);
+                }
+            }
+            if (faceDetector.rightEyePoints != null) {
+                rightGeometry = EyeCropGeometry.fromContour(interleaved(faceDetector.rightEyePoints), roll,
+                        IMAGE_WIDTH, IMAGE_HEIGHT, rgbMat.cols(), rgbMat.rows());
+                rightEye = alignedEyeCrop(rightGeometry, claheFace, claheRegion.x, claheRegion.y);
+                if (rightEye != null && !bothEyesClosed && calibrated) {
+                    rightTemplateError = detector.runEyeModel(detectionOutput, rightEye, 1);
+                }
+            }
+        } else if (faceDetector.leftEyePoints != null) { // left eye available
             List<PointF> leftEyePoints = faceDetector.leftEyePoints;
             leftEyeBound = getBoundingBox(leftEyePoints, rgbMat);
             if (leftEyeBound != null) {
@@ -403,7 +554,7 @@ public class Model implements ContractInterface.Model {
         }
 
         Rect rightEyeBound = null;
-        if (faceDetector.rightEyePoints != null) { // right eye available
+        if (!cv5 && faceDetector.rightEyePoints != null) { // right eye available
             List<PointF> rightEyePoints = faceDetector.rightEyePoints;
             rightEyeBound = getBoundingBox(rightEyePoints, rgbMat);
             if (rightEyeBound != null) {
@@ -421,10 +572,10 @@ public class Model implements ContractInterface.Model {
         // testing data
         detectionOutput.testingMats[0] = leftEye;
         detectionOutput.testingMats[1] = rightEye;
-        long nowMs = System.currentTimeMillis();
         boolean motionStable = (motionStabilizer == null) || motionStabilizer.isMotionStable();
         boolean phoneShaking = phoneMotion != null && phoneMotion.isShaking();
-        analyzeLookOutput(nowMs, motionStable && !phoneShaking); // analyze the output before returning to the presenter
+        boolean qualityBlocks = cv5 && qualityGate.getBlocksInput(); // head turned well away: the templates don't apply
+        analyzeLookOutput(nowMs, motionStable && !phoneShaking && !qualityBlocks); // analyze the output before returning to the presenter
 
         // Transit-robust Normalized Iris Estimation and Ballistic Gesture Detection
         // A flick can only say left/right/up, so once the six calibrated templates exist it must not override them:
@@ -444,21 +595,24 @@ public class Model implements ContractInterface.Model {
         // Robust eye contour selection: prefer left eye, fallback to right eye if left eye is missing or out of frame
         List<PointF> primaryPoints = null;
         Rect primaryBound = null;
+        EyeCropGeometry primaryGeometry = null;
         Mat primaryEyeMat = null;
         Mat primaryIrisMat = null;
-        if (faceDetector.leftEyePoints != null && leftEyeBound != null && leftEye != null) {
+        if (faceDetector.leftEyePoints != null && (leftEyeBound != null || leftGeometry != null) && leftEye != null) {
             primaryPoints = faceDetector.leftEyePoints;
             primaryBound = leftEyeBound;
+            primaryGeometry = leftGeometry;
             primaryEyeMat = leftEye;
             primaryIrisMat = leftEyeIris;
-        } else if (faceDetector.rightEyePoints != null && rightEyeBound != null && rightEye != null) {
+        } else if (faceDetector.rightEyePoints != null && (rightEyeBound != null || rightGeometry != null) && rightEye != null) {
             primaryPoints = faceDetector.rightEyePoints;
             primaryBound = rightEyeBound;
+            primaryGeometry = rightGeometry;
             primaryEyeMat = rightEye;
             primaryIrisMat = rightEyeIris;
         }
 
-        if (primaryPoints != null && primaryBound != null && primaryEyeMat != null && !primaryPoints.isEmpty()) {
+        if (primaryPoints != null && (primaryBound != null || primaryGeometry != null) && primaryEyeMat != null && !primaryPoints.isEmpty()) {
             List<PointF> points = primaryPoints;
             List<NormalizedIrisEstimator.Point2D> pts = new ArrayList<>(points.size());
             for (PointF p : points) {
@@ -470,8 +624,15 @@ public class Model implements ContractInterface.Model {
 
             NormalizedIrisEstimator.Point2D irisPt = null;
             if (!Double.isNaN(irisRoi.x) && !Double.isNaN(irisRoi.y) && irisRoi.x > 0 && irisRoi.y > 0) {
-                float irisX = primaryBound.x + (float) (irisRoi.x * primaryBound.width / (double) IMAGE_WIDTH);
-                float irisY = primaryBound.y + (float) (irisRoi.y * primaryBound.height / (double) IMAGE_HEIGHT);
+                float irisX, irisY;
+                if (primaryGeometry != null) { // rotated crop: map back through the inverse transform
+                    double[] frame = primaryGeometry.toFrame(irisRoi.x, irisRoi.y);
+                    irisX = (float) frame[0];
+                    irisY = (float) frame[1];
+                } else {
+                    irisX = primaryBound.x + (float) (irisRoi.x * primaryBound.width / (double) IMAGE_WIDTH);
+                    irisY = primaryBound.y + (float) (irisRoi.y * primaryBound.height / (double) IMAGE_HEIGHT);
+                }
                 irisPt = new NormalizedIrisEstimator.Point2D(irisX, irisY);
             }
             detectionOutput.irisFound = irisPt != null && detector.lastIrisFound;

@@ -96,6 +96,30 @@
                     android:orientation="horizontal">
 
                     <TextView
+                        style="@style/Vk.Text.Label"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="0.4"
+                        android:text="@string/Settings_VisionPipeline" />
+
+                    <Spinner
+                        android:id="@+id/visionPipelineSpinner"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="0.6"
+                        android:background="@drawable/text_rounded_light_green"
+                        android:entries="@array/visionPipeline_options"
+                        android:popupBackground="@drawable/bg_card" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal">
+
+                    <TextView
                         android:id="@+id/sensitivityTitle"
                         style="@style/Vk.Text.Label"
                         android:layout_width="0dp"

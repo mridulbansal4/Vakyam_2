@@ -22,10 +22,12 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.demo.opencv.vision.DetectionOutput;
+import com.demo.opencv.vision.VisionPipeline;
 import com.demo.opencv.R;
 import com.demo.opencv.UIViewModel;
 import com.demo.opencv.UserDataManager;
@@ -47,7 +49,7 @@ public class dev_mode_display extends Fragment {
     Handler handler;
     Runnable updateUI;
     SeekBar sensitivitySeekBar;
-    Spinner textEntrySpinner, languageSpinner;
+    Spinner textEntrySpinner, languageSpinner, visionPipelineSpinner;
     UserDataManager userDataManager;
 
     public dev_mode_display() {
@@ -88,6 +90,17 @@ public class dev_mode_display extends Fragment {
         }
     }
 
+    // e.g. "OpenCV 5 · 14 ms · YuNet face · TOO_DARK"
+    private static String pipelineStatus(DetectionOutput d) {
+        StringBuilder b = new StringBuilder(d.pipeline.getLabel())
+                .append(String.format(java.util.Locale.US, " · %.0f ms", d.processingMs));
+        if (d.pipeline.getUsesOpenCv5Stages()) {
+            b.append(d.yunetFace ? " · YuNet face" : d.faceDetected ? " · ML Kit face" : " · no face");
+            b.append(" · ").append(d.qualityPrimary != null ? d.qualityPrimary.name() : "image OK");
+        }
+        return b.toString();
+    }
+
     public void updateSettings() {
         int sensitivity = userDataManager.getSensitivity();
         int textEntryMode = userDataManager.getTextEntryMode();
@@ -100,6 +113,7 @@ public class dev_mode_display extends Fragment {
         textEntrySpinner.setSelection(textEntryMode);
 
         languageSpinner.setSelection(Objects.equals(language, "Hinglish") ? 1 : 0);
+        visionPipelineSpinner.setSelection(userDataManager.getVisionPipeline().ordinal());
     }
 
     @Override
@@ -122,6 +136,7 @@ public class dev_mode_display extends Fragment {
         sensitivitySeekBar = view.findViewById(R.id.seekBar);
         textEntrySpinner = view.findViewById(R.id.textEntrySpinner);
         languageSpinner = view.findViewById(R.id.languageSpinner);
+        visionPipelineSpinner = view.findViewById(R.id.visionPipelineSpinner);
 
         Context ctx = getContext() != null ? getContext() : requireActivity();
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(ctx, R.array.language_options, R.layout.custom_spinner_item);
@@ -131,6 +146,11 @@ public class dev_mode_display extends Fragment {
         ArrayAdapter<CharSequence> adapter2 = ArrayAdapter.createFromResource(ctx, R.array.textEntry_options, R.layout.custom_spinner_item);
         adapter2.setDropDownViewResource(R.layout.custom_spinner_item);
         textEntrySpinner.setAdapter(adapter2);
+
+        // Same order as VisionPipeline, so the position is the ordinal
+        ArrayAdapter<CharSequence> adapter3 = ArrayAdapter.createFromResource(ctx, R.array.visionPipeline_options, R.layout.custom_spinner_item);
+        adapter3.setDropDownViewResource(R.layout.custom_spinner_item);
+        visionPipelineSpinner.setAdapter(adapter3);
 
         updateSettings();
         // set seek bars
@@ -162,6 +182,24 @@ public class dev_mode_display extends Fragment {
                 String language = position == 1 ? "Hinglish" : "English";
                 Log.d("SpinnerTesting", "language changed to " + language);
                 userDataManager.setLanguage(language);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Another interface callback
+            }
+        });
+
+        visionPipelineSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                VisionPipeline[] pipelines = VisionPipeline.values();
+                if (position < 0 || position >= pipelines.length) return;
+                if (userDataManager.setVisionPipeline(pipelines[position])) {
+                    Log.i("SpinnerTesting", "vision pipeline changed to " + pipelines[position]);
+                    if (!userDataManager.checkCalibrationFiles()) {
+                        Toast.makeText(requireContext(), R.string.Settings_VisionPipelineNeedsCalibration, Toast.LENGTH_LONG).show();
+                    }
+                }
             }
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
@@ -207,6 +245,7 @@ public class dev_mode_display extends Fragment {
 
                 texts[0].setText(detection.AnalyzedData.Success ? "Look detected" : "Looking for a look…");
             }
+            texts[3].setText(pipelineStatus(detection));
         });
 
         TextView sensorHealthText = view.findViewById(R.id.sensorHealthText);

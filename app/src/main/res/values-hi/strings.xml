@@ -10,6 +10,13 @@
     <string name="Calibration_StatusHoldLook">Nazar ek jagah rakhiye.</string>
     <string name="Calibration_StatusLookFurther">Aankhein us taraf aur zyada le jaaiye.</string>
     <string name="Calibration_StatusHolding">Rukiye… capture ho raha hai</string>
+    <string name="Calibration_QualityTurnedAway">Chehra phone ki taraf kijiye.</string>
+    <string name="Calibration_QualityTooFar">Phone thoda paas laaiye.</string>
+    <string name="Calibration_QualityTooDark">Bahut andhera hai. Chehre par roshni daaliye.</string>
+    <string name="Calibration_QualityBacklit">Roshni peeche se aa rahi hai. Roshni ki taraf mudiye, ya phone hataiye.</string>
+    <string name="Calibration_QualityOverexposed">Chehre par roshni bahut tez hai. Seedhi roshni se hatiye.</string>
+    <string name="Calibration_QualityBlurry">Tasveer dhundhli hai. Phone ko hilne mat dijiye.</string>
+    <string name="Calibration_QualityTilted">Phone ko aankhon ki seedh mein rakhiye.</string>
     <string name="Calibration_LookStraight">Seedha dekhiye</string>
     <string name="Calibration_LookLeft">Left dekhiye</string>
     <string name="Calibration_LookRight">Right dekhiye</string>

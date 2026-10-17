@@ -346,6 +346,7 @@ Vakyam/
 │   ├── user-manual.pdf
 │   ├── sensors/                      # design notes for each sensor safeguard
 │   └── assets/screenshots/           # README screenshots, captured from the device
+├── eval/                             # desktop OpenCV 5 checks of the vision pipeline (pinned requirements)
 ├── tools/telemetry/                  # ADB scripts for reading device sensors
 └── Models/                           # local staging for on-device models (git-ignored)
 ```
@@ -391,6 +392,67 @@ Before calibration, a second path keeps the app usable: the iris centre is locat
 crop, converted to scale-invariant ratios, smoothed by a 1€ filter, and fed to a saccade
 detector that recognises left, right and up flicks. Once the six templates exist, they take
 over - a flick can only say left/right/up and would otherwise swallow the upper corners.
+
+### Two pipelines: classic and OpenCV 5
+
+**Settings → Vision pipeline** switches between two ways of finding and matching the eyes. The
+classic pipeline above is kept unchanged so the OpenCV 5 one can be benchmarked against it on
+the same phone. Each pipeline keeps its own calibration
+([`VisionPipeline`](app/src/main/java/com/demo/opencv/vision/VisionPipeline.kt)), because each
+cuts the eye crops differently. Classic is the default until the OpenCV 5 thresholds have
+been tuned on a phone.
+
+| Stage | Classic | OpenCV 5 |
+|---|---|---|
+| Find the face | ML Kit, whole frame | **YuNet** (`cv::FaceDetectorYN`) on a 320 px copy; ML Kit then reads the eyelids only inside YuNet's face box, and scans the whole frame if YuNet misses |
+| Normalise light | mean brightness removed per crop | **CLAHE** (clip 2.0, 4×4 tiles) on the face region |
+| Cut the eye | axis-aligned box round the eyelid contour, stretched to 44×18 | **one `warpAffine`** per eye: rotated by the head's roll, scaled by the eye's width only, so neither a tilted head nor wide-open lids change the crop |
+| Match templates | hand-written mean-removed squared error | **`matchTemplate` (TM_CCOEFF_NORMED)** with a 2 px margin, a 5×5 search that absorbs crop jitter |
+| Check the image | - | **quality gate**: sharpness (variance of the Laplacian), exposure and backlight, face size, and head pose from **`solvePnP` (SQPnP)** on YuNet's five landmarks |
+
+```mermaid
+flowchart LR
+    F["RGB frame"] --> Y["YuNet<br/>face + 5 landmarks"]
+    Y --> M["ML Kit eyelid contours<br/>inside the face box"]
+    Y --> Q["Quality gate<br/>Laplacian · exposure · solvePnP"]
+    F --> C["CLAHE<br/>on the face region"]
+    M --> W["warpAffine per eye<br/>roll-aligned 44×18"]
+    C --> W
+    W --> T["matchTemplate<br/>vs 6 calibrated looks"]
+    T --> D["dwell selector"]
+    Q -- "head turned away" --> D
+    Q -- "dark / blurred / far" --> CAL["calibration refuses<br/>the capture"]
+    style W fill:#34463F,stroke:#F4F1E8,color:#F4F1E8
+    style Q fill:#34463F,stroke:#F4F1E8,color:#F4F1E8
+```
+
+**The quality gate never silences the patient.**
+[`FaceQualityGate`](app/src/main/java/com/demo/opencv/vision/FaceQualityGate.kt) only blocks
+live input when the head is turned more than 35° away, because the templates no longer apply
+then. A dark room, a soft image or a distant face are shown to the caregiver and refuse
+calibration captures, since a template stored from a bad frame misfires for the whole session.
+After two re-prompts only the blocking issue still refuses a capture, so limits that are wrong
+for a particular phone can never stall calibration.
+
+**Why the crop follows the eyelids, not YuNet's eye points.** YuNet's eye landmarks sit near
+the iris, which moves with the look; a crop centred on them would make every direction look the
+same. They are also a few degrees off for head roll (a 15° tilt measured as 11° on a test
+photo), so roll comes from ML Kit's two 16-point eyelid contours, with YuNet as the fallback.
+
+**Measured on desktop OpenCV 5** with [`eval/alignment_check.py`](eval/alignment_check.py),
+which runs the same steps and matrix maths as the app on a face photo tilted by several
+angles, with the eyelid contours moved exactly with the image (error = 1 − normalised
+cross-correlation against the upright crop):
+
+| Head tilt | Roll-aligned crop | Same crop without alignment | Wrong eye |
+|---|---|---|---|
+| 5° | 0.001-0.002 | 0.003-0.004 | 1.02 |
+| 15° | 0.001-0.002 | 0.040-0.042 | 1.03 |
+| -15° | 0.001-0.003 | 0.150-0.163 | 1.03 |
+| 25° | 0.002 | 0.101-0.145 | 1.05 |
+
+This isolates the alignment step with perfect contours; it is not yet a measurement on
+patients or on the phone's camera.
 
 ---
 
@@ -580,7 +642,8 @@ governor never drops below 10 fps because the saccade detector resets on gaps ov
 | **Architecture** | Model-View-Presenter · Navigation component · ViewBinding · LiveData |
 | **Camera** | CameraX 1.1 (`ImageAnalysis`, front camera) |
 | **Face and eye landmarks** | Google ML Kit Face Detection 16.1.5 (contours + eye-open probability) |
-| **Image processing** | OpenCV 5.0.0 (`org.opencv:opencv:5.0.0.1`, Maven Central) |
+| **Image processing** | OpenCV 5.0.0 (`org.opencv:opencv:5.0.0.1`, Maven Central): YuNet, CLAHE, `warpAffine`, `matchTemplate`, `solvePnP` |
+| **Face detection (OpenCV 5 pipeline)** | YuNet `face_detection_yunet_2023mar.onnx` from the OpenCV model zoo (MIT), bundled in `app/src/main/assets` |
 | **LLM** | Gemma 4 E2B on LiteRT-LM 0.17.1, GPU with CPU fallback |
 | **Speech-to-text** | Android `SpeechRecognizer` online · Whisper (base, int8) via sherpa-onnx 1.13.8 offline |
 | **Text-to-speech** | Android `TextToSpeech` (US English, Indian English, Hindi voices) |
@@ -690,7 +753,13 @@ adb shell cmd thermalservice reset && adb shell dumpsys battery reset
 ```
 
 Useful log tags: `GemmaManager`, `GemmaTiming` (per-sentence latency), `SensorHealth`,
-`LookCamera`, `TextGeneration`.
+`LookCamera`, `TextGeneration`, `YuNet`, and `VisionBench`: one line a second with the
+pipeline, frame time, which detector found the face, the look and its error, and every
+quality measurement, so a benchmark run can be read straight off logcat:
+
+```bash
+adb logcat -s VisionBench
+```
 
 ---
 
@@ -715,8 +784,9 @@ Useful log tags: `GemmaManager`, `GemmaTiming` (per-sentence latency), `SensorHe
 Every decision that can be separated from Android is a pure class with an injected clock, so
 it can be tested on the JVM in milliseconds.
 
-- **294 unit tests in 36 files** under [`app/src/test/`](app/src/test/java/com/demo/opencv),
-  covering eye dwell and arbitration, the calibration gate, IMU stabilisers, the 1€ filter,
+- **342 unit tests in 41 files** under [`app/src/test/`](app/src/test/java/com/demo/opencv),
+  covering eye dwell and arbitration, the calibration gate, the OpenCV 5 eye-crop geometry,
+  quality gate and pipeline switch, IMU stabilisers, the 1€ filter,
   ambiguous-keyboard matching, Hinglish detection, yes/no question detection, the blink
   discriminator and scanner, every sensor policy, the typing metrics, and the Gemma prompt,
   guard rails and fallback.
@@ -724,6 +794,14 @@ it can be tested on the JVM in milliseconds.
   `ProfessionalTransitCalibrationHarnessTest` drive the vision stack with synthetic shake
   and vibration.
 - **On device.** `GemmaOnDeviceInferenceTest` runs real inference against the pushed model.
+- **Desktop OpenCV 5.** [`eval/alignment_check.py`](eval/alignment_check.py) runs the native
+  OpenCV 5 steps of the eye path (YuNet, CLAHE, `warpAffine`, `matchTemplate`), which the JVM
+  tests cannot load:
+
+  ```bash
+  pip install -r eval/requirements.txt
+  python eval/alignment_check.py path/to/face.jpg
+  ```
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest

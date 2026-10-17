@@ -40,4 +40,13 @@ class UserDataManagerTest {
         assertNotNull(userDataManager.rightEyeFileNames)
         assertEquals(6, userDataManager.rightEyeFileNames.size)
     }
+
+    @Test
+    fun calibrationFilesFollowTheActivePipeline() {
+        assertEquals(com.demo.opencv.vision.VisionPipeline.DEFAULT, userDataManager.visionPipeline)
+        val names = userDataManager.calibrationFileNames(userDataManager.leftEyeFileNames)
+        assertEquals(userDataManager.leftEyeFileNames.map {
+            com.demo.opencv.vision.VisionPipeline.DEFAULT.calibrationFileName(it)
+        }, names.toList())
+    }
 }

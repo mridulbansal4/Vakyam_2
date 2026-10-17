@@ -22,6 +22,8 @@
     <string name="Settings_LookType">Eye input type</string>
     <string name="Settings_IrisLightingThreshold">Lighting threshold</string>
     <string name="Settings_LookSensitivity">Sensitivity</string>
+    <string name="Settings_VisionPipeline">Vision pipeline</string>
+    <string name="Settings_VisionPipelineNeedsCalibration">This pipeline has its own calibration. Calibrate once to use it.</string>
     <string name="Settings_TextEntryMode">Text entry mode</string>
     <string name="Settings_Language">Language</string>
 
@@ -41,6 +43,13 @@
     <string name="Calibration_StatusHoldLook">Keep looking in that direction.</string>
     <string name="Calibration_StatusLookFurther">Move your eyes further in that direction.</string>
     <string name="Calibration_StatusHolding">Hold… capturing</string>
+    <string name="Calibration_QualityTurnedAway">Turn your face towards the phone.</string>
+    <string name="Calibration_QualityTooFar">Bring the phone a little closer.</string>
+    <string name="Calibration_QualityTooDark">Too dark. Add light on the face.</string>
+    <string name="Calibration_QualityBacklit">Light is behind you. Face the light, or move the phone.</string>
+    <string name="Calibration_QualityOverexposed">Too bright on the face. Move out of direct light.</string>
+    <string name="Calibration_QualityBlurry">The picture is blurred. Hold the phone still.</string>
+    <string name="Calibration_QualityTilted">Keep the phone level with your eyes.</string>
     <string name="Calibration_LookStraight">Look straight</string>
     <string name="Calibration_LookLeft">Look left</string>
     <string name="Calibration_LookRight">Look right</string>

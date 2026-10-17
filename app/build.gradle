@@ -32,7 +32,7 @@ android {
     }
 
     aaptOptions {
-        noCompress "txt"
+        noCompress "txt", "onnx" // the YuNet model is copied out of the APK on first launch
     }
 
     buildTypes {

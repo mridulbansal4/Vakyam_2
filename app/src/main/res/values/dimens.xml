@@ -17,7 +17,7 @@
     <dimen name="vk_outline">1.5dp</dimen>
     <dimen name="vk_outline_focus">4dp</dimen>
 
-    <!-- Direction badge on each gaze tile. -->
+    <!-- Direction badge on each option tile. -->
     <dimen name="vk_badge">36dp</dimen>
     <dimen name="vk_badge_inset">10dp</dimen>
     <dimen name="vk_tile_top_clearance">50dp</dimen>

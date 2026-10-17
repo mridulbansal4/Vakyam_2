@@ -41,7 +41,7 @@ Delegate a `DeepCoder` to integrate the researched language into the app:
 ### 4. 10,000+ Iterations Simulation Loop (DeepCoder)
 Delegate a `DeepCoder` to build and execute a massive test loop:
 1. **Test Harness:** Create or update a headless simulation harness (`simulate.py` or `GemmaLLMSimulationTest.kt`).
-2. **Simulation:** Run at least 10,000 macro-iterations feeding generated gaze sequences and LLM context prompts.
+2. **Simulation:** Run at least 10,000 macro-iterations feeding generated eye-gesture sequences and LLM context prompts.
    - Validate mathematical prefix collision rates (target: >95% exact matches).
    - Validate context-keyword mapping through the prompt assembly layer (preventing injection errors or messy string truncation).
 3. **Feedback Loop:** If errors are found in prediction accuracy or LLM parsing, autonomously correct the thresholds, missing characters, or dictionary mappings, and re-run the simulation until accuracy is perfected.

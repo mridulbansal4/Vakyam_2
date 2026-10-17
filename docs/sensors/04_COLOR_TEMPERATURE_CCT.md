@@ -312,7 +312,7 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 | C4 | Move between a warm lamp and a cool light | Panel CCT follows within ~1–2 s; overlay fades smoothly, with no flicker |
 | C5 | Phone on its real mount, back against the stand | CCT still within ~±500 K of the reading with the phone held free (if not, mount it with a gap or use the debug override for demos) |
 | C6 | Debug injection: `& $adb shell am broadcast -a com.vakyam.debug.SENSOR -p com.vakyam.app --ef cct 2700` then `--ef cct 6500` | Tint goes to max, then back to neutral; real sensor ignored for 60 s after injection |
-| C7 | Text mode under max tint | All 6 gaze options and the selected highlight remain clearly distinguishable |
+| C7 | Text mode under max tint | All 6 eye options and the selected highlight remain clearly distinguishable |
 
 ### 6.3 Feature B A/B procedure (only if you want to ship it)
 

@@ -6,7 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The three gaze input paths all read from and write to the one [PersonalLexicon]. */
+/** The three look input paths all read from and write to the one [PersonalLexicon]. */
 class PersonalVocabularyTest {
 
     private class MemoryStore : PersonalLexicon.Store {

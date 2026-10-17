@@ -16,7 +16,7 @@
     <color name="vk_track">#DDD9CB</color>
     <color name="vk_scrim">#A626342F</color>
 
-    <!-- Gaze tiles and keys -->
+    <!-- Option tiles and keys -->
     <color name="vk_key">#DAE5D1</color>
     <color name="vk_key_alt">#E8DEC8</color>
     <color name="vk_key_selecting">#EDC565</color>
@@ -33,7 +33,7 @@
     <color name="vk_accent">#48615A</color>
     <color name="vk_on_chrome">#F4F1E8</color>
 
-    <!-- Direction badges on gaze tiles: quiet until the tile is being selected -->
+    <!-- Direction badges on option tile: quiet until the tile is being selected -->
     <color name="vk_badge">#EEF2EA</color>
     <color name="vk_badge_ink">#34463F</color>
 

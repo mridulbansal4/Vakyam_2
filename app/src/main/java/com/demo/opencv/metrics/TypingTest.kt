@@ -12,9 +12,9 @@ import java.util.concurrent.CopyOnWriteArraySet
  * Listeners are called on whichever thread reported the event.
  */
 object TypingTest {
-    const val MODE_GAZE_LETTER = "gaze-letter"
-    const val MODE_GAZE_AMBIGUOUS = "gaze-ambiguous"
-    const val MODE_GAZE_LLM = "gaze-llm"
+    const val MODE_EYE_LETTER = "eye-letter"
+    const val MODE_EYE_AMBIGUOUS = "eye-ambiguous"
+    const val MODE_EYE_LLM = "eye-llm"
     const val MODE_BLINK = "blink"
 
     fun interface Listener {

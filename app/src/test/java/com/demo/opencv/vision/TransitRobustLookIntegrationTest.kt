@@ -14,7 +14,7 @@ import org.junit.Test
  * 4. MotionSensorStabilizer (shock circuit breaker)
  * 5. Gesture code mapping: 1=Left, 2=Right, 3=Up, 5=Blink Confirm
  */
-class TransitRobustGazeIntegrationTest {
+class TransitRobustLookIntegrationTest {
 
     private lateinit var estimator: NormalizedIrisEstimator
     private lateinit var filterX: OneEuroFilter
@@ -215,7 +215,7 @@ class TransitRobustGazeIntegrationTest {
         val isStable = jerkProcessor.update(0.0f, 9.0f, 9.8f, tNs, tMs)
         assertFalse("High jerk should trigger shock circuit breaker", isStable)
 
-        // Even if user's head bob caused a rapid gaze ratio change during the shock
+        // Even if user's head bob caused a rapid look ratio change during the shock
         val g = detector.process(0.85f, 0.50f, 0.30f, tMs)
         val rawCode = mapGestureToCode(g)
 
@@ -249,7 +249,7 @@ class TransitRobustGazeIntegrationTest {
     }
 
     @Test
-    fun testRightEyeFallbackTracksGazeEquallyAccurately() {
+    fun testRightEyeFallbackTracksLookEquallyAccurately() {
         var t = 0L
 
         // User's left eye is clipped by frame border, so Model falls back to right eye

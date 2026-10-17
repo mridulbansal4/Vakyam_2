@@ -4,7 +4,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 /**
- * 1€ (One-Euro) Filter for low-latency, jitter-resistant filtering of gaze signals in motion.
+ * 1€ (One-Euro) Filter for low-latency, jitter-resistant filtering of look signals in motion.
  *
  * In a vibrating vehicle or wheelchair:
  * - When the user is fixating (low speed), the filter acts with a low cutoff frequency (minCutoff),

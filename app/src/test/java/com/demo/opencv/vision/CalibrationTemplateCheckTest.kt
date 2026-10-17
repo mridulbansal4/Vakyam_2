@@ -24,7 +24,7 @@ class CalibrationTemplateCheckTest {
     private fun steps(vararg images: FloatArray?): Array<FloatArray?> = arrayOf(*images, null, null, null, null).copyOf(6)
 
     @Test
-    fun sameGazeIsRejectedAsACopyOfStraight() {
+    fun sameLookIsRejectedAsACopyOfStraight() {
         // What used to happen: the left-up step captured while the user was still looking straight
         val earlier = steps(straight, left, eye(34, 9), up)
         assertEquals(0, CalibrationTemplateCheck.indistinctFrom(eye(22, 9), eye(22, 9), earlier, earlier, 4))
@@ -37,7 +37,7 @@ class CalibrationTemplateCheckTest {
     }
 
     @Test
-    fun differentGazeIsAccepted() {
+    fun differentLookIsAccepted() {
         val earlier = steps(straight, left)
         assertEquals(-1, CalibrationTemplateCheck.indistinctFrom(up, up, earlier, earlier, 2))
     }

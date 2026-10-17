@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Caregiver data: gaze log and typing tests side by side, vocabulary and the chart below. -->
+<!-- Caregiver data: look log and typing tests side by side, vocabulary and the chart below. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/clinicianModeFragment"
@@ -33,14 +33,14 @@
                     android:padding="@dimen/vk_space_l">
 
                     <TextView
-                        android:id="@+id/gazeLogTitle"
+                        android:id="@+id/lookLogTitle"
                         style="@style/Vk.Text.Section"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/Clinician_GazeInputLog" />
+                        android:text="@string/Clinician_LookInputLog" />
 
                     <TextView
-                        android:id="@+id/gazeLogText"
+                        android:id="@+id/lookLogText"
                         style="@style/Vk.Text.Caption"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -112,7 +112,7 @@
                             android:fontFamily="monospace"
                             android:textColor="@color/vk_ink"
                             android:textSize="13sp"
-                            tools:text="gaze-letter      3 tests  avg  2.1 WPM" />
+                            tools:text="eye-letter      3 tests  avg  2.1 WPM" />
                     </HorizontalScrollView>
                 </LinearLayout>
             </androidx.core.widget.NestedScrollView>

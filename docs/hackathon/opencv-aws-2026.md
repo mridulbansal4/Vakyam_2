@@ -20,7 +20,7 @@ Hard requirements. If any of these is missing, the entry is not eligible.
 | 5 | Architecture diagram that shows the OpenCV 5 **and** AWS components | Mermaid diagrams with no AWS | Redraw |
 | 6 | **A working web endpoint** or an arranged live screen-share demo | Android APK only | Web endpoint (recommended) |
 | 7 | A video of 5 minutes or less showing the team, the app working, the architecture and the results | None | Record it |
-| 8 | Evaluation evidence, **including failure cases** | The typing-speed test exists, but there is no gaze-accuracy benchmark | Build the benchmark |
+| 8 | Evaluation evidence, **including failure cases** | The typing-speed test exists, but there is no eye-direction accuracy benchmark | Build the benchmark |
 
 Judging rubric (overall):
 
@@ -46,7 +46,7 @@ Optional special awards ($1,000 each, judged separately):
 
 ## 2. The pitch, reframed for this competition
 
-> **Vakyam: an eye-gaze communicator on any Android phone, powered by OpenCV 5, with an AWS
+> **Vakyam: an eye communicator on any Android phone, powered by OpenCV 5, with an AWS
 > agent that sets it up, tunes it and proves it works for each patient.**
 
 The privacy story stays intact: **live conversation never leaves the phone.** AWS handles
@@ -55,8 +55,8 @@ only what a phone does badly or what a clinician needs:
 1. **The Agentic Setup Coach.** A cloud agent looks at OpenCV 5 diagnostics from a
    calibration session and decides what to do next: recalibrate one direction, switch on
    the ring light, change the sensitivity, or ask the caregiver to reposition the phone.
-2. **The Gaze Lab.** A web endpoint where a judge (or a clinician) uploads a short face video
-   or uses a webcam. The same OpenCV 5 gaze pipeline, ported to Python, runs on AWS and
+2. **The Eye Lab.** A web endpoint where a judge (or a clinician) uploads a short face video
+   or uses a webcam. The same OpenCV 5 eye pipeline, ported to Python, runs on AWS and
    returns the gesture timeline, the chosen keywords and the generated sentence. **This is
    what meets the "working web endpoint" requirement**, since judges will not sideload an APK.
 3. **Evaluation and observability.** Opt-in, de-identified session metrics (WPM, error rate,
@@ -69,7 +69,7 @@ only what a phone does badly or what a clinician needs:
 ```mermaid
 flowchart LR
     subgraph PHONE["Android phone (offline-first)"]
-        CAM["CameraX frame"] --> CV5["OpenCV 5 gaze pipeline<br/>YuNet face · eye ROI · CLAHE<br/>matchTemplate · iris Hough"]
+        CAM["CameraX frame"] --> CV5["OpenCV 5 eye pipeline<br/>YuNet face · eye ROI · CLAHE<br/>matchTemplate · iris Hough"]
         CV5 --> DW["Dwell selector"] --> KB["Ambiguous keyboard"] --> GEM["Gemma on-device"] --> TTS["Speak"]
         CV5 --> DIAG["Calibration diagnostics<br/>(no raw video):<br/>brightness · blur · face pose ·<br/>template separability matrix"]
     end
@@ -81,7 +81,7 @@ flowchart LR
         S3["S3: opt-in eval clips<br/>(KMS, 7-day lifecycle)"]
         DDB["DynamoDB: per-patient<br/>settings + agent decisions"]
         CW["CloudWatch: traces, metrics, dashboard"]
-        WEB["Gaze Lab web app<br/>S3 + CloudFront"]
+        WEB["Eye Lab web app<br/>S3 + CloudFront"]
     end
 
     DIAG -- "HTTPS, opt-in" --> APIGW --> AG
@@ -127,19 +127,19 @@ The rule requires that the vision output change the next action. One loop:
    approve**. Every step goes to CloudWatch as a trace (the "trace showing OpenCV output
    changes a later decision" that the award requires).
 
-The Gaze Lab web endpoint runs the same loop server-side on an uploaded video, so judges
+The Eye Lab web endpoint runs the same loop server-side on an uploaded video, so judges
 can watch it happen without a phone.
 
 ---
 
 ## 4. Evaluation plan (needed for 30% + Agentic rubric)
 
-1. **Gaze classification benchmark.** Record about 10 volunteers × 6 directions × 3 lighting
+1. **Eye-direction classification benchmark.** Record about 10 volunteers × 6 directions × 3 lighting
    conditions (normal, dim, backlit) × 2 holds (mount, hand-held). Report per-direction
    accuracy, a confusion matrix, frames per second and latency per frame.
    **A/B test:** OpenCV 4.7 MSE (old) against OpenCV 5 matchTemplate + CLAHE + YuNet (new).
 2. **Text entry.** The built-in typing test (WPM, error %, selections per character) for
-   `gaze-letter`, `gaze-ambiguous` and `gaze-llm`. The CSV export already exists.
+   `eye-letter`, `eye-ambiguous` and `eye-llm`. The CSV export already exists.
 3. **Agent.** On N bad setups (deliberately dim, tilted or confusable), measure the
    percentage fixed without a human, the average number of iterations, the time to a usable
    calibration, and how often it correctly gave up and asked the caregiver.
@@ -151,7 +151,7 @@ can watch it happen without a phone.
 
 ## 5. Responsible-use section (part of the 10% cloud criterion)
 
-- Live speech and gaze **never leave the device**. Cloud features are opt-in and off by
+- Live speech and eye video **never leave the device**. Cloud features are opt-in and off by
   default.
 - Only derived diagnostics are sent by default. Raw clips need separate consent, are
   encrypted with KMS, and are deleted automatically after 7 days.
@@ -170,9 +170,9 @@ can watch it happen without a phone.
 |---|---|---|
 | 1 | Sat 17 | Check that an **OpenCV 5 Android SDK** release exists (if not, build from source with `build_sdk.py`). Swap it into `opencv/`. Make the build green. Set up the AWS account (new accounts get Free Tier credits). |
 | 2 | Sun 18 | OpenCV 5 pipeline upgrades: `matchTemplate` + CLAHE, YuNet face, quality gate (Laplacian, histogram, `solvePnP`). |
-| 3 | Mon 19 | Python port of the gaze pipeline (`opencv-python` 5.x), packaged as a container. Lambda arm64 or Fargate. |
+| 3 | Mon 19 | Python port of the eye pipeline (`opencv-python` 5.x), packaged as a container. Lambda arm64 or Fargate. |
 | 4 | Tue 20 | Bedrock agent with tool use + DynamoDB + API Gateway/Cognito. CloudWatch traces. |
-| 5 | Wed 21 | Phone → cloud diagnostics upload + caregiver-approval UI. Gaze Lab web page (S3 + CloudFront). |
+| 5 | Wed 21 | Phone → cloud diagnostics upload + caregiver-approval UI. Eye Lab web page (S3 + CloudFront). |
 | 6 | Thu 22 | Record the benchmark data. Run the A/B and agent evaluations. |
 | 7 | Fri 23 | IaC (CDK or SAM) so `cdk deploy` reproduces everything. Pin versions. Write the test instructions. |
 | 8 | Sat 24 | Technical report + architecture diagram + failure cases. |
@@ -182,7 +182,7 @@ can watch it happen without a phone.
 **Cut order if time runs short:** optical flow → HoughCircles fusion → hand-held benchmark →
 YuNet (keep ML Kit). **Never cut:** OpenCV 5, AWS endpoint, video, report, failure cases.
 
-**COOL award:** skip it unless days 3 to 5 finish early. If they do, run the Gaze Lab
+**COOL award:** skip it unless days 3 to 5 finish early. If they do, run the Eye Lab
 container on a Graviton instance with the COOL AMI from AWS Marketplace and benchmark
 frames per second and cost per 1,000 frames against stock OpenCV 5 on x86. That gives the
 "documented hybrid architecture" the award asks for.
@@ -196,7 +196,7 @@ frames per second and cost per 1,000 frames against stock OpenCV 5 on x86. That 
 - [ ] Technical report (PDF in `docs/`)
 - [ ] Architecture diagram (OpenCV 5 + AWS + agent)
 - [ ] Agent workflow diagram + a sample trace showing vision output → decision → tool call
-- [ ] Working Gaze Lab URL (and a fallback: offer a live screen-share)
+- [ ] Working Eye Lab URL (and a fallback: offer a live screen-share)
 - [ ] Video of 5 minutes or less: team, phone demo, web demo, architecture, results, a failure case
 - [ ] Evaluation tables + confusion matrix + failure cases
 - [ ] Pinned deps: Gradle, `requirements.txt` with exact versions, CDK lock file

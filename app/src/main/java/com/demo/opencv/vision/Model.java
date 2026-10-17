@@ -14,7 +14,7 @@ import com.demo.opencv.ContractInterface;
 import com.demo.opencv.UserDataManager;
 import com.demo.opencv.vision.DetectionOutput;
 import com.demo.opencv.vision.EyeDetection;
-import com.demo.opencv.vision.GazeData;
+import com.demo.opencv.vision.LookData;
 import com.demo.opencv.vision.GoogleFaceDetector;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
@@ -41,17 +41,17 @@ public class Model implements ContractInterface.Model {
     private final GoogleFaceDetector faceDetector = new GoogleFaceDetector();
     DetectionOutput detectionOutput = new DetectionOutput();
     private ArrayList<String> prevInputs = new ArrayList<>();
-    int gazeNum = 8; // number of types of gaze inputs
-    // A gaze must be held this long to count as a selection; closed eyes longer, so a natural blink is never entered
-    static final long GAZE_DWELL_MS = 300L, CLOSED_DWELL_MS = 450L;
-    final GazeDwellSelector dwellSelector = new GazeDwellSelector(GAZE_DWELL_MS, CLOSED_DWELL_MS);
-    int[] gazeCount;
+    int lookNum = 8; // number of types of look inputs
+    // A look must be held this long to count as a selection; closed eyes longer, so a natural blink is never entered
+    static final long LOOK_DWELL_MS = 300L, CLOSED_DWELL_MS = 450L;
+    final LookDwellSelector dwellSelector = new LookDwellSelector(LOOK_DWELL_MS, CLOSED_DWELL_MS);
+    int[] lookCount;
     static int IMAGE_WIDTH = 44, IMAGE_HEIGHT = 18;
-    Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches calibration template index to gaze tag
+    Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches calibration template index to look tag
     Point[] corners = new Point[4]; // left, top, right, down
     double[] leftTemplateError, rightTemplateError;
 
-    // Transit-robust gaze stabilization and gesture detection stack
+    // Transit-robust look stabilization and gesture detection stack
     private MotionSensorStabilizer motionStabilizer;
     private PhoneMotionTracker phoneMotion;
     private final NormalizedIrisEstimator irisEstimator = new NormalizedIrisEstimator();
@@ -133,7 +133,7 @@ public class Model implements ContractInterface.Model {
         }
         updateCalibrationTemplates();
         prevInputs = new ArrayList<>();
-        gazeCount = new int[gazeNum]; // change based on how many detections there are
+        lookCount = new int[lookNum]; // change based on how many detections there are
 
         faceDetector.initialize(); // initialize Google ML Kit
 
@@ -151,21 +151,21 @@ public class Model implements ContractInterface.Model {
         detector.updateCalibrationTemplates(ApplicationContext, false);
     }
 
-    private boolean gazingLeft(GazeData gaze) {
-        return gaze.GazeType == 1 || gaze.GazeType == 6;
+    private boolean gazingLeft(LookData look) {
+        return look.LookType == 1 || look.LookType == 6;
     }
 
-    private boolean gazingRight(GazeData gaze) {
-        return gaze.GazeType == 2 || gaze.GazeType == 7;
+    private boolean gazingRight(LookData look) {
+        return look.LookType == 2 || look.LookType == 7;
     }
 
     @Override
-    public void analyzeGazeOutput() {
-        analyzeGazeOutput(System.currentTimeMillis(), true);
+    public void analyzeLookOutput() {
+        analyzeLookOutput(System.currentTimeMillis(), true);
     }
 
     // steady = false while the phone is being shaken or bumped: the eye crops cannot be trusted then
-    void analyzeGazeOutput(long nowMs, boolean steady) { // determine whether input is valid or not based on raw data of both eyes
+    void analyzeLookOutput(long nowMs, boolean steady) { // determine whether input is valid or not based on raw data of both eyes
 
         if (!detectionOutput.LeftData.Success && !detectionOutput.RightData.Success) { // both eyes not available
             detectionOutput.AnalyzedData = detectionOutput.LeftData;
@@ -178,21 +178,21 @@ public class Model implements ContractInterface.Model {
 
         } else { // if both eyes are successful, add the two loss and take the lowest
 
-            GazeData leftGazeData = detectionOutput.LeftData;
-            GazeData rightGazeData = detectionOutput.RightData;
+            LookData leftLookData = detectionOutput.LeftData;
+            LookData rightLookData = detectionOutput.RightData;
 
-            if (leftGazeData.GazeType == rightGazeData.GazeType) {
-                // If both eyes agree on gaze direction (straight, left, right, up, closed, etc.), take lowest error
-                detectionOutput.AnalyzedData = (leftGazeData.GazeProbability <= rightGazeData.GazeProbability) ? leftGazeData : rightGazeData;
+            if (leftLookData.LookType == rightLookData.LookType) {
+                // If both eyes agree on look direction (straight, left, right, up, closed, etc.), take lowest error
+                detectionOutput.AnalyzedData = (leftLookData.LookProbability <= rightLookData.LookProbability) ? leftLookData : rightLookData;
 
-            } else if (leftGazeData.GazeType == 5 && rightGazeData.GazeType == 5) { // eyes closed
-                detectionOutput.AnalyzedData = rightGazeData;
+            } else if (leftLookData.LookType == 5 && rightLookData.LookType == 5) { // eyes closed
+                detectionOutput.AnalyzedData = rightLookData;
 
-            } else if (gazingLeft(leftGazeData) && gazingLeft(rightGazeData)) { // eyes looking left, take left eye
-                detectionOutput.AnalyzedData = leftGazeData;
+            } else if (gazingLeft(leftLookData) && gazingLeft(rightLookData)) { // eyes looking left, take left eye
+                detectionOutput.AnalyzedData = leftLookData;
 
-            } else if (gazingRight(leftGazeData) && gazingRight(rightGazeData)) { // eyes looking right, take right eye
-                detectionOutput.AnalyzedData = rightGazeData;
+            } else if (gazingRight(leftLookData) && gazingRight(rightLookData)) { // eyes looking right, take right eye
+                detectionOutput.AnalyzedData = rightLookData;
 
             } else { // combine the two losses
                 int index = -1;
@@ -214,27 +214,27 @@ public class Model implements ContractInterface.Model {
                 double combinedSensitivity = detector.effectiveSensitivity() * 2.0;
                 boolean success = (index >= 0) && (minError <= combinedSensitivity)
                         && EyeDetection.isClearMatch(minError, secondError);
-                int selectedGaze = (index >= 0 && index < tags.length) ? tags[index] : 0;
-                detectionOutput.setEyeData(2, success, selectedGaze, 1, (float)minError);
+                int selectedLook = (index >= 0 && index < tags.length) ? tags[index] : 0;
+                detectionOutput.setEyeData(2, success, selectedLook, 1, (float)minError);
             }
 
         }
 
         detectionOutput.gestureOutput = 0;
-        int observedGaze = GazeDwellSelector.UNRELIABLE;
+        int observedLook = LookDwellSelector.UNRELIABLE;
         if (!steady) {
             dwellSelector.cancel();
         } else if (detectionOutput.AnalyzedData.Success) {
-            observedGaze = detectionOutput.AnalyzedData.GazeType;
+            observedLook = detectionOutput.AnalyzedData.LookType;
         }
-        int selectedGaze = dwellSelector.update(observedGaze, nowMs);
-        if (selectedGaze != 0) { // the gaze was held long enough to be a deliberate input
+        int selectedLook = dwellSelector.update(observedLook, nowMs);
+        if (selectedLook != 0) { // the look was held long enough to be a deliberate input
             if (prevInputs.size() > 25) {
                 prevInputs.clear();
             }
-            prevInputs.add(detectionOutput.AnalyzedData.getTypeString(selectedGaze));
+            prevInputs.add(detectionOutput.AnalyzedData.getTypeString(selectedLook));
             detectionOutput.prevInputs = prevInputs;
-            detectionOutput.gestureOutput = selectedGaze;
+            detectionOutput.gestureOutput = selectedLook;
         }
     }
 
@@ -328,7 +328,7 @@ public class Model implements ContractInterface.Model {
     }
 
     @Override
-    public DetectionOutput classifyGaze(Mat cameraMat) {
+    public DetectionOutput classifyLook(Mat cameraMat) {
         int rotation = FRAME_ROTATIONS[rotationIndex];
         Mat upright = rotateFrame(cameraMat, rotation);
         try {
@@ -336,14 +336,14 @@ public class Model implements ContractInterface.Model {
             output.faceDetected = faceDetector.faceDetected;
             output.frameRotation = rotation;
             if (faceDetector.faceDetected) {
-                if (!rotationConfirmed) Log.i("GazeCamera", "Face found at frame rotation " + rotation);
+                if (!rotationConfirmed) Log.i("LookCamera", "Face found at frame rotation " + rotation);
                 rotationConfirmed = true;
                 framesWithoutFace = 0;
             } else if (++framesWithoutFace >= (rotationConfirmed ? CONFIRMED_ROTATION_GRACE_FRAMES : ROTATION_SEARCH_AFTER_FRAMES)) {
                 framesWithoutFace = 0;
                 rotationConfirmed = false;
                 rotationIndex = (rotationIndex + 1) % FRAME_ROTATIONS.length;
-                Log.i("GazeCamera", "No face found, trying frame rotation " + FRAME_ROTATIONS[rotationIndex]);
+                Log.i("LookCamera", "No face found, trying frame rotation " + FRAME_ROTATIONS[rotationIndex]);
             }
             return output;
         } finally {
@@ -424,7 +424,7 @@ public class Model implements ContractInterface.Model {
         long nowMs = System.currentTimeMillis();
         boolean motionStable = (motionStabilizer == null) || motionStabilizer.isMotionStable();
         boolean phoneShaking = phoneMotion != null && phoneMotion.isShaking();
-        analyzeGazeOutput(nowMs, motionStable && !phoneShaking); // analyze the output before returning to the presenter
+        analyzeLookOutput(nowMs, motionStable && !phoneShaking); // analyze the output before returning to the presenter
 
         // Transit-robust Normalized Iris Estimation and Ballistic Gesture Detection
         // A flick can only say left/right/up, so once the six calibrated templates exist it must not override them:
@@ -478,7 +478,7 @@ public class Model implements ContractInterface.Model {
 
             // Rotation-invariant anatomical landmark extraction
             NormalizedIrisEstimator.EyeLandmarks landmarks = irisEstimator.extractLandmarksFromContour(pts, irisPt);
-            NormalizedIrisEstimator.GazeMetrics metrics = irisEstimator.computeMetrics(landmarks);
+            NormalizedIrisEstimator.LookMetrics metrics = irisEstimator.computeMetrics(landmarks);
 
             double smoothedX = filterX.filter((double) metrics.getHorizontalRatio(), nowMs);
             double smoothedY = filterY.filter((double) metrics.getVerticalRatio(), nowMs);
@@ -526,7 +526,7 @@ public class Model implements ContractInterface.Model {
                 if (gestureCode != 0) {
                     detectionOutput.gestureOutput = gestureCode;
                     detectionOutput.AnalyzedData.Success = true;
-                    detectionOutput.AnalyzedData.GazeType = gestureCode;
+                    detectionOutput.AnalyzedData.LookType = gestureCode;
                     String typeStr = detectionOutput.AnalyzedData.getTypeString(gestureCode);
                     if (prevInputs.size() > 25) {
                         prevInputs.clear();
@@ -534,7 +534,7 @@ public class Model implements ContractInterface.Model {
                     prevInputs.add(typeStr);
                     detectionOutput.prevInputs = prevInputs;
                 } else if (detectionOutput.gestureOutput != 0) {
-                    // Calibrated gaze from analyzeGazeOutput() is preserved for text entry
+                    // Calibrated look from analyzeLookOutput() is preserved for text entry
                     gestureDetector.reset();
                 }
             } else {

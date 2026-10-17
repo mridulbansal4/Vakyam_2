@@ -138,7 +138,7 @@ class BallisticGestureDetectorTest {
         t += 800L
         detector.process(0.50f, 0.50f, 0.05f, t)
 
-        // Eyes reopen at t + 50ms, with gaze offset at 0.82f (e.g. user looked right while closed)
+        // Eyes reopen at t + 50ms, with look offset at 0.82f (e.g. user looked right while closed)
         t += 50L
         val reopenGesture = detector.process(0.82f, 0.50f, 0.30f, t)
 

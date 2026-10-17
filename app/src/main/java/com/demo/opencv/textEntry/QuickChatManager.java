@@ -17,7 +17,7 @@ public class QuickChatManager {
     int MAX_MODES = 5;
     static final int MY_PHRASES_MODE = 6; // the sentences this patient speaks most, learned from the typing modes
     private PersonalLexicon personalLexicon; // null without a context
-    private String[] myPhrases = new String[0]; // fixed while the page is open so entries do not move under the user's gaze
+    private String[] myPhrases = new String[0]; // fixed while the page is open so entries do not move under the user's look
     private String language = "English";
     private HinglishDetector hinglishDetector = HinglishDetector.get(null);
     String[] modeStrings = {
@@ -45,16 +45,16 @@ public class QuickChatManager {
         updateDisplays();
     }
 
-    public void manageUserInput(int input, boolean isGazeType) {
-        // left gaze = 3, right gaze = 5, up gaze = 0, down gaze = -1, closed = 4, left-up gaze = 1, right-up gaze = 2
+    public void manageUserInput(int input, boolean isLookType) {
+        // left look = 3, right look = 5, up look = 0, down look = -1, closed = 4, left-up look = 1, right-up look = 2
         int selection = input;
-        if (isGazeType) { // if is gaze type, then process it (is false for touchscreen)
-            final int[] keyboardInputMat = {-1, 3, 5, 0, -1, 4, 1, 2}; // convert gaze type into keyboard input
+        if (isLookType) { // if is look type, then process it (is false for touchscreen)
+            final int[] keyboardInputMat = {-1, 3, 5, 0, -1, 4, 1, 2}; // convert look type into keyboard input
             if (input < 0 || input >= keyboardInputMat.length) return;
             selection = keyboardInputMat[input];
         }
 
-        // up gaze = 0, left gaze = 1, right gaze = 2, closed = 3, left-up gaze = 4, right-up gaze = 5
+        // up look = 0, left look = 1, right look = 2, closed = 3, left-up look = 4, right-up look = 5
         if (selection != -1) {
             if (selection == 0) { // back button
                 if (mode != 0) {

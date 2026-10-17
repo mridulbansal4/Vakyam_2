@@ -26,7 +26,7 @@ class QuickChatManagerTest {
 
     @Test
     fun testSelectCategory1() {
-        // Selection 1 with isGazeType = false selects Category 1
+        // Selection 1 with isLookType = false selects Category 1
         quickChatManager.manageUserInput(1, false)
         assertEquals(1, quickChatManager.mode)
         assertNotNull(quickChatManager.quickChatData.texts)
@@ -44,13 +44,13 @@ class QuickChatManagerTest {
     }
 
     @Test
-    fun testGazeInputSelection() {
-        // Gaze type 3 maps to selection 0 (back) in keyboardInputMat
-        // Gaze type 1 maps to selection 3 (Category 3)
+    fun testLookInputSelection() {
+        // Look type 3 maps to selection 0 (back) in keyboardInputMat
+        // Look type 1 maps to selection 3 (Category 3)
         quickChatManager.manageUserInput(1, true)
         assertEquals(3, quickChatManager.mode)
 
-        // Now trigger back via gaze type 3 (which maps to selection 0)
+        // Now trigger back via look type 3 (which maps to selection 0)
         quickChatManager.manageUserInput(3, true)
         assertEquals(0, quickChatManager.mode)
     }

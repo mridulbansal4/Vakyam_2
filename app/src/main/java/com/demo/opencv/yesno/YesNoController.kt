@@ -17,7 +17,7 @@ enum class Answer { YES, NO }
  * A spoken yes or no. When the sentence said or typed to the patient in Type is a yes/no question
  * ([YesNoQuestion]), this screen takes over: the patient looks left for yes or right for no and
  * the phone says the answer, or looks up to go back to typing. Create one per Activity after
- * setContentView, feed it the gaze gestures, and close() it in onPause.
+ * setContentView, feed it the look gestures, and close() it in onPause.
  */
 class YesNoController(private val activity: AppCompatActivity, private val presenter: ContractInterface.Presenter) {
 
@@ -50,7 +50,7 @@ class YesNoController(private val activity: AppCompatActivity, private val prese
     /** Main thread. [question] is shown between the two answers. */
     fun open(question: String) {
         if (isOpen) return
-        presenter.setGazeInputPaused(true) // the look that answers must not also type or pick a phrase
+        presenter.setLookInputPaused(true) // the look that answers must not also type or pick a phrase
         answered = false
         openedAtMs = SystemClock.elapsedRealtime()
         overlay.show(question)
@@ -67,19 +67,19 @@ class YesNoController(private val activity: AppCompatActivity, private val prese
         main.removeCallbacks(noAnswerTask)
         backToClose.isEnabled = false
         overlay.hide()
-        presenter.setGazeInputPaused(false)
+        presenter.setLookInputPaused(false)
     }
 
-    /** Any thread. [gazeType] is DetectionOutput.gestureOutput: the same left and right the other screens select with. */
-    fun onGesture(gazeType: Int) {
+    /** Any thread. [lookType] is DetectionOutput.gestureOutput: the same left and right the other screens select with. */
+    fun onGesture(lookType: Int) {
         if (!isOpen) return
-        if (gazeType != GAZE_UP && gazeType !in LEFT && gazeType !in RIGHT) return
+        if (lookType != LOOK_UP && lookType !in LEFT && lookType !in RIGHT) return
         val now = SystemClock.elapsedRealtime()
         main.post {
             // A look already under way when the screen opened belongs to whatever was on screen before.
             if (now - openedAtMs < SETTLE_MS) return@post
-            when (gazeType) {
-                GAZE_UP -> if (!answered) close()
+            when (lookType) {
+                LOOK_UP -> if (!answered) close()
                 in LEFT -> accept(Answer.YES, "eyes")
                 else -> accept(Answer.NO, "eyes")
             }
@@ -101,8 +101,8 @@ class YesNoController(private val activity: AppCompatActivity, private val prese
         const val RESULT_MS = 3_000L
         const val NO_ANSWER_MS = 45_000L
         const val SETTLE_MS = 800L
-        // Indices of GazeData's gaze types
-        const val GAZE_UP = 3
+        // Indices of LookData's look types
+        const val LOOK_UP = 3
         val LEFT = setOf(1, 6) // left, left-up
         val RIGHT = setOf(2, 7) // right, right-up
     }

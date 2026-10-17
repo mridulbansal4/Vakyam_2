@@ -7,14 +7,14 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for Model gaze arbitration and dwell analysis:
- * 1. Verifies calibrated gaze detection across all directions (Left=1, Right=2, Up=3, Closed=5, etc.)
- * 2. Verifies that a gaze must be held for the dwell time before it triggers
- * 3. Verifies that sustained gaze does not repeatedly fire
+ * Unit tests for Model look arbitration and dwell analysis:
+ * 1. Verifies calibrated look detection across all directions (Left=1, Right=2, Up=3, Closed=5, etc.)
+ * 2. Verifies that a look must be held for the dwell time before it triggers
+ * 3. Verifies that sustained look does not repeatedly fire
  * 4. Verifies arbitration between calibration template matching and ballistic transit gestures
  * 5. Verifies motion shock suppression (circuit breaker)
  */
-class ModelGazeArbitrationTest {
+class ModelLookArbitrationTest {
 
     private lateinit var model: Model
     private var t = 0L
@@ -26,34 +26,34 @@ class ModelGazeArbitrationTest {
         t = 1_000L
     }
 
-    /** One 30 fps frame with both eyes reporting the given gaze; returns the selection made on that frame. */
+    /** One 30 fps frame with both eyes reporting the given look; returns the selection made on that frame. */
     private fun frame(left: Int, right: Int = left, steady: Boolean = true): Int {
         t += 33L
         model.detectionOutput.setEyeData(0, true, left, 1, 0.005f)
         model.detectionOutput.setEyeData(1, true, right, 1, 0.005f)
-        model.analyzeGazeOutput(t, steady)
+        model.analyzeLookOutput(t, steady)
         return model.detectionOutput.gestureOutput
     }
 
-    private fun hold(gaze: Int, ms: Long, steady: Boolean = true): List<Int> =
-        (1..(ms / 33L)).map { frame(gaze, steady = steady) }.filter { it != 0 }
+    private fun hold(look: Int, ms: Long, steady: Boolean = true): List<Int> =
+        (1..(ms / 33L)).map { frame(look, steady = steady) }.filter { it != 0 }
 
     @Test
-    fun testCalibratedGazeDwellTriggersOnceAfterHold() {
+    fun testCalibratedLookDwellTriggersOnceAfterHold() {
         // Three frames used to be enough; a glance that short must no longer be entered
-        assertEquals(emptyList<Int>(), hold(1, Model.GAZE_DWELL_MS - 66L))
+        assertEquals(emptyList<Int>(), hold(1, Model.LOOK_DWELL_MS - 66L))
         assertEquals(listOf(1), hold(1, 200L))
-        // Sustained gaze fires once, does not bounce/repeat
+        // Sustained look fires once, does not bounce/repeat
         assertEquals(emptyList<Int>(), hold(1, 2_000L))
     }
 
     @Test
-    fun testUpGazeAgreementDetection() {
+    fun testUpLookAgreementDetection() {
         assertEquals(listOf(3), hold(3, 600L))
     }
 
     @Test
-    fun testRightGazeAgreementDetection() {
+    fun testRightLookAgreementDetection() {
         assertEquals(listOf(2), hold(2, 600L))
     }
 
@@ -69,7 +69,7 @@ class ModelGazeArbitrationTest {
     }
 
     @Test
-    fun testPhoneShakeDropsTheHeldGaze() {
+    fun testPhoneShakeDropsTheHeldLook() {
         assertEquals(emptyList<Int>(), hold(1, 250L) + hold(1, 100L, steady = false) + hold(1, 250L))
         assertEquals(listOf(1), hold(1, 200L))
     }
@@ -86,7 +86,7 @@ class ModelGazeArbitrationTest {
 
     @Test
     fun testLookingStraightDoesNotFireKeystroke() {
-        // Straight gaze (0) should never trigger a non-zero gestureOutput
+        // Straight look (0) should never trigger a non-zero gestureOutput
         assertEquals(emptyList<Int>(), hold(0, 2_000L))
     }
 
@@ -106,7 +106,7 @@ class ModelGazeArbitrationTest {
         model.leftTemplateError = doubleArrayOf(0.05, 0.05, 0.05, 0.005, 0.05, 0.05)
         model.rightTemplateError = doubleArrayOf(0.05, 0.05, 0.05, 0.005, 0.05, 0.05)
 
-        // Disagreeing eye gazes: Left says 1, Right says 2
+        // Disagreeing eye looks: Left says 1, Right says 2
         val fired = (1..20).map { frame(1, 2) }.filter { it != 0 }
 
         // Index 3 maps to tag 3 (Up)
@@ -114,9 +114,9 @@ class ModelGazeArbitrationTest {
     }
 
     @Test
-    fun testCalibratedGazePreservedWhenBallisticGestureIsNone() {
-        // Simulate calibrated gaze detection
-        var gestureOutput = 1 // from analyzeGazeOutput()
+    fun testCalibratedLookPreservedWhenBallisticGestureIsNone() {
+        // Simulate calibrated look detection
+        var gestureOutput = 1 // from analyzeLookOutput()
         val gestureCode = 0   // ballistic detector didn't fire (natural eye movement)
         val motionStable = true
 
@@ -154,7 +154,7 @@ class ModelGazeArbitrationTest {
 
     @Test
     fun testVehicleShockCircuitBreakerSuppressesBothInputs() {
-        // Even if calibrated gaze or ballistic detector has output, vehicle shock suppresses
+        // Even if calibrated look or ballistic detector has output, vehicle shock suppresses
         var gestureOutput = 2
         val gestureCode = 2
         val motionStable = false // transit shock

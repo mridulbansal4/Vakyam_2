@@ -29,7 +29,7 @@ class NormalizedIrisEstimator {
         val irisCenter: Point2D
     )
 
-    data class GazeMetrics(
+    data class LookMetrics(
         val horizontalRatio: Float, // 0.0 (far left relative to eye corners) to 1.0 (far right), ~0.5 is centered
         val verticalRatio: Float,   // 0.0 (looking up) to 1.0 (looking down), ~0.5 is centered
         val eyeOpenRatio: Float,    // aperture height / eye width (blink detection)
@@ -147,7 +147,7 @@ class NormalizedIrisEstimator {
         )
     }
 
-    fun computeMetrics(landmarks: EyeLandmarks): GazeMetrics {
+    fun computeMetrics(landmarks: EyeLandmarks): LookMetrics {
         val dx = landmarks.outerCanthus.x - landmarks.innerCanthus.x
         val dy = landmarks.outerCanthus.y - landmarks.innerCanthus.y
         val eyeWidth = hypot(dx, dy).coerceAtLeast(1e-4f)
@@ -170,7 +170,7 @@ class NormalizedIrisEstimator {
 
         val openRatio = eyeHeight / eyeWidth
 
-        return GazeMetrics(
+        return LookMetrics(
             horizontalRatio = hRatio,
             verticalRatio = vRatio,
             eyeOpenRatio = openRatio,

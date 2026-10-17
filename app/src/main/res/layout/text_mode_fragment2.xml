@@ -20,19 +20,19 @@
         android:layout_marginEnd="@dimen/vk_gutter"
         android:layout_marginBottom="@dimen/vk_screen_margin"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/rightUpGazeText2"
+        app:layout_constraintEnd_toStartOf="@id/rightUpLookText2"
         app:layout_constraintHorizontal_weight="1.45"
-        app:layout_constraintStart_toEndOf="@id/leftUpGazeText2"
+        app:layout_constraintStart_toEndOf="@id/leftUpLookText2"
         app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Left column -->
     <TextView
-        android:id="@+id/leftUpGazeText2"
+        android:id="@+id/leftUpLookText2"
         style="@style/Vk.KeyTile"
         android:layout_marginStart="@dimen/vk_screen_margin"
         android:layout_marginTop="@dimen/vk_screen_margin"
         android:layout_marginBottom="@dimen/vk_half_gutter"
-        app:layout_constraintBottom_toTopOf="@id/leftGazeText2"
+        app:layout_constraintBottom_toTopOf="@id/leftLookText2"
         app:layout_constraintEnd_toStartOf="@id/centerColumn"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintHorizontal_weight="1"
@@ -41,24 +41,24 @@
         tools:text="ABCDEF" />
 
     <TextView
-        android:id="@+id/leftGazeText2"
+        android:id="@+id/leftLookText2"
         style="@style/Vk.KeyTile"
         android:layout_marginTop="@dimen/vk_half_gutter"
         android:layout_marginBottom="@dimen/vk_screen_margin"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/leftUpGazeText2"
-        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
-        app:layout_constraintTop_toBottomOf="@id/leftUpGazeText2"
+        app:layout_constraintEnd_toEndOf="@id/leftUpLookText2"
+        app:layout_constraintStart_toStartOf="@id/leftUpLookText2"
+        app:layout_constraintTop_toBottomOf="@id/leftUpLookText2"
         tools:text="NOPQRST" />
 
     <!-- Right column -->
     <TextView
-        android:id="@+id/rightUpGazeText2"
+        android:id="@+id/rightUpLookText2"
         style="@style/Vk.KeyTile"
         android:layout_marginTop="@dimen/vk_screen_margin"
         android:layout_marginEnd="@dimen/vk_screen_margin"
         android:layout_marginBottom="@dimen/vk_half_gutter"
-        app:layout_constraintBottom_toTopOf="@id/rightGazeText2"
+        app:layout_constraintBottom_toTopOf="@id/rightLookText2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@id/centerColumn"
@@ -66,14 +66,14 @@
         tools:text="GHIJKLM" />
 
     <TextView
-        android:id="@+id/rightGazeText2"
+        android:id="@+id/rightLookText2"
         style="@style/Vk.KeyTile"
         android:layout_marginTop="@dimen/vk_half_gutter"
         android:layout_marginBottom="@dimen/vk_screen_margin"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
-        app:layout_constraintStart_toStartOf="@id/rightUpGazeText2"
-        app:layout_constraintTop_toBottomOf="@id/rightUpGazeText2"
+        app:layout_constraintEnd_toEndOf="@id/rightUpLookText2"
+        app:layout_constraintStart_toStartOf="@id/rightUpLookText2"
+        app:layout_constraintTop_toBottomOf="@id/rightUpLookText2"
         tools:text="UVWXYZ" />
 
     <!-- Dividers between main and sub option -->
@@ -85,9 +85,9 @@
         android:layout_marginEnd="@dimen/vk_space_l"
         android:alpha="0.35"
         android:background="@color/vk_outline"
-        app:layout_constraintEnd_toEndOf="@id/leftUpGazeText2"
-        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
-        app:layout_constraintTop_toTopOf="@id/leftUpGazeText2" />
+        app:layout_constraintEnd_toEndOf="@id/leftUpLookText2"
+        app:layout_constraintStart_toStartOf="@id/leftUpLookText2"
+        app:layout_constraintTop_toTopOf="@id/leftUpLookText2" />
 
     <View
         android:layout_width="0dp"
@@ -97,9 +97,9 @@
         android:layout_marginEnd="@dimen/vk_space_l"
         android:alpha="0.35"
         android:background="@color/vk_outline"
-        app:layout_constraintEnd_toEndOf="@id/leftGazeText2"
-        app:layout_constraintStart_toStartOf="@id/leftGazeText2"
-        app:layout_constraintTop_toTopOf="@id/leftGazeText2" />
+        app:layout_constraintEnd_toEndOf="@id/leftLookText2"
+        app:layout_constraintStart_toStartOf="@id/leftLookText2"
+        app:layout_constraintTop_toTopOf="@id/leftLookText2" />
 
     <View
         android:layout_width="0dp"
@@ -109,9 +109,9 @@
         android:layout_marginEnd="@dimen/vk_space_l"
         android:alpha="0.35"
         android:background="@color/vk_outline"
-        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
-        app:layout_constraintStart_toStartOf="@id/rightUpGazeText2"
-        app:layout_constraintTop_toTopOf="@id/rightUpGazeText2" />
+        app:layout_constraintEnd_toEndOf="@id/rightUpLookText2"
+        app:layout_constraintStart_toStartOf="@id/rightUpLookText2"
+        app:layout_constraintTop_toTopOf="@id/rightUpLookText2" />
 
     <View
         android:layout_width="0dp"
@@ -121,49 +121,49 @@
         android:layout_marginEnd="@dimen/vk_space_l"
         android:alpha="0.35"
         android:background="@color/vk_outline"
-        app:layout_constraintEnd_toEndOf="@id/rightGazeText2"
-        app:layout_constraintStart_toStartOf="@id/rightGazeText2"
-        app:layout_constraintTop_toTopOf="@id/rightGazeText2" />
+        app:layout_constraintEnd_toEndOf="@id/rightLookText2"
+        app:layout_constraintStart_toStartOf="@id/rightLookText2"
+        app:layout_constraintTop_toTopOf="@id/rightLookText2" />
 
     <!-- Sub options: the lower part of each corner tile -->
     <TextView
-        android:id="@+id/leftUpGazeSubText"
+        android:id="@+id/leftUpLookSubText"
         style="@style/Vk.KeySub"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="@id/leftUpGazeText2"
-        app:layout_constraintEnd_toEndOf="@id/leftUpGazeText2"
-        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
-        app:layout_constraintTop_toTopOf="@id/leftUpGazeText2"
+        app:layout_constraintBottom_toBottomOf="@id/leftUpLookText2"
+        app:layout_constraintEnd_toEndOf="@id/leftUpLookText2"
+        app:layout_constraintStart_toStartOf="@id/leftUpLookText2"
+        app:layout_constraintTop_toTopOf="@id/leftUpLookText2"
         tools:text="hello" />
 
     <TextView
-        android:id="@+id/leftGazeSubText"
+        android:id="@+id/leftLookSubText"
         style="@style/Vk.KeySub"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="@id/leftGazeText2"
-        app:layout_constraintEnd_toEndOf="@id/leftGazeText2"
-        app:layout_constraintStart_toStartOf="@id/leftGazeText2"
-        app:layout_constraintTop_toTopOf="@id/leftGazeText2"
+        app:layout_constraintBottom_toBottomOf="@id/leftLookText2"
+        app:layout_constraintEnd_toEndOf="@id/leftLookText2"
+        app:layout_constraintStart_toStartOf="@id/leftLookText2"
+        app:layout_constraintTop_toTopOf="@id/leftLookText2"
         tools:text="water" />
 
     <TextView
-        android:id="@+id/rightUpGazeSubText"
+        android:id="@+id/rightUpLookSubText"
         style="@style/Vk.KeySub"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="@id/rightUpGazeText2"
-        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
-        app:layout_constraintStart_toStartOf="@id/rightUpGazeText2"
-        app:layout_constraintTop_toTopOf="@id/rightUpGazeText2"
+        app:layout_constraintBottom_toBottomOf="@id/rightUpLookText2"
+        app:layout_constraintEnd_toEndOf="@id/rightUpLookText2"
+        app:layout_constraintStart_toStartOf="@id/rightUpLookText2"
+        app:layout_constraintTop_toTopOf="@id/rightUpLookText2"
         tools:text="good" />
 
     <TextView
-        android:id="@+id/rightGazeSubText"
+        android:id="@+id/rightLookSubText"
         style="@style/Vk.KeySub"
         android:layout_marginTop="60dp"
-        app:layout_constraintBottom_toBottomOf="@id/rightGazeText2"
-        app:layout_constraintEnd_toEndOf="@id/rightGazeText2"
-        app:layout_constraintStart_toStartOf="@id/rightGazeText2"
-        app:layout_constraintTop_toTopOf="@id/rightGazeText2"
+        app:layout_constraintBottom_toBottomOf="@id/rightLookText2"
+        app:layout_constraintEnd_toEndOf="@id/rightLookText2"
+        app:layout_constraintStart_toStartOf="@id/rightLookText2"
+        app:layout_constraintTop_toTopOf="@id/rightLookText2"
         tools:text="thanks" />
 
     <!-- Corner badges -->
@@ -172,57 +172,57 @@
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
         android:layout_marginTop="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_left_up"
-        app:layout_constraintStart_toStartOf="@id/leftUpGazeText2"
-        app:layout_constraintTop_toTopOf="@id/leftUpGazeText2" />
+        android:src="@drawable/ic_look_left_up"
+        app:layout_constraintStart_toStartOf="@id/leftUpLookText2"
+        app:layout_constraintTop_toTopOf="@id/leftUpLookText2" />
 
     <ImageView
         android:id="@+id/imageView13"
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
         android:layout_marginTop="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_left"
-        app:layout_constraintStart_toStartOf="@id/leftGazeText2"
-        app:layout_constraintTop_toTopOf="@id/leftGazeText2" />
+        android:src="@drawable/ic_look_left"
+        app:layout_constraintStart_toStartOf="@id/leftLookText2"
+        app:layout_constraintTop_toTopOf="@id/leftLookText2" />
 
     <ImageView
         android:id="@+id/imageView11"
         style="@style/Vk.Badge"
         android:layout_marginTop="@dimen/vk_badge_inset"
         android:layout_marginEnd="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_right_up"
-        app:layout_constraintEnd_toEndOf="@id/rightUpGazeText2"
-        app:layout_constraintTop_toTopOf="@id/rightUpGazeText2" />
+        android:src="@drawable/ic_look_right_up"
+        app:layout_constraintEnd_toEndOf="@id/rightUpLookText2"
+        app:layout_constraintTop_toTopOf="@id/rightUpLookText2" />
 
     <ImageView
         android:id="@+id/imageView12"
         style="@style/Vk.Badge"
         android:layout_marginTop="@dimen/vk_badge_inset"
         android:layout_marginEnd="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_right"
-        app:layout_constraintEnd_toEndOf="@id/rightGazeText2"
-        app:layout_constraintTop_toTopOf="@id/rightGazeText2" />
+        android:src="@drawable/ic_look_right"
+        app:layout_constraintEnd_toEndOf="@id/rightLookText2"
+        app:layout_constraintTop_toTopOf="@id/rightLookText2" />
 
     <!-- Centre column: Switch (eyes closed) and Finish (up) -->
     <TextView
-        android:id="@+id/closedGazeText2"
+        android:id="@+id/closedLookText2"
         style="@style/Vk.PillTile"
         android:layout_height="60dp"
         android:layout_marginEnd="@dimen/vk_half_gutter"
-        android:background="@drawable/gaze_option_bg_2"
-        app:layout_constraintEnd_toStartOf="@id/upGazeText2"
+        android:background="@drawable/look_option_bg_2"
+        app:layout_constraintEnd_toStartOf="@id/upLookText2"
         app:layout_constraintStart_toStartOf="@id/centerColumn"
         app:layout_constraintTop_toTopOf="@id/centerColumn"
         tools:text="Switch" />
 
     <TextView
-        android:id="@+id/upGazeText2"
+        android:id="@+id/upLookText2"
         style="@style/Vk.PillTile"
         android:layout_height="60dp"
         android:layout_marginStart="@dimen/vk_half_gutter"
-        android:background="@drawable/gaze_option_bg_2"
+        android:background="@drawable/look_option_bg_2"
         app:layout_constraintEnd_toEndOf="@id/centerColumn"
-        app:layout_constraintStart_toEndOf="@id/closedGazeText2"
+        app:layout_constraintStart_toEndOf="@id/closedLookText2"
         app:layout_constraintTop_toTopOf="@id/centerColumn"
         tools:text="Finish" />
 
@@ -230,19 +230,19 @@
         android:id="@+id/imageView3"
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_closed"
-        app:layout_constraintBottom_toBottomOf="@id/closedGazeText2"
-        app:layout_constraintStart_toStartOf="@id/closedGazeText2"
-        app:layout_constraintTop_toTopOf="@id/closedGazeText2" />
+        android:src="@drawable/ic_look_closed"
+        app:layout_constraintBottom_toBottomOf="@id/closedLookText2"
+        app:layout_constraintStart_toStartOf="@id/closedLookText2"
+        app:layout_constraintTop_toTopOf="@id/closedLookText2" />
 
     <ImageView
         android:id="@+id/imageView"
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_up"
-        app:layout_constraintBottom_toBottomOf="@id/upGazeText2"
-        app:layout_constraintStart_toStartOf="@id/upGazeText2"
-        app:layout_constraintTop_toTopOf="@id/upGazeText2" />
+        android:src="@drawable/ic_look_up"
+        app:layout_constraintBottom_toBottomOf="@id/upLookText2"
+        app:layout_constraintStart_toStartOf="@id/upLookText2"
+        app:layout_constraintTop_toTopOf="@id/upLookText2" />
 
     <!-- Centre column: the sentence fills the middle; the bottom row is the mic alone, centred, until something
          is heard; then the heard text takes the row and the mic moves to its end. -->
@@ -265,7 +265,7 @@
         app:layout_constraintBottom_toTopOf="@id/sentenceBox2"
         app:layout_constraintEnd_toEndOf="@id/centerColumn"
         app:layout_constraintStart_toStartOf="@id/centerColumn"
-        app:layout_constraintTop_toBottomOf="@id/closedGazeText2"
+        app:layout_constraintTop_toBottomOf="@id/closedLookText2"
         app:layout_constraintVertical_weight="0.45"
         tools:text="Text: A-F" />
 
@@ -391,7 +391,7 @@
         style="@style/Vk.PillTile"
         android:layout_height="68dp"
         android:layout_marginStart="@dimen/vk_half_gutter"
-        android:background="@drawable/gaze_option_bg_2"
+        android:background="@drawable/look_option_bg_2"
         android:text="@string/TextEntry_Back"
         android:translationZ="22dp"
         android:visibility="invisible"
@@ -404,7 +404,7 @@
         android:id="@+id/speakButtonImage"
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_left"
+        android:src="@drawable/ic_look_left"
         android:translationZ="25dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@id/speakButton"
@@ -415,7 +415,7 @@
         android:id="@+id/backButtonImage"
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_right_up"
+        android:src="@drawable/ic_look_right_up"
         android:translationZ="25dp"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@id/backButton"

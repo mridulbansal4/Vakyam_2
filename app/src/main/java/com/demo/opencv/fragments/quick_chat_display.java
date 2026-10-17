@@ -30,7 +30,7 @@ public class quick_chat_display extends Fragment {
     Activity mActivity;
     Handler handler;
     Runnable updateUI;
-    List<TextView> gazeButtons = new ArrayList<>();
+    List<TextView> lookButtons = new ArrayList<>();
     public quick_chat_display() {
         // Required empty public constructor
     }
@@ -83,17 +83,17 @@ public class quick_chat_display extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
 
         UserDataManager userDataManager = (UserDataManager) requireActivity().getApplication();
-        gazeButtons.clear();
-        gazeButtons.add(view.findViewById(R.id.QuickChatUp));
-        gazeButtons.add(view.findViewById(R.id.QuickChatLeftUp));
-        gazeButtons.add(view.findViewById(R.id.QuickChatRightUp));
-        gazeButtons.add(view.findViewById(R.id.QuickChatLeft));
-        gazeButtons.add(view.findViewById(R.id.QuickChatClosed));
-        gazeButtons.add(view.findViewById(R.id.QuickChatRight));
+        lookButtons.clear();
+        lookButtons.add(view.findViewById(R.id.QuickChatUp));
+        lookButtons.add(view.findViewById(R.id.QuickChatLeftUp));
+        lookButtons.add(view.findViewById(R.id.QuickChatRightUp));
+        lookButtons.add(view.findViewById(R.id.QuickChatLeft));
+        lookButtons.add(view.findViewById(R.id.QuickChatClosed));
+        lookButtons.add(view.findViewById(R.id.QuickChatRight));
 
-        for (int i = 0; i < gazeButtons.size(); i++) { // add click listeners for the eye gesture buttons
+        for (int i = 0; i < lookButtons.size(); i++) { // add click listeners for the eye gesture buttons
             int finalI = i;
-            TextView btn = gazeButtons.get(i);
+            TextView btn = lookButtons.get(i);
             if (btn != null) {
                 btn.setOnClickListener(v -> quickChatListener.onQuickChatButtonClicked(finalI));
             }
@@ -104,8 +104,8 @@ public class quick_chat_display extends Fragment {
             QuickChatData quickChatData = item.quickChatData;
             if (quickChatData != null && quickChatData.texts != null) {
                 for (int i = 0; i < 6; i++) {
-                    if (i < gazeButtons.size() && i < quickChatData.texts.length) {
-                        setText(gazeButtons.get(i), quickChatData.texts[i]);
+                    if (i < lookButtons.size() && i < quickChatData.texts.length) {
+                        setText(lookButtons.get(i), quickChatData.texts[i]);
                     }
                 }
             }

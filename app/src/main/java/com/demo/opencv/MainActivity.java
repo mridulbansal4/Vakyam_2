@@ -619,7 +619,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onTextModeButtonClicked(int input) {
-        presenter.onGazeButtonClicked(input);
+        presenter.onLookButtonClicked(input);
     }
 
     @Override
@@ -645,7 +645,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onQuickChatButtonClicked(int input) {
-        presenter.onGazeButtonClicked(input);
+        presenter.onLookButtonClicked(input);
     }
 
     @Override

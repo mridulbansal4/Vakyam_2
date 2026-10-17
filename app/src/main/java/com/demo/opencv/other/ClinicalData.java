@@ -9,7 +9,7 @@ public class ClinicalData {
 
     public final List<Float> leftNICX = Collections.synchronizedList(new ArrayList<>());
     public final List<Float> leftNICY = Collections.synchronizedList(new ArrayList<>());
-    public final List<String> gazeLog = Collections.synchronizedList(new ArrayList<>());
+    public final List<String> lookLog = Collections.synchronizedList(new ArrayList<>());
 
     public synchronized void addNICPoint(float x, float y) {
         if (leftNICX.size() >= MAX_DATA_POINTS) {
@@ -22,17 +22,17 @@ public class ClinicalData {
         leftNICY.add(y);
     }
 
-    public synchronized void addGazeLog(String entry) {
+    public synchronized void addLookLog(String entry) {
         if (entry == null) return;
-        if (gazeLog.size() >= MAX_DATA_POINTS) {
-            gazeLog.remove(0);
+        if (lookLog.size() >= MAX_DATA_POINTS) {
+            lookLog.remove(0);
         }
-        gazeLog.add(entry);
+        lookLog.add(entry);
     }
 
     public synchronized void clear() {
         leftNICX.clear();
         leftNICY.clear();
-        gazeLog.clear();
+        lookLog.clear();
     }
 }

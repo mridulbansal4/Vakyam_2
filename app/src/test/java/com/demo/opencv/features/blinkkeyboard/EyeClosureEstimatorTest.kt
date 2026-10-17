@@ -49,7 +49,7 @@ class EyeClosureEstimatorTest {
 
     @Test
     fun aShutEyeWithAWobblingProbabilityStaysOneClosure() {
-        // What the gaze camera really delivers: a shut eye whose probability wobbles above the
+        // What the look camera really delivers: a shut eye whose probability wobbles above the
         // cut-off every few frames. That must not split one closure into several blinks.
         openEyes()
         var reopened = false

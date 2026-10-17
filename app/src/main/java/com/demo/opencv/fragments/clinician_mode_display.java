@@ -76,11 +76,11 @@ public class clinician_mode_display extends Fragment {
         }
     }
 
-    private static ArrayList<Entry> setChartData(float[] floatArray, String[] gazeType) {
+    private static ArrayList<Entry> setChartData(float[] floatArray, String[] lookType) {
         ArrayList<Entry> dataset = new ArrayList<>();
         if (floatArray == null) return dataset;
         for (int i = 0; i < floatArray.length; i++) {
-            boolean isClosed = (gazeType != null && gazeType.length > i && Objects.equals(gazeType[i], "Closed"));
+            boolean isClosed = (lookType != null && lookType.length > i && Objects.equals(lookType[i], "Closed"));
             if (!isClosed && floatArray[i] < 1 && floatArray[i] > 0) {
                 // only get values in the range
                 dataset.add(new Entry(i, floatArray[i]));
@@ -94,8 +94,8 @@ public class clinician_mode_display extends Fragment {
         Bundle args = new Bundle();
 
         if (clinicalData != null) {
-            if (clinicalData.gazeLog != null) {
-                args.putStringArray("gazeInputLog", StringListToArray(clinicalData.gazeLog));
+            if (clinicalData.lookLog != null) {
+                args.putStringArray("lookInputLog", StringListToArray(clinicalData.lookLog));
             }
             if (clinicalData.leftNICX != null && clinicalData.leftNICY != null) {
                 args.putFloatArray("leftNICX", FloatListToArray(clinicalData.leftNICX));
@@ -243,24 +243,24 @@ public class clinician_mode_display extends Fragment {
             Log.d("ClinicalMode", "Received Data");
             float[] leftNICX = args.getFloatArray("leftNICX"); // left NIC x-coordinate
             float[] leftNICY = args.getFloatArray("leftNICY"); // left NIC y-coordinate
-            String[] gazeInputLog = args.getStringArray("gazeInputLog"); // gaze type
+            String[] lookInputLog = args.getStringArray("lookInputLog"); // look type
 
-            if (gazeInputLog != null) { // adding the gaze input log
-                Log.d("ClinicalMode", "Gaze input log size = " + gazeInputLog.length);
-                TextView gazeInputLogView = view.findViewById(R.id.gazeLogText);
-                if (gazeInputLogView != null) {
+            if (lookInputLog != null) { // adding the look input log
+                Log.d("ClinicalMode", "Look input log size = " + lookInputLog.length);
+                TextView lookInputLogView = view.findViewById(R.id.lookLogText);
+                if (lookInputLogView != null) {
                     StringBuilder targetString = new StringBuilder();
-                    for (String s : gazeInputLog) {
+                    for (String s : lookInputLog) {
                         targetString.append(s);
                         targetString.append('\n');
                     }
-                    gazeInputLogView.setText(targetString.toString());
+                    lookInputLogView.setText(targetString.toString());
                 }
             }
 
             if (mChart != null && leftNICX != null && leftNICY != null) { // if data present, adding graph
-                ArrayList<Entry> dataset1 = setChartData(leftNICX, gazeInputLog); // convert to data type
-                ArrayList<Entry> dataset2 = setChartData(leftNICY, gazeInputLog);
+                ArrayList<Entry> dataset1 = setChartData(leftNICX, lookInputLog); // convert to data type
+                ArrayList<Entry> dataset2 = setChartData(leftNICY, lookInputLog);
 
                 LineDataSet set1, set2; // define data sets
                 set1 = initLineDataSet(dataset1, "NIC left x-coordinate", 0xFF2F6F6A);

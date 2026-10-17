@@ -74,10 +74,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/ic_gaze_up" />
+                android:src="@drawable/ic_look_up" />
 
             <TextView
-                android:id="@+id/upGazeText"
+                android:id="@+id/upLookText"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -102,10 +102,10 @@
                 android:layout_height="match_parent"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/ic_gaze_left" />
+                android:src="@drawable/ic_look_left" />
 
             <TextView
-                android:id="@+id/leftGazeText"
+                android:id="@+id/leftLookText"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -130,10 +130,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/ic_gaze_right" />
+                android:src="@drawable/ic_look_right" />
 
             <TextView
-                android:id="@+id/rightGazeText"
+                android:id="@+id/rightLookText"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -158,10 +158,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/ic_gaze_closed" />
+                android:src="@drawable/ic_look_closed" />
 
             <TextView
-                android:id="@+id/closedGazeText"
+                android:id="@+id/closedLookText"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -186,10 +186,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/ic_gaze_left_up" />
+                android:src="@drawable/ic_look_left_up" />
 
             <TextView
-                android:id="@+id/leftUpGazeText"
+                android:id="@+id/leftUpLookText"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -214,10 +214,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="5"
                 android:padding="2sp"
-                android:src="@drawable/ic_gaze_right_up" />
+                android:src="@drawable/ic_look_right_up" />
 
             <TextView
-                android:id="@+id/rightUpGazeText"
+                android:id="@+id/rightUpLookText"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_weight="1"

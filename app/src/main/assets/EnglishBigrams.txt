@@ -39,8 +39,6 @@ view no 93
 elderly no 18
 high no 100
 three have 87
-municipal gaze 77
-simply gaze 31
 comfortable I 24
 potential that 92
 trade that 98
@@ -1302,7 +1300,6 @@ begin military 76
 secular military 90
 system price 60
 chair pride 26
-gaze tribe 91
 dig stiff 88
 key according 81
 literary decision 66
@@ -2365,7 +2362,6 @@ opening living 19
 compete living 31
 face unless 53
 plastic tomorrow 86
-gaze technique 96
 yet folk 48
 pressure doll 97
 Roman boil 35

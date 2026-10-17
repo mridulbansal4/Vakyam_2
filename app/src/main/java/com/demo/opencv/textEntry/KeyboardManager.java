@@ -52,11 +52,11 @@ public class KeyboardManager {
         return keyboardData;
     }
 
-    public void processInput(int input, boolean isGazeType) {
+    public void processInput(int input, boolean isLookType) {
         int selection = input;
-        if (isGazeType) {
-            // left gaze = 1, right gaze = 2, up gaze = 0, down gaze = -1, closed = 3, left-up gaze = 4, right-up gaze = 5
-            final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
+        if (isLookType) {
+            // left look = 1, right look = 2, up look = 0, down look = -1, closed = 3, left-up look = 4, right-up look = 5
+            final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert look type into keyboard input
             if (input < 0 || input >= keyboardInputMat.length) return;
             selection = keyboardInputMat[input];
         }
@@ -82,7 +82,7 @@ public class KeyboardManager {
                     }
                     textInput += operation; // add the letter/space
                 }
-                TypingTest.onTextChanged(textInput, TypingTest.MODE_GAZE_LETTER);
+                TypingTest.onTextChanged(textInput, TypingTest.MODE_EYE_LETTER);
             }
             layer = 1;
         }

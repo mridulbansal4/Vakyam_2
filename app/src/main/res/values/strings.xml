@@ -2,7 +2,7 @@
     <!-- Untranslatable Strings -->
     <string name="app_name" translatable="false">Vakyam</string>
 
-    <!-- Gaze Types -->
+    <!-- Eye input types -->
     <string name="Straight">Straight</string>
     <string name="Left">Left</string>
     <string name="Right">Right</string>
@@ -19,16 +19,16 @@
     <!-- Settings UI Strings -->
     <string name="Settings_TopBarTitle">Settings</string>
     <string name="Settings_Title">Settings</string>
-    <string name="Settings_GazeType">Gaze type</string>
+    <string name="Settings_LookType">Eye input type</string>
     <string name="Settings_IrisLightingThreshold">Lighting threshold</string>
-    <string name="Settings_GazeSensitivity">Sensitivity</string>
+    <string name="Settings_LookSensitivity">Sensitivity</string>
     <string name="Settings_TextEntryMode">Text entry mode</string>
     <string name="Settings_Language">Language</string>
 
     <!-- Calibration UI Strings -->
     <string name="Calibration_TopBarTitle">Calibrate</string>
     <string name="Calibration_Title">Eye calibration</string>
-    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see the picture). Press start, then hold your gaze in each direction until you hear a beep. Each direction is captured automatically.</string>
+    <string name="Calibration_Description">Calibrate your eyes for Vakyam to recognize your eye gestures. Make sure your eyes are on the same level as the front-end camera (see the picture). Press start, then look in each direction until you hear a beep. Each direction is captured automatically.</string>
     <string name="Calibration_Continue">Continue</string>
     <string name="Calibration_Start">Start</string>
     <string name="Calibration_Restart">Restart</string>
@@ -38,7 +38,7 @@
     <string name="Calibration_StatusNoEyes">Eyes not visible. Move your face into view.</string>
     <string name="Calibration_StatusEyesClosed">Keep your eyes open.</string>
     <string name="Calibration_StatusPhoneMoving">Hold the phone still.</string>
-    <string name="Calibration_StatusHoldGaze">Hold your gaze steady.</string>
+    <string name="Calibration_StatusHoldLook">Keep looking in that direction.</string>
     <string name="Calibration_StatusLookFurther">Move your eyes further in that direction.</string>
     <string name="Calibration_StatusHolding">Hold… capturing</string>
     <string name="Calibration_LookStraight">Look straight</string>
@@ -111,8 +111,8 @@
 
     <!-- Clinician UI Strings -->
     <string name="Clinician_TopBarTitle">Data</string>
-    <string name="Clinician_GazeInputLog">Gaze input log</string>
-    <string name="Settings_Error">Gaze Error</string>
+    <string name="Clinician_LookInputLog">Eye input log</string>
+    <string name="Settings_Error">Eye Error</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="Sensor_ThermalCritical">The phone is warm, so Vakyam is running a little slower while it cools down. Eye typing keeps working. This clears by itself once the phone has cooled.</string>

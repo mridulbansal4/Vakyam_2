@@ -7,7 +7,7 @@
     <string name="Calibration_StatusNoEyes">Aankhein nahi dikh rahi. Chehra camera ke saamne laaiye.</string>
     <string name="Calibration_StatusEyesClosed">Aankhein khuli rakhiye.</string>
     <string name="Calibration_StatusPhoneMoving">Phone ko hilne mat dijiye.</string>
-    <string name="Calibration_StatusHoldGaze">Nazar ek jagah rakhiye.</string>
+    <string name="Calibration_StatusHoldLook">Nazar ek jagah rakhiye.</string>
     <string name="Calibration_StatusLookFurther">Aankhein us taraf aur zyada le jaaiye.</string>
     <string name="Calibration_StatusHolding">Rukiye… capture ho raha hai</string>
     <string name="Calibration_LookStraight">Seedha dekhiye</string>

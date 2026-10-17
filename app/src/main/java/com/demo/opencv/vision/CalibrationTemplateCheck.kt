@@ -2,11 +2,11 @@ package com.demo.opencv.vision
 
 /**
  * Checks an eye image before it is stored as a calibration template, using the same measure the
- * gaze classifier uses (mean squared difference after removing each image's mean brightness).
+ * look classifier uses (mean squared difference after removing each image's mean brightness).
  *
  * The iris-position gate alone is not enough: the iris is hard to locate when the eye looks up or
  * into a corner, so a step could be captured while the user was still looking straight ahead. A
- * template that looks like an earlier one makes that gaze impossible to tell apart, so it is
+ * template that looks like an earlier one makes that look impossible to tell apart, so it is
  * rejected here instead, however the step was triggered.
  *
  * Images are grey pixels in 0..1, all of the same size.

@@ -18,7 +18,7 @@ import kotlin.math.sqrt
  *
  * If jerk exceeds the shock threshold (default 4.5 m/s^3), it engages a temporary
  * Motion-Hold window (300ms) that:
- * 1. Suppresses all gaze gesture evaluations.
+ * 1. Suppresses all look gesture evaluations.
  * 2. Prevents false positive inputs caused by involuntary head bobs or phone vibrations.
  * 3. Keeps typing state intact rather than resetting or mis-selecting.
  */

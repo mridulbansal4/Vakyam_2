@@ -21,10 +21,10 @@ public interface ContractInterface {
     }
 
     interface Model {
-        void analyzeGazeOutput(); // method that runs with new user gaze input
+        void analyzeLookOutput(); // method that runs with new user look input
         void initialize(Context context, Context applicationContext) throws IOException; // method to initialize models in the database (OpenCV, TensorFlow Lite, ChatGPT, etc.)
         void updateCalibrationTemplates();
-        DetectionOutput classifyGaze(Mat rgbMat); // determine gaze code with output
+        DetectionOutput classifyLook(Mat rgbMat); // determine look code with output
         void setFaceRoiDetection(boolean enabled); // run ML Kit on a crop around the last face
     }
 
@@ -37,13 +37,13 @@ public interface ContractInterface {
         ClinicalData getClinicalData();
         void setMode(String value);
         String getMode();
-        void onGazeButtonClicked(int input);
+        void onLookButtonClicked(int input);
         void onRecordButtonClicked();
         void setFaceRoiDetection(boolean enabled);
         void speakCaregiverMessage(String text);
         void speakPatientText(String text); // in the voice of the patient's language
-        void setGazeInputPaused(boolean paused); // eye gestures stop selecting while another screen reads the eyes
+        void setLookInputPaused(boolean paused); // eye gestures stop selecting while another screen reads the eyes
         void finishTypingTest();
-        void clearText(); // empty the text box of every gaze text-entry mode
+        void clearText(); // empty the text box of every look text-entry mode
     }
 }

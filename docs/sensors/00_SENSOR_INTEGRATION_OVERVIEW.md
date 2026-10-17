@@ -6,7 +6,7 @@ This file holds the pieces shared by all three sensor features, so each sensor d
 |---|---|---|
 | [02_THERMAL_ADAPTIVE_PERFORMANCE.md](02_THERMAL_ADAPTIVE_PERFORMANCE.md) | `PowerManager` thermal status + thermal headroom (+ battery temp) | Cursor stutter / camera kill when OpenCV + ML Kit + Gemma overheat the SoC |
 | [03_BATTERY_CHARGING_HEAT_SAFETY.md](03_BATTERY_CHARGING_HEAT_SAFETY.md) | Battery thermistor via `ACTION_BATTERY_CHANGED` | Battery swelling/heat damage while fast-charging on a bedside/wheelchair mount |
-| [04_COLOR_TEMPERATURE_CCT.md](04_COLOR_TEMPERATURE_CCT.md) | `stk_stk6b9x light_cct` (vendor type 66557) + `tcs3743` lux | Eye strain during 8–14 h/day gaze typing |
+| [04_COLOR_TEMPERATURE_CCT.md](04_COLOR_TEMPERATURE_CCT.md) | `stk_stk6b9x light_cct` (vendor type 66557) + `tcs3743` lux | Eye strain during 8–14 h/day eye typing |
 
 ---
 

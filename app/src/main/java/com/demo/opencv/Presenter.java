@@ -32,7 +32,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public boolean presenterBusy = false;
     public String mode = ""; // Home, Calibration, Text, Dev, Clinician, QuickChat
     boolean recording = false;
-    private volatile boolean gazeInputPaused = false;
+    private volatile boolean lookInputPaused = false;
     private final ContractInterface.View mainView; // creating object of View Interface
     private final ContractInterface.Model model; // creating object of Model Interface
     private final KeyboardManager keyboardManager = new KeyboardManager();
@@ -177,7 +177,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         appliveData.calibrationStatusRes = 0;
     }
 
-    private void autoCaptureCalibration(DetectionOutput detectionOutput) { // captures a calibration step once the gaze is held steady
+    private void autoCaptureCalibration(DetectionOutput detectionOutput) { // captures a calibration step once the look is held steady
         int state = userDataManager.getCalibrationState();
         if (state < 0 || state >= userDataManager.calibrationTemplateNum || detectionOutput == null) {
             appliveData.calibrationProgress = 0f;
@@ -219,7 +219,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             if (sameAs >= 0 || !settled) {
                 Log.i("AutoCalibration", "Rejected step " + state + (sameAs >= 0 ? ": looks like step " + sameAs : ": eye image not settled"));
                 appliveData.calibrationProgress = 0f;
-                appliveData.calibrationStatusRes = sameAs >= 0 ? R.string.Calibration_StatusLookFurther : R.string.Calibration_StatusHoldGaze;
+                appliveData.calibrationStatusRes = sameAs >= 0 ? R.string.Calibration_StatusLookFurther : R.string.Calibration_StatusHoldLook;
                 capture = false;
             }
         }
@@ -248,7 +248,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
             case HOLDING:
             case CAPTURED: return R.string.Calibration_StatusHolding;
             case NOT_STEADY:
-            default: return R.string.Calibration_StatusHoldGaze;
+            default: return R.string.Calibration_StatusHoldLook;
         }
     }
 
@@ -293,7 +293,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     }
 
     @Override
-    public void onGazeButtonClicked(int input) { // when the user clicks a gaze button (for text mode and quick chat)
+    public void onLookButtonClicked(int input) { // when the user clicks a look button (for text mode and quick chat)
         playBeepTone();
         if (Objects.equals(mode, "Text")) {
             TypingTest.onSelection();
@@ -365,7 +365,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     public void speakPatientText(String text) { audioManager.speakText(text, userDataManager.getLanguage()); }
 
     @Override
-    public void setGazeInputPaused(boolean paused) { gazeInputPaused = paused; }
+    public void setLookInputPaused(boolean paused) { lookInputPaused = paused; }
 
     @Override
     public void clearText() {
@@ -376,7 +376,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
     @Override
     public void finishTypingTest() { // the caregiver ends the test with whatever has been typed so far
         if (userDataManager.getTextEntryMode() == 0) {
-            TypingTest.onSpoken(keyboardManager.getTextInput(), TypingTest.MODE_GAZE_LETTER);
+            TypingTest.onSpoken(keyboardManager.getTextInput(), TypingTest.MODE_EYE_LETTER);
         } else {
             textEntryManager.finishTypingTest();
         }
@@ -387,40 +387,40 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         presenterBusy = true;
         prevMat = rgbMat;
        // Log.d("MVPPresenter", "Frame loaded");
-        DetectionOutput detectionOutput = model.classifyGaze(rgbMat); // get detection output from model
+        DetectionOutput detectionOutput = model.classifyLook(rgbMat); // get detection output from model
      //   Log.d("MVPPresenter", "Frame processed");
 
         if (detectionOutput != null && detectionOutput.leftNIC != null) {
             clinicalData.addNICPoint((float) detectionOutput.leftNIC.x, (float) detectionOutput.leftNIC.y);
         }
 
-        if (Objects.equals(mode, "Calibration") && !gazeInputPaused) {
+        if (Objects.equals(mode, "Calibration") && !lookInputPaused) {
             autoCaptureCalibration(detectionOutput);
         }
 
-        if (!gazeInputPaused && detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid
+        if (!lookInputPaused && detectionOutput != null && detectionOutput.AnalyzedData != null) { // when the input is valid
             if (Objects.equals(mode, "Text") || Objects.equals(mode, "Dev") || Objects.equals(mode, "QuickChat")) { // not calibrating or in clinician mode, process the input
-                int gazeType = detectionOutput.gestureOutput;
+                int lookType = detectionOutput.gestureOutput;
 
-                if (gazeType != 0) { // gaze input is meaningful
-                    Log.d("IrisDetection", "Gesture Output: " + gazeType);
+                if (lookType != 0) { // look input is meaningful
+                    Log.d("IrisDetection", "Gesture Output: " + lookType);
                     playBeepTone();
 
                     if (Objects.equals(mode, "Text")) { // only do text input in text mode
-                        String gazeLogInput = Calendar.getInstance().getTime() + ": " + userDataManager.gazeIndexToString(gazeType);
-                        clinicalData.addGazeLog(gazeLogInput);
+                        String lookLogInput = Calendar.getInstance().getTime() + ": " + userDataManager.lookIndexToString(lookType);
+                        clinicalData.addLookLog(lookLogInput);
                         TypingTest.onSelection();
 
                         if (userDataManager.getTextEntryMode() == 0) { // letter-by-letter mode
-                            keyboardManager.processInput(gazeType);
+                            keyboardManager.processInput(lookType);
                             KeyboardData keyboardData = keyboardManager.getDisplays();
                             appliveData.setKeyboardDisplays(keyboardData);
                         } else { // other two modes
                             textEntryManager.LLMEnabled = (userDataManager.getTextEntryMode() == 2);
-                            textEntryManager.manageUserInput(gazeType, true);
+                            textEntryManager.manageUserInput(lookType, true);
                         }
                     } else if (Objects.equals(mode, "QuickChat")) { // quick chat mode
-                        quickChatManager.manageUserInput(gazeType, true);
+                        quickChatManager.manageUserInput(lookType, true);
                     }
                 }
             }
@@ -450,7 +450,7 @@ public class Presenter implements ContractInterface.Presenter, AudioManager.Audi
         appliveData.setDetectionOutput(detectionOutput);
         appliveData.leftTemplates = userDataManager.getLeftCalibrationData(); // templates shown in calibration screen
         appliveData.rightTemplates = userDataManager.getRightCalibrationData();
-        mainView.updateLiveData(appliveData); // display the gaze data and testing mats
+        mainView.updateLiveData(appliveData); // display the look data and testing mats
 
         presenterBusy = false;
     }

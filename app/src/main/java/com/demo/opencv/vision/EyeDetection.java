@@ -21,7 +21,7 @@ import com.demo.opencv.UserDataManager;
 public class EyeDetection {
     UserDataManager userDataManager;
     public Mat finalMat, opening;
-    Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches the calibration order to the gaze data order
+    Integer[] tags = new Integer[]{0, 1, 2, 3, 6, 7}; // matches the calibration order to the look data order
     Mat[] leftTemplates, rightTemplates;
     public float thresholdValue = 18f;
     public boolean adaptiveThreshold = true;
@@ -92,7 +92,7 @@ public class EyeDetection {
     }
     static final double CLEAR_MATCH_RATIO = 0.9;
 
-    // The best template must beat the runner-up by a margin; a gaze halfway between two templates is not an input
+    // The best template must beat the runner-up by a margin; a look halfway between two templates is not an input
     static boolean isClearMatch(double bestError, double secondError) {
         return bestError <= secondError * CLEAR_MATCH_RATIO;
     }
@@ -144,9 +144,9 @@ public class EyeDetection {
         float effectiveSensitivity = effectiveSensitivity();
         Log.d("GestureDetection", "Sensitivity = " + effectiveSensitivity);
         Boolean success = minError <= effectiveSensitivity && isClearMatch(minError, secondError); // get threshold for the specific type
-        Log.d("GestureDetection", "The gaze for ");
-        int gazeTag = (index >= 0 && index < tags.length) ? tags[index] : 0;
-        detectionOutput.setEyeData(type, success, gazeTag, 1, (float)minError);
+        Log.d("GestureDetection", "The look for ");
+        int lookTag = (index >= 0 && index < tags.length) ? tags[index] : 0;
+        detectionOutput.setEyeData(type, success, lookTag, 1, (float)minError);
 
         return templateError;
 

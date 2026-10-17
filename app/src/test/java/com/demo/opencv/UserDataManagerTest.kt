@@ -15,22 +15,22 @@ class UserDataManagerTest {
     }
 
     @Test
-    fun testGazeIndexToStringValidIndices() {
-        assertEquals("Straight", userDataManager.gazeIndexToString(0))
-        assertEquals("Left", userDataManager.gazeIndexToString(1))
-        assertEquals("Right", userDataManager.gazeIndexToString(2))
-        assertEquals("Up", userDataManager.gazeIndexToString(3))
-        assertEquals("Down", userDataManager.gazeIndexToString(4))
-        assertEquals("Closed", userDataManager.gazeIndexToString(5))
-        assertEquals("Left Up", userDataManager.gazeIndexToString(6))
-        assertEquals("Right Up", userDataManager.gazeIndexToString(7))
+    fun testLookIndexToStringValidIndices() {
+        assertEquals("Straight", userDataManager.lookIndexToString(0))
+        assertEquals("Left", userDataManager.lookIndexToString(1))
+        assertEquals("Right", userDataManager.lookIndexToString(2))
+        assertEquals("Up", userDataManager.lookIndexToString(3))
+        assertEquals("Down", userDataManager.lookIndexToString(4))
+        assertEquals("Closed", userDataManager.lookIndexToString(5))
+        assertEquals("Left Up", userDataManager.lookIndexToString(6))
+        assertEquals("Right Up", userDataManager.lookIndexToString(7))
     }
 
     @Test
-    fun testGazeIndexToStringOutOfBounds() {
-        assertEquals("Unknown (-1)", userDataManager.gazeIndexToString(-1))
-        assertEquals("Unknown (8)", userDataManager.gazeIndexToString(8))
-        assertEquals("Unknown (100)", userDataManager.gazeIndexToString(100))
+    fun testLookIndexToStringOutOfBounds() {
+        assertEquals("Unknown (-1)", userDataManager.lookIndexToString(-1))
+        assertEquals("Unknown (8)", userDataManager.lookIndexToString(8))
+        assertEquals("Unknown (100)", userDataManager.lookIndexToString(100))
     }
 
     @Test

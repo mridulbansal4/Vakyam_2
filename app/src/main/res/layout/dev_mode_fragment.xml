@@ -15,7 +15,7 @@
         android:padding="@dimen/vk_screen_margin">
 
         <TextView
-            android:id="@+id/gazeDetectionStastics"
+            android:id="@+id/lookDetectionStastics"
             style="@style/Vk.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -101,7 +101,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="0.4"
-                        android:text="@string/Settings_GazeSensitivity" />
+                        android:text="@string/Settings_LookSensitivity" />
 
                     <SeekBar
                         android:id="@+id/seekBar"
@@ -150,14 +150,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/vk_space_m"
-                    tools:text="Gaze detected" />
+                    tools:text="Look detected" />
 
                 <TextView
                     android:id="@+id/textView2"
                     style="@style/Vk.Text.Caption"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    tools:text="Overall gaze type: Straight" />
+                    tools:text="Overall look type: Straight" />
 
                 <TextView
                     android:id="@+id/textView3"
@@ -174,14 +174,14 @@
                     android:visibility="gone" />
 
                 <TextView
-                    android:id="@+id/gazeInputLog2"
+                    android:id="@+id/lookInputLog2"
                     style="@style/Vk.Text.Caption"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/vk_space_s"
                     android:maxLines="3"
                     android:ellipsize="start"
-                    tools:text="Gaze input log: Left, Up, Closed" />
+                    tools:text="Look input log: Left, Up, Closed" />
             </LinearLayout>
         </LinearLayout>
 

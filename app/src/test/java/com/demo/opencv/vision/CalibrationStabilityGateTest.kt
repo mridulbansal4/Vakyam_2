@@ -51,7 +51,7 @@ class CalibrationStabilityGateTest {
     }
 
     @Test
-    fun jitteryGazeNeverCaptures() {
+    fun jitteryLookNeverCaptures() {
         val gate = CalibrationStabilityGate()
         gate.startStep(0L)
         assertEquals(0, feed(gate, 0L, 4000L) { i -> Triple(if (i % 2 == 0) 0.40f else 0.50f, 0.5f, Float.NaN) })
@@ -162,7 +162,7 @@ class CalibrationStabilityGateTest {
     }
 
     @Test
-    fun escalationToleratesNoisierGaze() {
+    fun escalationToleratesNoisierLook() {
         val gate = CalibrationStabilityGate()
         gate.startStep(0L)
         val jitter = { i: Int -> Triple(0.5f + if (i % 2 == 0) 0.06f else 0f, 0.5f, Float.NaN) }
@@ -176,7 +176,7 @@ class CalibrationStabilityGateTest {
 
     @Test
     fun phoneRotationIsCompensatedWithGyroAngles() {
-        // Eyes follow the screen as the hand-held phone wobbles: the gaze ratio moves with the yaw.
+        // Eyes follow the screen as the hand-held phone wobbles: the look ratio moves with the yaw.
         val wobble = { i: Int ->
             val yaw = 0.05f * sin(i * 0.9f)
             Triple(0.5f + 1.0f * yaw, 0.5f, yaw)
@@ -193,7 +193,7 @@ class CalibrationStabilityGateTest {
 
     @Test
     fun compensationCannotHideRealEyeMovement() {
-        // Gaze jumps around while the phone is perfectly still: nothing to compensate.
+        // Look jumps around while the phone is perfectly still: nothing to compensate.
         val gate = CalibrationStabilityGate()
         gate.startStep(0L)
         assertEquals(0, feed(gate, 0L, 3000L) { i -> Triple(if (i % 2 == 0) 0.40f else 0.50f, 0.5f, 0f) })

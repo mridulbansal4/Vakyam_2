@@ -1,6 +1,6 @@
 package com.demo.opencv.vision;
 
-import com.demo.opencv.vision.GazeData;
+import com.demo.opencv.vision.LookData;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -8,25 +8,25 @@ import org.opencv.core.Point;
 import java.util.ArrayList;
 
 public class DetectionOutput {
-    public GazeData LeftData; public GazeData RightData; public GazeData AnalyzedData;
-    public void setEyeData(int type, Boolean Success, int GazeType, int GazeLength, float GazeProbability) {
+    public LookData LeftData; public LookData RightData; public LookData AnalyzedData;
+    public void setEyeData(int type, Boolean Success, int LookType, int LookLength, float LookProbability) {
         // 0: left, 1: right, 2: final
         if (type == 0) {
             // set left eye data
-            this.LeftData.setGazeData(Success, GazeType, GazeLength, GazeProbability);
+            this.LeftData.setLookData(Success, LookType, LookLength, LookProbability);
         } else if (type == 1) {
             // set right eye data
-            this.RightData.setGazeData(Success, GazeType, GazeLength, GazeProbability);
+            this.RightData.setLookData(Success, LookType, LookLength, LookProbability);
         } else {
-            // set analyzed gaze data
-            this.AnalyzedData.setGazeData(Success, GazeType, GazeLength, GazeProbability);
+            // set analyzed look data
+            this.AnalyzedData.setLookData(Success, LookType, LookLength, LookProbability);
         }
     }
 
     public void initialize(int MatNum) {
-        this.RightData = new GazeData();
-        this.LeftData = new GazeData();
-        this.AnalyzedData = new GazeData();
+        this.RightData = new LookData();
+        this.LeftData = new LookData();
+        this.AnalyzedData = new LookData();
         testingMats = new Mat[MatNum];
         eyesOpen = false;
         motionStable = false;

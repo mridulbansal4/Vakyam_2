@@ -5,7 +5,7 @@ import java.util.Locale
 
 /**
  * What this patient actually says: their words, which word follows which, and whole spoken
- * sentences. One instance is shared by every input mode (gaze text entry, quick chat and the
+ * sentences. One instance is shared by every input mode (look text entry, quick chat and the
  * blink keyboard), so a name spelled once in any of them is predicted in all of them.
  */
 class PersonalLexicon @JvmOverloads constructor(

@@ -50,9 +50,9 @@ class YesNoOverlay(context: Context, private val listener: Listener) : View(cont
     }
     private val questionPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = medium }
     // The same eye badges as the Type and Quick chat tiles: the pupil shows where to look.
-    private val lookLeft = AppCompatResources.getDrawable(context, R.drawable.ic_gaze_left)
-    private val lookRight = AppCompatResources.getDrawable(context, R.drawable.ic_gaze_right)
-    private val lookUp = AppCompatResources.getDrawable(context, R.drawable.ic_gaze_up)
+    private val lookLeft = AppCompatResources.getDrawable(context, R.drawable.ic_look_left)
+    private val lookRight = AppCompatResources.getDrawable(context, R.drawable.ic_look_right)
+    private val lookUp = AppCompatResources.getDrawable(context, R.drawable.ic_look_up)
 
     // Read again each time the screen opens: the language can change in Settings.
     private var yesLabel = ""

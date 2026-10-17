@@ -8,7 +8,7 @@
 
 <br/>
 
-**Gaze → Keywords → Sentence → Voice**
+**Eyes → Keywords → Sentence → Voice**
 
 An Android AAC app for people who cannot speak or move. The front camera reads six eye
 gestures, an ambiguous keyboard turns them into keywords, an on-device Gemma model expands
@@ -48,7 +48,7 @@ with no cloud and no extra hardware.
 
 - [Overview](#overview) · [Why this is different](#why-this-is-different)
 - [Product walkthrough](#product-walkthrough) · [A complete conversation](#a-complete-conversation)
-- [System architecture](#system-architecture) · [Repository structure](#repository-structure) · [The gaze pipeline](#the-gaze-pipeline)
+- [System architecture](#system-architecture) · [Repository structure](#repository-structure) · [The eye pipeline](#the-eye-pipeline)
 - [Algorithms](#algorithms) · [On-device sentence generation](#on-device-sentence-generation) · [English and Hinglish](#english-and-hinglish)
 - [Sensor safeguards](#sensor-safeguards) · [Visual gallery](#visual-gallery) · [Technology stack](#technology-stack)
 - [Installation](#installation) · [Running](#running) · [Debug hooks](#debug-hooks)
@@ -94,13 +94,13 @@ phone then speaks it.
 
 ## Product walkthrough
 
-The top bar has six destinations. Every gaze target can also be tapped, so a caregiver can
+The top bar has six destinations. Every on-screen target can also be tapped, so a caregiver can
 always step in.
 
 ### 1 - Calibrate
 
 Six looks, captured automatically: straight, left, right, up, left-up, right-up. The app
-speaks each instruction, waits for the gaze to hold steady, beeps, and stores one eye-crop
+speaks each instruction, waits for the eyes to hold steady, beeps, and stores one eye-crop
 template per eye per direction.
 
 ![Calibration: the six captured eye templates and the live status line](docs/assets/screenshots/calibrate.png)
@@ -183,7 +183,7 @@ has actually spoken before, learned automatically.
 
 ### 6 - Spell (blink keyboard)
 
-A second input method for users who can blink reliably but cannot hold a directional gaze. A
+A second input method for users who can blink reliably but cannot hold their eyes in one direction. A
 QWERTY grid is scanned row by row, then key by key
 ([`ScanningEngine`](app/src/main/java/com/demo/opencv/features/blinkkeyboard/ScanningEngine.kt));
 a deliberate blink of 350-1200 ms selects. Blinks under 250 ms are treated as involuntary and
@@ -195,7 +195,7 @@ The closed-eye threshold adapts to each user's own open-eye aspect ratio.
 
 ### 7 - Data and Settings
 
-**Data** shows the gaze input log and runs the [typing-speed test](#typing-speed-test).
+**Data** shows the eye input log and runs the [typing-speed test](#typing-speed-test).
 **Settings** holds language, text-entry mode, sensitivity and lighting threshold, plus a live
 **Sensor Health** panel and buttons that simulate a dark room, hot phone, hot charger, warm
 light and tired eyes.
@@ -253,12 +253,12 @@ flowchart TB
         P["Presenter<br/>routes gestures to the active mode"]
     end
 
-    subgraph VISION["vision/ - gaze classification"]
+    subgraph VISION["vision/ - eye-direction classification"]
         MODEL["Model"]
         FACE["ML Kit face + eye contours"]
         EYE["EyeDetection<br/>template match + iris"]
         STAB["IMU stabilizers · 1€ filter"]
-        DWELL["GazeDwellSelector"]
+        DWELL["LookDwellSelector"]
     end
 
     subgraph TEXT["textEntry/ - language"]
@@ -324,7 +324,7 @@ Vakyam/
 │       │   │   ├── UserDataManager.java      # Application: settings + calibration templates
 │       │   │   ├── AI/                       # GemmaManager (LiteRT-LM) · GeminiManager (adapter)
 │       │   │   ├── vision/                   # Model · EyeDetection · GoogleFaceDetector
-│       │   │   │                             #   GazeDwellSelector · BallisticGestureDetector
+│       │   │   │                             #   LookDwellSelector · BallisticGestureDetector
 │       │   │   │                             #   NormalizedIrisEstimator · OneEuroFilter
 │       │   │   │                             #   MotionSensorStabilizer · PhoneMotionTracker
 │       │   │   │                             #   CalibrationStabilityGate · CalibrationTemplateCheck
@@ -337,7 +337,7 @@ Vakyam/
 │       │   │   ├── personal/                 # PersonalLexicon · PrefsLexiconStore
 │       │   │   ├── other/                    # AudioManager (TTS) · OfflineSpeechRecognizer
 │       │   │   └── fragments/                # one fragment per screen
-│       │   ├── res/                          # layouts, gaze icons, values + values-hi
+│       │   ├── res/                          # layouts, direction icons, values + values-hi
 │       │   └── ic_launcher-playstore.png     # the app logo
 │       ├── test/                             # JVM unit tests (no device needed)
 │       └── androidTest/                      # on-device Gemma inference test
@@ -352,10 +352,10 @@ Vakyam/
 
 ---
 
-## The gaze pipeline
+## The eye pipeline
 
 One camera frame, start to finish
-([`Model.classifyGaze`](app/src/main/java/com/demo/opencv/vision/Model.java)):
+([`Model.classifyLook`](app/src/main/java/com/demo/opencv/vision/Model.java)):
 
 ```mermaid
 flowchart LR
@@ -405,12 +405,12 @@ calibration do not shift the result. A match must be under the user's sensitivit
 *and* clearly better than the runner-up (best ≤ 0.9 × second-best), otherwise the frame is
 unreadable rather than wrong.
 
-When the two eyes disagree, `Model.analyzeGazeOutput` trusts the eye on the side being looked
+When the two eyes disagree, `Model.analyzeLookOutput` trusts the eye on the side being looked
 toward, and otherwise picks the template with the lowest summed error across both eyes.
 
 ### Time-based dwell selection
 
-[`GazeDwellSelector`](app/src/main/java/com/demo/opencv/vision/GazeDwellSelector.kt) turns
+[`LookDwellSelector`](app/src/main/java/com/demo/opencv/vision/LookDwellSelector.kt) turns
 per-frame classifications into deliberate input.
 
 ```
@@ -479,8 +479,8 @@ words drawn from the caregiver's question, and finally the frequency-ordered Eng
 measures so results can be compared with published AAC numbers: words per minute at five
 characters per word, error rate as minimum string distance over the longer string, and
 selections per character. The clock starts at the first eye selection and stops when the
-sentence is spoken. Each result is stored with the input mode (`gaze-letter`,
-`gaze-ambiguous`, `gaze-llm`, `blink`) and the sensor conditions at the time, and the log can
+sentence is spoken. Each result is stored with the input mode (`eye-letter`,
+`eye-ambiguous`, `eye-llm`, `blink`) and the sensor conditions at the time, and the log can
 be shared as CSV from the Data screen.
 
 ---
@@ -690,15 +690,15 @@ adb shell cmd thermalservice reset && adb shell dumpsys battery reset
 ```
 
 Useful log tags: `GemmaManager`, `GemmaTiming` (per-sentence latency), `SensorHealth`,
-`GazeCamera`, `TextGeneration`.
+`LookCamera`, `TextGeneration`.
 
 ---
 
 ## Feature matrix
 
-| Capability | Letter-by-letter gaze | Ambiguous keyboard | **Ambiguous + LLM** | Blink keyboard |
+| Capability | Letter-by-letter eye | Ambiguous keyboard | **Ambiguous + LLM** | Blink keyboard |
 |---|---|---|---|---|
-| Input | 6 gaze gestures | 6 gaze gestures | 6 gaze gestures | blink only |
+| Input | 6 eye gestures | 6 eye gestures | 6 eye gestures | blink only |
 | Gestures per letter | 2 | 1 | 1, and fewer words needed | scan + blink |
 | Any word, including names | yes | dictionary + learned | dictionary + learned | yes |
 | Word prediction | - | yes | yes | yes |
@@ -716,11 +716,11 @@ Every decision that can be separated from Android is a pure class with an inject
 it can be tested on the JVM in milliseconds.
 
 - **294 unit tests in 36 files** under [`app/src/test/`](app/src/test/java/com/demo/opencv),
-  covering gaze dwell and arbitration, the calibration gate, IMU stabilisers, the 1€ filter,
+  covering eye dwell and arbitration, the calibration gate, IMU stabilisers, the 1€ filter,
   ambiguous-keyboard matching, Hinglish detection, yes/no question detection, the blink
   discriminator and scanner, every sensor policy, the typing metrics, and the Gemma prompt,
   guard rails and fallback.
-- **Transit simulation.** `TransitRobustGazeIntegrationTest` and
+- **Transit simulation.** `TransitRobustLookIntegrationTest` and
   `ProfessionalTransitCalibrationHarnessTest` drive the vision stack with synthetic shake
   and vibration.
 - **On device.** `GemmaOnDeviceInferenceTest` runs real inference against the pushed model.
@@ -770,5 +770,5 @@ sherpa-onnx under Apache 2.0, and the Gemma model under Google's Gemma terms of 
 
 <div align="center">
 <br/>
-<sub><b>Vakyam</b> - Gaze → Keywords → Sentence → Voice</sub>
+<sub><b>Vakyam</b> - Eyes → Keywords → Sentence → Voice</sub>
 </div>

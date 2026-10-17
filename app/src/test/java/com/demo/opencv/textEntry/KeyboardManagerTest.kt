@@ -29,7 +29,7 @@ class KeyboardManagerTest {
 
     @Test
     fun testLayer1ToLayer2Transition() {
-        // Gaze 1 corresponds to input 1 ("g h i j k l")
+        // Look 1 corresponds to input 1 ("g h i j k l")
         keyboardManager.processInput(1)
         assertEquals(2, keyboardManager.layer)
         assertEquals(1, keyboardManager.page)
@@ -46,12 +46,12 @@ class KeyboardManagerTest {
 
     @Test
     fun testCharacterSelectionAndReturnToLayer1() {
-        // Gaze 3 corresponds to input 0 (page 0: "abcdef")
+        // Look 3 corresponds to input 0 (page 0: "abcdef")
         keyboardManager.processInput(3)
         assertEquals(2, keyboardManager.layer)
         assertEquals(0, keyboardManager.page)
 
-        // Gaze 3 corresponds to input 0 -> 'a'
+        // Look 3 corresponds to input 0 -> 'a'
         keyboardManager.processInput(3)
         assertEquals(1, keyboardManager.layer)
         assertEquals("a", keyboardManager.textInput)
@@ -64,25 +64,25 @@ class KeyboardManagerTest {
         keyboardManager.processInput(3)
         assertEquals("a", keyboardManager.textInput)
 
-        // Enter page 5 (gaze 7 -> input 5: " *#")
+        // Enter page 5 (look 7 -> input 5: " *#")
         keyboardManager.processInput(7)
         assertEquals(2, keyboardManager.layer)
         assertEquals(5, keyboardManager.page)
 
-        // Input 1 is '*' (delete) via gaze 1
+        // Input 1 is '*' (delete) via look 1
         keyboardManager.processInput(1)
         assertEquals(1, keyboardManager.layer)
         assertEquals("", keyboardManager.textInput)
     }
 
     @Test
-    fun testLeftUpGazeEntersPage4() {
-        // Gaze 6 (LeftUp) -> input 4 (Page 4: "yz,.!?")
+    fun testLeftUpLookEntersPage4() {
+        // Look 6 (LeftUp) -> input 4 (Page 4: "yz,.!?")
         keyboardManager.processInput(6)
         assertEquals(2, keyboardManager.layer)
         assertEquals(4, keyboardManager.page)
 
-        // Gaze 3 (Up) -> input 0 -> 'y'
+        // Look 3 (Up) -> input 0 -> 'y'
         keyboardManager.processInput(3)
         assertEquals(1, keyboardManager.layer)
         assertEquals("y", keyboardManager.textInput)
@@ -90,7 +90,7 @@ class KeyboardManagerTest {
 
     @Test
     fun testDirectTouchInput() {
-        // Direct button index 5 (Page 5) without gaze translation
+        // Direct button index 5 (Page 5) without look translation
         keyboardManager.processInput(5, false)
         assertEquals(2, keyboardManager.layer)
         assertEquals(5, keyboardManager.page)
@@ -107,12 +107,12 @@ class KeyboardManagerTest {
         keyboardManager.processInput(3)
         keyboardManager.processInput(3) // 'a'
         keyboardManager.processInput(3)
-        keyboardManager.processInput(1) // 'b' (gaze 1 -> input 1)
+        keyboardManager.processInput(1) // 'b' (look 1 -> input 1)
         assertEquals("ab", keyboardManager.textInput)
 
-        // Enter page 5 (gaze 7 -> input 5)
+        // Enter page 5 (look 7 -> input 5)
         keyboardManager.processInput(7)
-        // Gaze 2 -> input 2 -> '#' (clear)
+        // Look 2 -> input 2 -> '#' (clear)
         keyboardManager.processInput(2)
         assertEquals(1, keyboardManager.layer)
         assertEquals("", keyboardManager.textInput)

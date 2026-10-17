@@ -190,7 +190,7 @@ public class UserDataManager extends Application {
         return bitmaps;
     }
 
-    public String gazeIndexToString(int index) {
+    public String lookIndexToString(int index) {
         if (reference == null || index < 0 || index >= reference.length) {
             return "Unknown (" + index + ")";
         }

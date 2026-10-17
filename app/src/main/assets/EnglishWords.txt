@@ -3355,7 +3355,6 @@ painter
 colonial
 pie
 sake
-gaze
 courage
 pregnancy
 swear
@@ -4484,7 +4483,6 @@ case
 eighth
 notebook
 outline
-gaze
 attendance
 speculation
 uncover

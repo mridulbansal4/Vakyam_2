@@ -48,7 +48,7 @@ class TypingMetricsTest {
         trial.onSelection(70_000L)
         assertEquals(50_000L, trial.elapsedMs(60_000L))
 
-        val result = trial.finish(" i need water ", "gaze-letter", 123L, "tier=FULL")
+        val result = trial.finish(" i need water ", "eye-letter", 123L, "tier=FULL")
         assertEquals(60_000L, result.durationMs)
         assertEquals(3, result.selections)
         assertEquals(1, result.corrections)
@@ -78,7 +78,7 @@ class TypingMetricsTest {
             val log = TrialLog(file)
             assertTrue(log.read().isEmpty())
             val first = TrialResult(1L, "blink", "English", "a b", "a b", 9_000L, 7, 0, "")
-            val second = first.copy(timestampMs = 2L, mode = "gaze-letter")
+            val second = first.copy(timestampMs = 2L, mode = "eye-letter")
             log.append(first)
             log.append(second)
             assertEquals(listOf(first, second), log.read())
@@ -91,11 +91,11 @@ class TypingMetricsTest {
     @Test
     fun theReportSummarisesEachModeAndListsNewestFirst() {
         val slow = TrialResult(1_000L, "blink", "English", "i need water", "i need water", 120_000L, 40, 1, "")
-        val fast = TrialResult(2_000L, "gaze-llm", "English", "thank you", "thank you", 30_000L, 6, 0, "")
+        val fast = TrialResult(2_000L, "eye-llm", "English", "thank you", "thank you", 30_000L, 6, 0, "")
         val report = TrialReport.format(listOf(slow, fast), "none")
         val lines = report.lines()
         assertTrue(lines[0].startsWith("blink") && "1.1 WPM" in lines[0])
-        assertTrue(lines[1].startsWith("gaze-llm") && "3.2 WPM" in lines[1])
+        assertTrue(lines[1].startsWith("eye-llm") && "3.2 WPM" in lines[1])
         assertTrue(lines.indexOfFirst { "thank you" in it } < lines.indexOfFirst { "i need water" in it })
         assertEquals("none", TrialReport.format(emptyList(), "none"))
     }
@@ -142,12 +142,12 @@ class TypingTestTest {
         now = 35_000L
         TypingTest.onSelection()
         assertEquals(30_000L, TypingTest.elapsedMs())
-        TypingTest.onSpoken("I need water.", TypingTest.MODE_GAZE_LLM)
+        TypingTest.onSpoken("I need water.", TypingTest.MODE_EYE_LLM)
 
         assertFalse(TypingTest.isActive)
         val result = TypingTest.lastResult
         assertNotNull(result)
-        assertEquals(TypingTest.MODE_GAZE_LLM, result!!.mode)
+        assertEquals(TypingTest.MODE_EYE_LLM, result!!.mode)
         assertEquals(30_000L, result.durationMs)
         assertEquals(2, result.selections)
         assertEquals(1, result.corrections)
@@ -168,10 +168,10 @@ class TypingTestTest {
     fun letterModeEndsOnlyWhenTheTextMatches() {
         TypingTest.arm("hi there", "English")
         TypingTest.onSelection()
-        TypingTest.onTextChanged("hi the", TypingTest.MODE_GAZE_LETTER)
+        TypingTest.onTextChanged("hi the", TypingTest.MODE_EYE_LETTER)
         assertTrue(TypingTest.isActive)
         TypingTest.onSelection()
-        TypingTest.onTextChanged("Hi there", TypingTest.MODE_GAZE_LETTER)
+        TypingTest.onTextChanged("Hi there", TypingTest.MODE_EYE_LETTER)
         assertFalse(TypingTest.isActive)
         assertEquals("Hi there", TypingTest.lastResult!!.typed)
     }

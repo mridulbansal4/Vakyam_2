@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- 3 x 2 grid of equal tiles: 16dp from every screen edge, 12dp between tiles.
-     Each tile's badge sits in the corner matching its gaze direction. -->
+     Each tile's badge sits in the corner matching its look direction. -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -28,7 +28,7 @@
         android:layout_marginStart="@dimen/vk_space_xs"
         android:layout_marginEnd="@dimen/vk_space_xs"
         android:layout_marginBottom="@dimen/vk_half_gutter"
-        android:background="@drawable/gaze_option_bg_2"
+        android:background="@drawable/look_option_bg_2"
         android:paddingTop="@dimen/vk_tile_top_clearance"
         app:layout_constraintBottom_toTopOf="@id/QuickChatClosed"
         app:layout_constraintEnd_toStartOf="@id/QuickChatRightUp"
@@ -86,7 +86,7 @@
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
         android:layout_marginTop="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_left_up"
+        android:src="@drawable/ic_look_left_up"
         app:layout_constraintStart_toStartOf="@id/QuickChatLeftUp"
         app:layout_constraintTop_toTopOf="@id/QuickChatLeftUp" />
 
@@ -94,7 +94,7 @@
         android:id="@+id/QuickChatUpImage"
         style="@style/Vk.Badge"
         android:layout_marginTop="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_up"
+        android:src="@drawable/ic_look_up"
         app:layout_constraintEnd_toEndOf="@id/QuickChatUp"
         app:layout_constraintStart_toStartOf="@id/QuickChatUp"
         app:layout_constraintTop_toTopOf="@id/QuickChatUp" />
@@ -104,7 +104,7 @@
         style="@style/Vk.Badge"
         android:layout_marginTop="@dimen/vk_badge_inset"
         android:layout_marginEnd="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_right_up"
+        android:src="@drawable/ic_look_right_up"
         app:layout_constraintEnd_toEndOf="@id/QuickChatRightUp"
         app:layout_constraintTop_toTopOf="@id/QuickChatRightUp" />
 
@@ -113,7 +113,7 @@
         style="@style/Vk.Badge"
         android:layout_marginStart="@dimen/vk_badge_inset"
         android:layout_marginTop="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_left"
+        android:src="@drawable/ic_look_left"
         app:layout_constraintStart_toStartOf="@id/QuickChatLeft"
         app:layout_constraintTop_toTopOf="@id/QuickChatLeft" />
 
@@ -121,7 +121,7 @@
         android:id="@+id/QuickChatClosedImage"
         style="@style/Vk.Badge"
         android:layout_marginTop="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_closed"
+        android:src="@drawable/ic_look_closed"
         app:layout_constraintEnd_toEndOf="@id/QuickChatClosed"
         app:layout_constraintStart_toStartOf="@id/QuickChatClosed"
         app:layout_constraintTop_toTopOf="@id/QuickChatClosed" />
@@ -131,7 +131,7 @@
         style="@style/Vk.Badge"
         android:layout_marginTop="@dimen/vk_badge_inset"
         android:layout_marginEnd="@dimen/vk_badge_inset"
-        android:src="@drawable/ic_gaze_right"
+        android:src="@drawable/ic_look_right"
         app:layout_constraintEnd_toEndOf="@id/QuickChatRight"
         app:layout_constraintTop_toTopOf="@id/QuickChatRight" />
 </androidx.constraintlayout.widget.ConstraintLayout>

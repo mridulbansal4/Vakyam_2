@@ -12,7 +12,7 @@ import kotlin.math.hypot
  *
  * Hand-held robustness:
  * - Phone motion compensation: when the gyro angles of each sample are given, the part of the
- *   gaze movement that is explained by the phone rotating (e.g. the eyes following the moving
+ *   look movement that is explained by the phone rotating (e.g. the eyes following the moving
  *   screen) is removed before steadiness is judged.
  * - A real shake pauses collection instead of discarding it; the window is only cleared if the
  *   shake lasts longer than [shakeResetMs].
@@ -20,7 +20,7 @@ import kotlin.math.hypot
  *   noisy when looking far left/right), using a trimmed range so one bad frame doesn't block.
  *
  * When a Straight reference is set, the held position must also be displaced from it in the
- * step's direction by [minDisplacement], so the wrong gaze is never captured.
+ * step's direction by [minDisplacement], so the wrong look is never captured.
  *
  * Each call to [escalate] (done when a step is re-prompted) makes the gate more lenient: level 1
  * halves the required displacement and doubles the allowed spread; level 2 drops the direction
@@ -37,7 +37,7 @@ class CalibrationStabilityGate @JvmOverloads constructor(
 ) {
     enum class Status { SETTLING, NO_EYES, EYES_CLOSED, PHONE_MOVING, NOT_STEADY, TOO_CLOSE_TO_REFERENCE, HOLDING, CAPTURED }
 
-    /** Expected gaze movement from Straight: x grows to the user's right, y grows downwards. */
+    /** Expected look movement from Straight: x grows to the user's right, y grows downwards. */
     enum class Direction(val dx: Int, val dy: Int) {
         STRAIGHT(0, 0), LEFT(-1, 0), RIGHT(1, 0), UP(0, -1), DOWN(0, 1), LEFT_UP(-1, -1), RIGHT_UP(1, -1)
     }
@@ -65,7 +65,7 @@ class CalibrationStabilityGate @JvmOverloads constructor(
         private set
     var lastDistanceFromReference = Float.NaN
         private set
-    /** Largest gaze correction applied for phone rotation in the last window. */
+    /** Largest look correction applied for phone rotation in the last window. */
     var lastMotionCorrection = 0f
         private set
 
@@ -262,7 +262,7 @@ class CalibrationStabilityGate @JvmOverloads constructor(
     }
 
     private companion object {
-        const val MAX_GAIN = 1.5f // gaze-ratio units per radian of phone rotation
+        const val MAX_GAIN = 1.5f // look-ratio units per radian of phone rotation
         const val RIDGE_ANGLE = 0.005f // radians; below this phone rotation the fit is ignored
     }
 }

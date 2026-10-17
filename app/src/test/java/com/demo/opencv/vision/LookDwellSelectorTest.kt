@@ -5,10 +5,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class GazeDwellSelectorTest {
+class LookDwellSelectorTest {
 
     private companion object {
-        const val X = GazeDwellSelector.UNRELIABLE
+        const val X = LookDwellSelector.UNRELIABLE
         const val STRAIGHT = 0
         const val LEFT = 1
         const val RIGHT = 2
@@ -17,30 +17,30 @@ class GazeDwellSelectorTest {
         const val LEFT_UP = 6
     }
 
-    private lateinit var selector: GazeDwellSelector
+    private lateinit var selector: LookDwellSelector
     private var t = 0L
 
     @Before
     fun setUp() {
-        selector = GazeDwellSelector()
+        selector = LookDwellSelector()
         t = 1_000L
     }
 
     /** Feeds one frame per entry at the given frame interval and returns every selection made. */
     private fun feed(frames: List<Int>, frameMs: Long = 33L): List<Int> {
         val fired = ArrayList<Int>()
-        for (gaze in frames) {
+        for (look in frames) {
             t += frameMs
-            val out = selector.update(gaze, t)
+            val out = selector.update(look, t)
             if (out != 0) fired.add(out)
         }
         return fired
     }
 
-    private fun hold(gaze: Int, ms: Long, frameMs: Long = 33L) = feed(List((ms / frameMs).toInt()) { gaze }, frameMs)
+    private fun hold(look: Int, ms: Long, frameMs: Long = 33L) = feed(List((ms / frameMs).toInt()) { look }, frameMs)
 
     @Test
-    fun heldGazeFiresExactlyOnce() {
+    fun heldLookFiresExactlyOnce() {
         assertEquals(listOf(LEFT), hold(LEFT, 2_000L))
     }
 
@@ -138,7 +138,7 @@ class GazeDwellSelectorTest {
     }
 
     @Test
-    fun gazeSeenAgainAfterALongGapStartsOver() {
+    fun lookSeenAgainAfterALongGapStartsOver() {
         // Face lost for two seconds in the middle of a hold: the frames before the gap must not count
         hold(LEFT, 250L)
         t += 2_000L

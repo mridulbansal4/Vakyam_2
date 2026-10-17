@@ -43,7 +43,7 @@ public class text_mode_display extends Fragment {
     TextView contextBox;
     TextView finishBox;
     ImageButton recordButton;
-    final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
+    final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert look type into keyboard input
     List<TextView> keyboardOptions = new ArrayList<>();
     List<TextView> finishedScreenTexts = new ArrayList<>();
     List<ImageView> finishedScreenImages = new ArrayList<>();
@@ -171,26 +171,26 @@ public class text_mode_display extends Fragment {
             textInput = view.findViewById(R.id.textInput);
             contextBox = view.findViewById(R.id.contextBox);
             sentenceBox = view.findViewById(R.id.sentenceBox);
-            keyboardOptions.add(view.findViewById(R.id.upGazeText)); // 0: up
-            keyboardOptions.add(view.findViewById(R.id.leftGazeText)); // 1: left
-            keyboardOptions.add(view.findViewById(R.id.rightGazeText)); // 2: right
-            keyboardOptions.add(view.findViewById(R.id.closedGazeText)); // 3: closed gaze
-            keyboardOptions.add(view.findViewById(R.id.leftUpGazeText)); // 4: left up
-            keyboardOptions.add(view.findViewById(R.id.rightUpGazeText)); // 5: right up
+            keyboardOptions.add(view.findViewById(R.id.upLookText)); // 0: up
+            keyboardOptions.add(view.findViewById(R.id.leftLookText)); // 1: left
+            keyboardOptions.add(view.findViewById(R.id.rightLookText)); // 2: right
+            keyboardOptions.add(view.findViewById(R.id.closedLookText)); // 3: closed look
+            keyboardOptions.add(view.findViewById(R.id.leftUpLookText)); // 4: left up
+            keyboardOptions.add(view.findViewById(R.id.rightUpLookText)); // 5: right up
         } else {
             textInput = view.findViewById(R.id.textInput2);
             contextBox = view.findViewById(R.id.contextBox2);
             sentenceBox = view.findViewById(R.id.sentenceBox2);
-            keyboardOptions.add(view.findViewById(R.id.upGazeText2)); // 0: up
-            keyboardOptions.add(view.findViewById(R.id.leftGazeText2)); // 1: left
-            keyboardOptions.add(view.findViewById(R.id.rightGazeText2)); // 2: right
-            keyboardOptions.add(view.findViewById(R.id.closedGazeText2)); // 3: closed gaze
-            keyboardOptions.add(view.findViewById(R.id.leftUpGazeText2)); // 4: left up
-            keyboardOptions.add(view.findViewById(R.id.rightUpGazeText2)); // 5: right up
-            keyboardOptions.add(view.findViewById(R.id.leftGazeSubText)); // 6. left sub text
-            keyboardOptions.add(view.findViewById(R.id.rightGazeSubText)); // 7. right sub text
-            keyboardOptions.add(view.findViewById(R.id.leftUpGazeSubText)); // 8. left up sub text
-            keyboardOptions.add(view.findViewById(R.id.rightUpGazeSubText)); // 9. right up sub text
+            keyboardOptions.add(view.findViewById(R.id.upLookText2)); // 0: up
+            keyboardOptions.add(view.findViewById(R.id.leftLookText2)); // 1: left
+            keyboardOptions.add(view.findViewById(R.id.rightLookText2)); // 2: right
+            keyboardOptions.add(view.findViewById(R.id.closedLookText2)); // 3: closed look
+            keyboardOptions.add(view.findViewById(R.id.leftUpLookText2)); // 4: left up
+            keyboardOptions.add(view.findViewById(R.id.rightUpLookText2)); // 5: right up
+            keyboardOptions.add(view.findViewById(R.id.leftLookSubText)); // 6. left sub text
+            keyboardOptions.add(view.findViewById(R.id.rightLookSubText)); // 7. right sub text
+            keyboardOptions.add(view.findViewById(R.id.leftUpLookSubText)); // 8. left up sub text
+            keyboardOptions.add(view.findViewById(R.id.rightUpLookSubText)); // 9. right up sub text
             recordButton = view.findViewById(R.id.recordButton);
             if (recordButton != null) {
                 recordButton.setOnClickListener(v -> textModeListener.recordButtonClicked());
@@ -298,9 +298,9 @@ public class text_mode_display extends Fragment {
 
                 if (actual != -1 && actual >= 0 && actual < keyboardOptions.size()) {
                     if (actual == 0 || actual == 3) {
-                        setBackground(actual, R.drawable.gaze_option_bg_2, R.drawable.gaze_option_bg_selected, 300);
+                        setBackground(actual, R.drawable.look_option_bg_2, R.drawable.look_option_bg_selected, 300);
                     } else {
-                        setBackground(actual, R.drawable.gaze_option_bg_1, R.drawable.gaze_option_bg_selected, 300);
+                        setBackground(actual, R.drawable.look_option_bg_1, R.drawable.look_option_bg_selected, 300);
                     }
                 }
             }

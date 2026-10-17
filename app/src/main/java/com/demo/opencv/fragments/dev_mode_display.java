@@ -43,7 +43,7 @@ public class dev_mode_display extends Fragment {
     Activity mActivity;
     ImageView[] images = new ImageView[4];
     TextView[] texts = new TextView[7];
-    TextView gazeInputLog;
+    TextView lookInputLog;
     Handler handler;
     Runnable updateUI;
     SeekBar sensitivitySeekBar;
@@ -118,7 +118,7 @@ public class dev_mode_display extends Fragment {
         texts[2] = view.findViewById(R.id.textView3);
         texts[3] = view.findViewById(R.id.textView4);
         texts[4] = view.findViewById(R.id.textView5);
-        gazeInputLog = view.findViewById(R.id.gazeInputLog2);
+        lookInputLog = view.findViewById(R.id.lookInputLog2);
         sensitivitySeekBar = view.findViewById(R.id.seekBar);
         textEntrySpinner = view.findViewById(R.id.textEntrySpinner);
         languageSpinner = view.findViewById(R.id.languageSpinner);
@@ -195,17 +195,17 @@ public class dev_mode_display extends Fragment {
 
             if (detection.prevInputs != null) {
                 String listString = String.join(", ", detection.prevInputs);
-                String text = "Gaze input log: " + listString;
-                gazeInputLog.setText(text);
+                String text = "Look input log: " + listString;
+                lookInputLog.setText(text);
             }
             if (detection.AnalyzedData != null) {
-                String s = "Overall gaze type: " + detection.AnalyzedData.getTypeString(detection.AnalyzedData.GazeType);
+                String s = "Overall look type: " + detection.AnalyzedData.getTypeString(detection.AnalyzedData.LookType);
                 texts[1].setText(s);
 
-                s = "Overall loss: " + String.format(java.util.Locale.US, "%.2f", detection.AnalyzedData.GazeProbability);
+                s = "Overall loss: " + String.format(java.util.Locale.US, "%.2f", detection.AnalyzedData.LookProbability);
                 texts[2].setText(s);
 
-                texts[0].setText(detection.AnalyzedData.Success ? "Gaze detected" : "Looking for a gaze…");
+                texts[0].setText(detection.AnalyzedData.Success ? "Look detected" : "Looking for a look…");
             }
         });
 

@@ -14,7 +14,7 @@
        FRONT SELFIE CAMERA if the rear lens is active.
      - Keeps the selfie viewfinder open so the live preview is visibly displayed.
      - Physically clicks and captures real high-res photos via KEYCODE_CAMERA (saved to DCIM).
-     - Steps through Vakyam's 6 calibration gaze positions and toggles left/right eyes.
+     - Steps through Vakyam's 6 calibration eye positions and toggles left/right eyes.
   2. Active Dual Microphones:
      - Actively streams audio via Vakyam's speech record button and native Sound Recorder.
   3. ALL 53 Hardware Sensors at Max Level:
@@ -203,7 +203,7 @@ class DedicatedTelemetryEngine:
     """
     Randomized, non-deterministic state machine focusing strictly on:
     1. Eye Calibration & Active Selfie Camera Photo Capture
-    2. Vakyam AAC Gaze Text Generation & On-Device LLM
+    2. Vakyam AAC Eye Text Generation & On-Device LLM
     3. Active Dual Microphone Streams (Vakyam Mic + Vivo Sound Recorder)
     4. Active Camera Hardware (Vakyam 30 FPS Stream + Native Camera ISP)
     """
@@ -271,7 +271,7 @@ class DedicatedTelemetryEngine:
         """
         Navigates Vakyam's Eye Calibration feature, actively launches the Selfie Camera,
         ensures front-facing selfie preview is visible on screen, physically captures photo,
-        exercises eye template capture across multiple gaze positions, and returns cleanly.
+        exercises eye template capture across multiple eye positions, and returns cleanly.
         """
         print(f"[{self.iteration:04d}] >>> [CALIBRATION & SELFIE CAMERA] Opening Calibration & Selfie Camera...")
         
@@ -312,11 +312,11 @@ class DedicatedTelemetryEngine:
 
     def run_vakyam_aac_routine(self):
         """Randomized AAC typing, LLM expansion, and TTS speech playback."""
-        print(f"[{self.iteration:04d}] >>> [AAC ENGINE] Randomized Gaze Typing & On-Device LLM...")
+        print(f"[{self.iteration:04d}] >>> [AAC ENGINE] Randomized Eye Typing & On-Device LLM...")
         self.bridge.tap(*self.TABS["TEXT_ENTRY"])
         time.sleep(0.5)
 
-        # Type 2-5 gaze buckets
+        # Type 2-5 eye buckets
         taps = random.randint(2, 5)
         buckets = [
             self.TEXT_ENTRY["BUCKET_1"],

@@ -59,11 +59,11 @@
         <item name="android:textColor">@color/vk_ink_soft</item>
     </style>
 
-    <!-- A gaze target. Padding leaves room for the direction badge in whichever corner it sits. -->
+    <!-- A option target. Padding leaves room for the direction badge in whichever corner it sits. -->
     <style name="Vk.Tile">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">0dp</item>
-        <item name="android:background">@drawable/gaze_option_bg_1</item>
+        <item name="android:background">@drawable/look_option_bg_1</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:gravity">center</item>
         <item name="android:textAlignment">center</item>
@@ -108,7 +108,7 @@
         <item name="autoSizeMinTextSize">15sp</item>
         <item name="autoSizeMaxTextSize">@dimen/vk_text_word</item>
     </style>
-    <!-- Wide, short gaze target: badge at the start, label centred in the remaining space. -->
+    <!-- Wide, short option target: badge at the start, label centred in the remaining space. -->
     <style name="Vk.PillTile" parent="Vk.Tile">
         <item name="android:maxLines">1</item>
         <item name="android:paddingStart">52dp</item>

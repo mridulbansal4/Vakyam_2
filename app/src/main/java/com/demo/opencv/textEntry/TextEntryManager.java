@@ -133,11 +133,11 @@ public class TextEntryManager {
         }
     }
 
-    public void manageUserInput(int input, boolean isGazeType) {
-        // left gaze = 1, right gaze = 2, up gaze = 0, down gaze = -1, closed = 3, left-up gaze = 4, right-up gaze = 5
+    public void manageUserInput(int input, boolean isLookType) {
+        // left look = 1, right look = 2, up look = 0, down look = -1, closed = 3, left-up look = 4, right-up look = 5
         int selection = input;
-        if (isGazeType) { // if is gaze type, then process it
-            final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert gaze type into keyboard input
+        if (isLookType) { // if is look type, then process it
+            final int[] keyboardInputMat = {-1, 1, 2, 0, -1, 3, 4, 5}; // convert look type into keyboard input
             if (input < 0 || input >= keyboardInputMat.length) return;
             selection = keyboardInputMat[input];
         }
@@ -395,7 +395,7 @@ public class TextEntryManager {
         }
         speak(text);
         learnUtterance(text);
-        TypingTest.onSpoken(text, LLMEnabled ? TypingTest.MODE_GAZE_LLM : TypingTest.MODE_GAZE_AMBIGUOUS);
+        TypingTest.onSpoken(text, LLMEnabled ? TypingTest.MODE_EYE_LLM : TypingTest.MODE_EYE_AMBIGUOUS);
     }
 
     // The voice follows the sentence: Hinglish is spoken by the Hindi voice even with Language = English.
@@ -432,7 +432,7 @@ public class TextEntryManager {
 
     public void finishTypingTest() {
         TypingTest.onSpoken(LLMEnabled ? current.Sentence : current.getWords(),
-                LLMEnabled ? TypingTest.MODE_GAZE_LLM : TypingTest.MODE_GAZE_AMBIGUOUS);
+                LLMEnabled ? TypingTest.MODE_EYE_LLM : TypingTest.MODE_EYE_AMBIGUOUS);
     }
 
     public TextInfo getCurrent() {

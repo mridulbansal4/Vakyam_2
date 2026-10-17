@@ -55,15 +55,15 @@ class ProfessionalTransitCalibrationHarnessTest {
      *
      * @param distanceCm Distance from camera in centimeters (determines scale/pixels)
      * @param rollDeg Head/phone roll angle in degrees (-45° to +45°)
-     * @param gazeX Horizontal gaze ratio (0.0=left, 0.5=center, 1.0=right)
-     * @param gazeY Vertical gaze ratio (0.0=up, 0.5=center, 1.0=down)
+     * @param lookX Horizontal look ratio (0.0=left, 0.5=center, 1.0=right)
+     * @param lookY Vertical look ratio (0.0=up, 0.5=center, 1.0=down)
      * @param eyeOpen True if eye is open, false if closed (blink)
      */
     private fun generateLandmarks(
         distanceCm: Float,
         rollDeg: Float,
-        gazeX: Float,
-        gazeY: Float,
+        lookX: Float,
+        lookY: Float,
         eyeOpen: Boolean
     ): NormalizedIrisEstimator.EyeLandmarks {
         val baselineWidth = (3000.0f / distanceCm.coerceAtLeast(10.0f))
@@ -82,8 +82,8 @@ class ProfessionalTransitCalibrationHarnessTest {
         val unrotatedLowerX = centerX
         val unrotatedLowerY = centerY + palpebralHeight / 2.0f
 
-        val unrotatedIrisX = unrotatedInnerX + gazeX * (unrotatedOuterX - unrotatedInnerX)
-        val unrotatedIrisY = unrotatedUpperY + gazeY * (unrotatedLowerY - unrotatedUpperY)
+        val unrotatedIrisX = unrotatedInnerX + lookX * (unrotatedOuterX - unrotatedInnerX)
+        val unrotatedIrisY = unrotatedUpperY + lookY * (unrotatedLowerY - unrotatedUpperY)
 
         val rad = Math.toRadians(rollDeg.toDouble())
         val cosT = cos(rad).toFloat()
@@ -131,7 +131,7 @@ class ProfessionalTransitCalibrationHarnessTest {
 
             val rightLandmarks = generateLandmarks(distance, 0f, 0.85f, 0.50f, true)
             val rightMetrics = estimator.computeMetrics(rightLandmarks)
-            assertEquals("Distance $distance cm: Right gaze ratio must be 0.85", 0.85f, rightMetrics.horizontalRatio, 0.001f)
+            assertEquals("Distance $distance cm: Right look ratio must be 0.85", 0.85f, rightMetrics.horizontalRatio, 0.001f)
 
             val localFilterX = OneEuroFilter()
             val localFilterY = OneEuroFilter()
@@ -363,7 +363,7 @@ class ProfessionalTransitCalibrationHarnessTest {
     fun testSaccadeDynamicsAndFixationStability() {
         val detector = BallisticGestureDetector()
 
-        // 1. Slow Drift Rejection: slow gaze movement across 500ms
+        // 1. Slow Drift Rejection: slow look movement across 500ms
         var t = 0L
         detector.process(0.50f, 0.50f, 0.30f, t)
         for (i in 1..10) {
@@ -373,7 +373,7 @@ class ProfessionalTransitCalibrationHarnessTest {
             assertEquals("Slow fixation drift must never trigger a flick gesture", BallisticGestureDetector.Gesture.NONE, g)
         }
 
-        // 2. Fixation Stability at Extremes: user looks right and HOLDS gaze there for 5 seconds
+        // 2. Fixation Stability at Extremes: user looks right and HOLDS look there for 5 seconds
         val holdDetector = BallisticGestureDetector()
         t = 1000L
         holdDetector.process(0.50f, 0.50f, 0.30f, t)
@@ -390,9 +390,9 @@ class ProfessionalTransitCalibrationHarnessTest {
                 subsequentTriggerCount++
             }
         }
-        assertEquals("Holding gaze at extreme right must NOT trigger repeated flicks", 0, subsequentTriggerCount)
+        assertEquals("Holding look at extreme right must NOT trigger repeated flicks", 0, subsequentTriggerCount)
 
-        // 3. Fixation Stability for Upward Gaze: user looks up and holds gaze for 5 seconds
+        // 3. Fixation Stability for Upward Look: user looks up and holds look for 5 seconds
         val upDetector = BallisticGestureDetector()
         t = 5000L
         upDetector.process(0.50f, 0.50f, 0.30f, t)
@@ -408,7 +408,7 @@ class ProfessionalTransitCalibrationHarnessTest {
                 subsequentUpTriggers++
             }
         }
-        assertEquals("Holding gaze upwards must NOT trigger repeated upward flicks", 0, subsequentUpTriggers)
+        assertEquals("Holding look upwards must NOT trigger repeated upward flicks", 0, subsequentUpTriggers)
     }
 
     // =========================================================================
@@ -583,7 +583,7 @@ class ProfessionalTransitCalibrationHarnessTest {
 
             // Chronological physiological time windows
             val gestureStartTimeMs = 1200L
-            val gestureDurationMs = 250L // Realistic 250ms human intentional gaze dwell
+            val gestureDurationMs = 250L // Realistic 250ms human intentional look dwell
             val gestureEndTimeMs = gestureStartTimeMs + gestureDurationMs
 
             val blinkStartMs = 1000L

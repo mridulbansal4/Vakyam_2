@@ -75,24 +75,24 @@ class ManagerRobustnessTest {
         assertEquals(1, km.layer)
 
         // Valid selection in layer 1 switches to layer 2
-        // selection 1 (left gaze -> input 1)
+        // selection 1 (left look -> input 1)
         km.processInput(1)
         assertEquals(2, km.layer)
         assertEquals(1, km.page)
 
-        // Select a character in layer 2 (e.g. selection 0 -> up gaze -> input 0)
+        // Select a character in layer 2 (e.g. selection 0 -> up look -> input 0)
         // layer2Options[1] is "ghijkl", index 0 is 'g'
-        km.processInput(3) // gaze 3 is up -> input 0
+        km.processInput(3) // look 3 is up -> input 0
         assertEquals(1, km.layer)
         assertEquals("g", km.textInput)
 
         // Backspace operation when deleting
         // Enter layer 2 page 5 (" *#")
-        km.processInput(7) // gaze 7 is right-up -> input 5
+        km.processInput(7) // look 7 is right-up -> input 5
         assertEquals(2, km.layer)
         assertEquals(5, km.page)
         // input 1 is '*' (delete)
-        km.processInput(1) // gaze 1 -> input 1 -> delete '*'
+        km.processInput(1) // look 1 -> input 1 -> delete '*'
         assertEquals(1, km.layer)
         assertEquals("", km.textInput)
 
@@ -114,7 +114,7 @@ class ManagerRobustnessTest {
         qc.manageUserInput(100, false)
         assertEquals(0, qc.mode)
 
-        // Selection 1 with isGazeType=false enters category 1
+        // Selection 1 with isLookType=false enters category 1
         qc.manageUserInput(1, false)
         assertEquals(1, qc.mode)
 
@@ -124,7 +124,7 @@ class ManagerRobustnessTest {
     }
 
     @Test
-    fun testTextEntryManagerFinishedModeGazeActionsAndTransitions() {
+    fun testTextEntryManagerFinishedModeLookActionsAndTransitions() {
         val manager = TextEntryManager()
         val keyboardData = manager.displays
         assertNotNull(keyboardData)
@@ -133,12 +133,12 @@ class ManagerRobustnessTest {
         keyboardData.finished = true
         assertTrue(keyboardData.finished)
 
-        // In finished mode: Selection 2 (Right Gaze / former upload action)
+        // In finished mode: Selection 2 (Right Look / former upload action)
         // Must be a safe no-op: does not throw, does not exit finished mode, does not alter state
         manager.manageUserInput(2, false) // direct input 2
         assertTrue(keyboardData.finished)
 
-        manager.manageUserInput(2, true) // gaze index 2 -> translates to selection 2
+        manager.manageUserInput(2, true) // look index 2 -> translates to selection 2
         assertTrue(keyboardData.finished)
 
         // Invalid / out-of-bounds inputs in finished mode are also safe no-ops
@@ -153,24 +153,24 @@ class ManagerRobustnessTest {
         manager.manageUserInput(100, false)
         assertTrue(keyboardData.finished)
 
-        // Selection 1 (SPEAK button / Left Gaze) in finished mode speaks text and keeps finished mode active
+        // Selection 1 (SPEAK button / Left Look) in finished mode speaks text and keeps finished mode active
         manager.manageUserInput(1, false) // direct input 1
         assertTrue(keyboardData.finished)
-        manager.manageUserInput(1, true) // gaze index 1 -> translates to selection 1
+        manager.manageUserInput(1, true) // look index 1 -> translates to selection 1
         assertTrue(keyboardData.finished)
 
-        // Selection 5 (BACK button / Right-Up Gaze) in finished mode returns to keyboard mode
+        // Selection 5 (BACK button / Right-Up Look) in finished mode returns to keyboard mode
         manager.manageUserInput(5, false) // direct input 5
         assertFalse(keyboardData.finished)
 
-        // Re-enter finished mode via WordMode gaze input:
+        // Re-enter finished mode via WordMode look input:
         // First switch to WordMode (mode = 0) via selection 3 in LetterMode
         manager.manageUserInput(3, false)
-        // Now in WordMode: Gaze index 3 (Up Gaze) maps to selection 0 in keyboardInputMat -> triggers finished mode
+        // Now in WordMode: Look index 3 (Up Look) maps to selection 0 in keyboardInputMat -> triggers finished mode
         manager.manageUserInput(3, true)
         assertTrue(keyboardData.finished)
 
-        // Exit finished mode via Right-Up Gaze (gaze index 7 -> maps to selection 5)
+        // Exit finished mode via Right-Up Look (look index 7 -> maps to selection 5)
         manager.manageUserInput(7, true)
         assertFalse(keyboardData.finished)
     }

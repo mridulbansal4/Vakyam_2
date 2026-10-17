@@ -1,0 +1,6 @@
+# Installed into COOL's own Python environment on the COOL AMI: everything except OpenCV and numpy, which COOL
+# provides (installing opencv-python here would shadow the COOL build).
+fastapi==0.143.3
+uvicorn[standard]==0.54.0
+anthropic[bedrock]==1.15.0
+boto3==1.43.114

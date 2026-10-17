@@ -1,0 +1,3 @@
+# The baseline the COOL build is compared against: the same OpenCV version, from PyPI
+opencv-python-headless==5.0.0.93
+numpy==2.2.6

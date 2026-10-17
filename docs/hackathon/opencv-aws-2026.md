@@ -186,7 +186,9 @@ can watch it happen without a phone.
 **Cut order if time runs short:** optical flow → HoughCircles fusion → hand-held benchmark →
 YuNet (keep ML Kit). **Never cut:** OpenCV 5, AWS endpoint, video, report, failure cases.
 
-**COOL award:** skip it unless days 3 to 5 finish early. If they do, run the Eye Lab
+**COOL award (17 Oct):** the benchmark ([`eyelab/bench`](../../eyelab/bench/README.md)) and a COOL compute mode
+for the stack (`-c compute=cool`) are built; both need an AWS account with the COOL Graviton4 subscription to run.
+Original note: skip it unless days 3 to 5 finish early. If they do, run the Eye Lab
 container on a Graviton instance with the COOL AMI from AWS Marketplace and benchmark
 frames per second and cost per 1,000 frames against stock OpenCV 5 on x86. That gives the
 "documented hybrid architecture" the award asks for.

@@ -94,6 +94,18 @@ npx aws-cdk@2.1145.0 bootstrap
 npx aws-cdk@2.1145.0 deploy --app ".venv/Scripts/python app.py"
 ```
 
+**On COOL instead of Fargate.** Subscribe to *Cloud Optimized OpenCV for AWS Graviton4* in AWS Marketplace, then:
+
+```bash
+npx aws-cdk@2.1145.0 deploy --app ".venv/Scripts/python app.py" -c compute=cool -c cool_ami=ami-...
+```
+
+This runs the service on a Graviton4 Auto Scaling group (`c8g.xlarge` by default, `-c cool_instance_type=…`) from
+the COOL AMI, inside COOL's own Python environment. An instance refuses to serve unless `cv2` comes from
+`/opt/cool`, and `/healthz` then reports `"cool": true`. Shell access is through Systems Manager, with no SSH, and the
+service log is shipped to the same CloudWatch log group. The [COOL benchmark](bench/README.md) compares COOL with
+stock OpenCV 5 on the same instance.
+
 The stack prints `EyeLabUrl` (the HTTPS page), `DashboardName` and `LogGroupName`. Context values
 (`-c bedrock_model=…`, `-c max_sessions=…`, `-c polly_voice=…`) override the defaults. `cdk destroy` removes it.
 

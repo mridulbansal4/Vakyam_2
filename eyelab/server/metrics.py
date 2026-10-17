@@ -13,6 +13,12 @@ from dataclasses import dataclass, field
 NAMESPACE = "Vakyam/EyeLab"
 
 
+def opencv_build() -> dict:
+    """Which OpenCV is serving: COOL on its AMI lives under /opt/cool, the PyPI wheel anywhere else."""
+    import cv2
+    return {"opencv": cv2.__version__, "opencv_file": cv2.__file__, "cool": "/opt/cool" in cv2.__file__}
+
+
 def emit(metrics: dict[str, tuple[float, str]], properties: dict | None = None, stream=None) -> dict:
     """metrics: name -> (value, CloudWatch unit)."""
     record = {
@@ -25,6 +31,7 @@ def emit(metrics: dict[str, tuple[float, str]], properties: dict | None = None, 
             }],
         },
         "Service": "eyelab",
+        "opencv_build": "cool" if opencv_build()["cool"] else "stock",
         **{name: value for name, (value, _) in metrics.items()},
         **(properties or {}),
     }

@@ -33,7 +33,7 @@ from coach.runner import CoachRunner
 
 from .coach_session import SessionCoachEnv
 from .config import Settings
-from .metrics import SessionStats, emit
+from .metrics import SessionStats, emit, opencv_build
 from .sentence import SentenceService, clean_keywords
 from .speech import PollySpeech
 
@@ -69,7 +69,7 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
 
     @app.get("/healthz")
     def healthz():
-        return {"ok": True, "version": __version__, "sessions": app.state.active, "opencv": cv2.__version__}
+        return {"ok": True, "version": __version__, "sessions": app.state.active, **opencv_build()}
 
     @app.get("/")
     def index():

@@ -57,6 +57,7 @@ def test_health_and_page():
     client, _ = make_client()
     health = client.get("/healthz").json()
     assert health["ok"] and health["opencv"].startswith("5.")
+    assert health["cool"] is False and health["opencv_file"].endswith(".py")  # the PyPI wheel, not COOL
     page = client.get("/")
     assert page.status_code == 200 and "Speak without hands." in page.text
     assert client.get("/static/app.js").status_code == 200

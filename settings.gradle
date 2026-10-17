@@ -15,4 +15,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Vakyam"
 include ':app'
-include ':opencv'

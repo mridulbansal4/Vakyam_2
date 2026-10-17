@@ -13,7 +13,8 @@ import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.imgproc.Moments;
+import org.opencv.geometry.Geometry;
+import org.opencv.geometry.Moments;
 import java.util.ArrayList;
 
 import com.demo.opencv.UserDataManager;
@@ -197,7 +198,7 @@ public class EyeDetection {
         double maxVal = -1;
         int maxValIdx = -1;
         for (int i = 0; i < contours.size(); i++) {
-            double contourArea = Imgproc.contourArea(contours.get(i));
+            double contourArea = Geometry.contourArea(contours.get(i));
             if (maxVal < contourArea) {
                 maxVal = contourArea;
                 maxValIdx = i;
@@ -208,7 +209,7 @@ public class EyeDetection {
         lastIrisFound = maxValIdx != -1;
         if (maxValIdx != -1) {
             MatOfPoint maxContour = contours.get(maxValIdx);
-            Moments moments = Imgproc.moments(maxContour);
+            Moments moments = Geometry.moments(maxContour);
             double m00 = moments.get_m00();
             if (Math.abs(m00) > 1e-5) {
                 irisCenter.x = moments.get_m10() / m00;

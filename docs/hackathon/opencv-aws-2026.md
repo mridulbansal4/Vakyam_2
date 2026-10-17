@@ -13,7 +13,7 @@ Hard requirements. If any of these is missing, the entry is not eligible.
 
 | # | Requirement | Vakyam today | Gap |
 |---|---|---|---|
-| 1 | **OpenCV 5** does substantive image/video analysis | OpenCV **4.7.0** Android SDK (`opencv/build.gradle`) | **Upgrade to OpenCV 5** |
+| 1 | **OpenCV 5** does substantive image/video analysis | **Done (17 Oct):** OpenCV 5.0.0 from Maven Central | Make OpenCV do more of the work |
 | 2 | A **meaningful component runs on AWS** | Fully offline, no cloud at all | **Add an AWS component** |
 | 3 | Technical report: problem, users, architecture, OpenCV 5 implementation, AWS deployment, evaluation, limitations, responsible use | The README covers most of it except AWS and evaluation | Write the report |
 | 4 | Judge-accessible repo with pinned dependencies and build/deploy/test instructions | Repo exists; Gradle versions are pinned | Add AWS deploy steps (IaC) |

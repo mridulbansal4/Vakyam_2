@@ -23,7 +23,7 @@ with no cloud and no extra hardware.
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.4-7f52ff?logo=kotlin&logoColor=white)](https://kotlinlang.org/)
 [![Java 17](https://img.shields.io/badge/Java-17-e76f00?logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![OpenCV](https://img.shields.io/badge/OpenCV-4.7.0-5c3ee8?logo=opencv&logoColor=white)](https://opencv.org/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-5.0.0-5c3ee8?logo=opencv&logoColor=white)](https://opencv.org/)
 [![ML Kit](https://img.shields.io/badge/ML_Kit-Face_Detection-4285f4?logo=google&logoColor=white)](https://developers.google.com/ml-kit/vision/face-detection)
 [![LiteRT-LM](https://img.shields.io/badge/LiteRT--LM-0.17.1-ff6f00)](https://ai.google.dev/edge/litert)
 [![Gemma 4 E2B](https://img.shields.io/badge/Gemma-4_E2B-1a73e8)](https://ai.google.dev/gemma)
@@ -341,7 +341,7 @@ Vakyam/
 │       │   └── ic_launcher-playstore.png     # the app logo
 │       ├── test/                             # JVM unit tests (no device needed)
 │       └── androidTest/                      # on-device Gemma inference test
-├── opencv/                           # vendored OpenCV Android SDK 4.7.0
+├── (OpenCV 5.0.0 comes from Maven Central: org.opencv:opencv:5.0.0.1)
 ├── docs/
 │   ├── user-manual.pdf
 │   ├── sensors/                      # design notes for each sensor safeguard
@@ -580,7 +580,7 @@ governor never drops below 10 fps because the saccade detector resets on gaps ov
 | **Architecture** | Model-View-Presenter · Navigation component · ViewBinding · LiveData |
 | **Camera** | CameraX 1.1 (`ImageAnalysis`, front camera) |
 | **Face and eye landmarks** | Google ML Kit Face Detection 16.1.5 (contours + eye-open probability) |
-| **Image processing** | OpenCV 4.7.0 (vendored Android SDK) |
+| **Image processing** | OpenCV 5.0.0 (`org.opencv:opencv:5.0.0.1`, Maven Central) |
 | **LLM** | Gemma 4 E2B on LiteRT-LM 0.17.1, GPU with CPU fallback |
 | **Speech-to-text** | Android `SpeechRecognizer` online · Whisper (base, int8) via sherpa-onnx 1.13.8 offline |
 | **Text-to-speech** | Android `TextToSpeech` (US English, Indian English, Hindi voices) |
@@ -753,7 +753,7 @@ it can be tested on the JVM in milliseconds.
 ## Acknowledgements
 
 - **Google** - Gemma, LiteRT-LM and ML Kit Face Detection.
-- **OpenCV** - the Android SDK vendored under [`opencv/`](opencv).
+- **OpenCV 5** - the official Android package from Maven Central (`org.opencv:opencv:5.0.0.1`).
 - **k2-fsa / sherpa-onnx** and **OpenAI Whisper** - offline speech recognition.
 - **Casiez, Roussel and Vogel** - *1€ Filter: A Simple Speed-based Low-pass Filter for Noisy
   Input in Interactive Systems* (CHI 2012).

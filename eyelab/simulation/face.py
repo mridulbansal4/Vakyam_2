@@ -35,13 +35,16 @@ class FakeDetector:
 
 
 def render(look: Look, roll_deg: float = 0.0, shift=(0.0, 0.0), pupil_follow: float = 0.6,
-           noise: float = 3.0, seed: int = 0) -> tuple[np.ndarray, Face]:
+           noise: float = 3.0, seed: int = 0, scale: float = 1.0, brightness: float = 1.0,
+           head_turn_px: float = 0.0, iris: tuple[int, int] | None = None) -> tuple[np.ndarray, Face]:
+    """scale < 1 moves the face away; brightness < 1 darkens the room; head_turn_px moves the nose landmark
+    sideways (what YuNet reports for a turned head); iris overrides the pupil offset for this look."""
     rng = np.random.default_rng(seed)
     cx, cy = FRAME_W / 2, FRAME_H / 2 - 20
     img = np.full((FRAME_H, FRAME_W), 70, np.uint8)
     cv2.ellipse(img, (int(cx), int(cy + 30)), (95, 125), 0, 0, 360, 150, -1)   # face
     eyes = [np.array([cx - EYE_DISTANCE / 2, cy]), np.array([cx + EYE_DISTANCE / 2, cy])]
-    dx, dy = IRIS_OFFSETS[look]
+    dx, dy = iris if iris is not None else IRIS_OFFSETS[look]
     for e in eyes:
         ex, ey = int(e[0]), int(e[1])
         cv2.rectangle(img, (ex - 22, ey - 22), (ex + 22, ey - 17), 60, -1)        # brow
@@ -58,17 +61,22 @@ def render(look: Look, roll_deg: float = 0.0, shift=(0.0, 0.0), pupil_follow: fl
     mouth = [np.array([cx - 28, cy + 95]), np.array([cx + 28, cy + 95])]
     cv2.line(img, tuple(map(int, mouth[0])), tuple(map(int, mouth[1])), 80, 3)
 
-    m = cv2.getRotationMatrix2D((cx, cy + 30), -roll_deg, 1.0)  # negative: OpenCV rotates counter-clockwise
+    m = cv2.getRotationMatrix2D((cx, cy + 30), -roll_deg, scale)  # negative: OpenCV rotates counter-clockwise
     m[:, 2] += shift
     img = cv2.warpAffine(img, m, (FRAME_W, FRAME_H), borderMode=cv2.BORDER_REPLICATE)
+    if brightness != 1.0:
+        img = np.clip(img.astype(np.float32) * brightness, 0, 255).astype(np.uint8)
+        noise = max(noise, 3.0 / max(brightness, 0.1) * 0.5)  # a dark sensor is a noisy one
     if noise:
         img = np.clip(img.astype(np.float32) + rng.normal(0, noise, img.shape), 0, 255).astype(np.uint8)
 
     follow = np.array([dx, dy]) * pupil_follow
+    nose = nose + np.array([head_turn_px, 0.0])
     points = np.array([eyes[0] + follow, eyes[1] + follow, nose, mouth[0], mouth[1]])
     points = (m[:, :2] @ points.T).T + m[:, 2]
     box_center = m[:, :2] @ np.array([cx, cy + 30]) + m[:, 2]
-    face = Face(float(box_center[0] - 100), float(box_center[1] - 130), 200.0, 260.0, 0.92, points)
+    face = Face(float(box_center[0] - 100 * scale), float(box_center[1] - 130 * scale), 200.0 * scale,
+                260.0 * scale, 0.92, points)
     return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR), face
 
 

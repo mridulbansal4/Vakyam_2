@@ -1,0 +1,3186 @@
+[
+ {
+  "scenario": "clean",
+  "description": "Nothing wrong: the coach should confirm and finish quickly.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 9,
+  "simulated_seconds": 52.5,
+  "wall_seconds": 7.0,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 4282.2,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.42
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.83
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.2
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.246,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.12
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.19
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.11
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.666,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.12
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "weak_up",
+  "description": "While calibrating 'up' the user only glanced up a little, so up and straight are look-alikes.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 11,
+  "simulated_seconds": 53.7,
+  "wall_seconds": 7.7,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 1,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "recalibrate_look",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 4282.2,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.67
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.1234
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5871
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5893
+      }
+     ],
+     "confusable": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.1234
+      }
+     ],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "straight and up are only 0.1234 apart; re-record up further out.",
+    "tool": "recalibrate_look",
+    "input": {
+     "look": "up",
+     "instruction": "Look further up, right at the top edge of the screen."
+    },
+    "result": {
+     "captured": true,
+     "status": "captured",
+     "closest_pairs_with_this_look": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2521
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5345
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5369
+      }
+     ],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.36
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2521
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5345
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5369
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.01
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.11
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.08
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.246,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.08
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.16
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.255,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.12
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.664,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.11
+   },
+   {
+    "step": 11,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "turned_away",
+  "description": "The user has turned their head well away from the screen.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 58.5,
+  "wall_seconds": 9.5,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "instruct_user",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 4282.2,
+     "yaw_deg": -41.2,
+     "pitch_deg": 3.6,
+     "issues": {
+      "TURNED_AWAY": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.62
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows TURNED_AWAY; the user can fix this.",
+    "tool": "instruct_user",
+    "input": {
+     "message": "Please turn your face towards the screen.",
+     "wait_seconds": 4
+    },
+    "result": {
+     "instructed": "Please turn your face towards the screen.",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4281.5,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 2.03
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.05
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.05
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.245,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.14
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.23
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.2
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.2
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "too_far",
+  "description": "The user has slumped back, far from the camera.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 58.5,
+  "wall_seconds": 10.3,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "instruct_user",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 80.0,
+     "face_brightness": 125.9,
+     "frame_brightness": 71.0,
+     "sharpness": 4456.7,
+     "yaw_deg": 0.0,
+     "pitch_deg": 2.5,
+     "issues": {
+      "TOO_FAR": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.78
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows TOO_FAR; the user can fix this.",
+    "tool": "instruct_user",
+    "input": {
+     "message": "Please come a little closer to the camera.",
+     "wait_seconds": 4
+    },
+    "result": {
+     "instructed": "Please come a little closer to the camera.",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4281.5,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 2.36
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.3
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.3
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.245,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.11
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.09
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.14
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.17
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "dark_room",
+  "description": "The room light went off; the caregiver can switch it on.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 57.5,
+  "wall_seconds": 9.6,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 30.6,
+     "frame_brightness": 18.9,
+     "sharpness": 971.1,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {
+      "TOO_DARK": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.83
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows TOO_DARK; only the caregiver can fix this.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The face is too dark. Please turn on a light in front of the user."
+    },
+    "result": {
+     "answer": "done",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4279.3,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 1.78
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.14
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.19
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.246,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.24
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.19
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.12
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.14
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "dim_room_unfixable",
+  "description": "The room is dim and the caregiver cannot add light, but the looks still work: the coach should test them rather than give up.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 52.5,
+  "wall_seconds": 9.5,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test. The picture still shows TOO_DARK; fix it when you can.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 30.6,
+     "frame_brightness": 18.9,
+     "sharpness": 971.1,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {
+      "TOO_DARK": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.88
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows TOO_DARK; only the caregiver can fix this.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The face is too dark. Please turn on a light in front of the user."
+    },
+    "result": {
+     "answer": "cannot"
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.025,
+     "median_margin": 0.254,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.39
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.024,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.39
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.026,
+     "median_margin": 0.241,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.026,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.48
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.026,
+     "median_margin": 0.25,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.139,
+     "median_margin": 0.624,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.5
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test. The picture still shows TOO_DARK; fix it when you can."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test. The picture still shows TOO_DARK; fix it when you can."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "very_dark_unfixable",
+  "description": "The room is very dark and nobody can add light. At the set threshold several looks fail; one approved sensitivity change restores them without misreading the resting look.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 18,
+  "simulated_seconds": 75.4,
+  "wall_seconds": 19.5,
+  "approvals_requested": 1,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test. The picture still shows TOO_DARK; fix it when you can.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "propose_sensitivity",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 14.1,
+     "frame_brightness": 10.5,
+     "sharpness": 3026.9,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {
+      "TOO_DARK": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.89
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows TOO_DARK; only the caregiver can fix this.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The face is too dark. Please turn on a light in front of the user."
+    },
+    "result": {
+     "answer": "cannot"
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.452,
+     "median_margin": 0.125,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.42
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 0.03,
+     "best_match_rate": 1.0,
+     "median_error": 0.45,
+     "median_margin": 0.126,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.462,
+     "median_margin": 0.12,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.49
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.468,
+     "median_margin": 0.124,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.466,
+     "median_margin": 0.119,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.41
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.711,
+     "median_margin": 0.149,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.42
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "The right looks win but the threshold rejects them.",
+    "tool": "propose_sensitivity",
+    "input": {
+     "value": 45,
+     "reason": "left, right, up, left-up, right-up, closed: the right look is the closest match but rejected. The worst, closed, has error 0.711 against a limit of 0.40."
+    },
+    "result": {
+     "approved": true,
+     "sensitivity": 45
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 11,
+    "policy": "rules",
+    "rationale": "Check left again.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.453,
+     "median_margin": 0.126,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.48
+   },
+   {
+    "step": 12,
+    "policy": "rules",
+    "rationale": "Check right again.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.456,
+     "median_margin": 0.123,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 13,
+    "policy": "rules",
+    "rationale": "Check up again.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.463,
+     "median_margin": 0.123,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.48
+   },
+   {
+    "step": 14,
+    "policy": "rules",
+    "rationale": "Check left-up again.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.472,
+     "median_margin": 0.122,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.42
+   },
+   {
+    "step": 15,
+    "policy": "rules",
+    "rationale": "Check right-up again.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.472,
+     "median_margin": 0.123,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.38
+   },
+   {
+    "step": 16,
+    "policy": "rules",
+    "rationale": "Check closed again.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.96,
+     "best_match_rate": 1.0,
+     "median_error": 0.705,
+     "median_margin": 0.149,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.42
+   },
+   {
+    "step": 17,
+    "policy": "rules",
+    "rationale": "A looser threshold must not turn resting into a selection.",
+    "tool": "self_test",
+    "input": {
+     "look": "straight"
+    },
+    "result": {
+     "look": "straight",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.461,
+     "median_margin": 0.117,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.34
+   },
+   {
+    "step": 18,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test. The picture still shows TOO_DARK; fix it when you can."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test. The picture still shows TOO_DARK; fix it when you can."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "no_face",
+  "description": "The screen was knocked and the camera no longer sees a face; the caregiver re-aims it.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 57.5,
+  "wall_seconds": 9.9,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 0.0,
+     "face_width_px": null,
+     "face_brightness": null,
+     "frame_brightness": null,
+     "sharpness": null,
+     "yaw_deg": null,
+     "pitch_deg": null,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.64
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows NO_FACE; only the caregiver can fix this.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The camera cannot see a face. Please move the screen so it faces the user."
+    },
+    "result": {
+     "answer": "done",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4279.3,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 1.88
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.26
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.22
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.246,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.17
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.19
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.27
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.27
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "no_face_unfixable",
+  "description": "The camera no longer sees a face and nobody can move the screen: the coach must stop and say so, not loop.",
+  "policy": "rules",
+  "outcome": "needs_help",
+  "designed_outcome": "needs_help",
+  "ground_truth_ok": false,
+  "correct": true,
+  "steps": 3,
+  "simulated_seconds": 32.9,
+  "wall_seconds": 0.6,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "The camera still shows NO_FACE; the looks cannot be tested until the user faces the camera.",
+  "ground_truth": {
+   "recognised": {
+    "left": 0.0,
+    "right": 0.0,
+    "up": 0.0,
+    "left-up": 0.0,
+    "right-up": 0.0,
+    "closed": 0.0
+   },
+   "resting_misread_rate": 1.0,
+   "ok": false
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 0.0,
+     "face_width_px": null,
+     "face_brightness": null,
+     "frame_brightness": null,
+     "sharpness": null,
+     "yaw_deg": null,
+     "pitch_deg": null,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.58
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Camera shows NO_FACE; only the caregiver can fix this.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The camera cannot see a face. Please move the screen so it faces the user."
+    },
+    "result": {
+     "answer": "cannot"
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "needs_help",
+     "summary": "The camera still shows NO_FACE; the looks cannot be tested until the user faces the camera."
+    },
+    "result": {
+     "outcome": "needs_help",
+     "summary": "The camera still shows NO_FACE; the looks cannot be tested until the user faces the camera."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "strict_threshold",
+  "description": "Sensitivity was set too strict for this noisy camera: closed eyes, which have little texture, are the right match but rejected. The caregiver approves a change.",
+  "policy": "rules",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 12,
+  "simulated_seconds": 73.4,
+  "wall_seconds": 9.6,
+  "approvals_requested": 1,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "Every look passed its self test.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "propose_sensitivity",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 5707.8,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2556
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5329
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5386
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.09
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.259,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.14
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.243,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.12
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.11
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.014,
+     "median_margin": 0.255,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.09
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.592,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.11
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "The right looks win but the threshold rejects them.",
+    "tool": "propose_sensitivity",
+    "input": {
+     "value": 10,
+     "reason": "closed: the right look is the closest match but rejected. The worst, closed, has error 0.105 against a limit of 0.08."
+    },
+    "result": {
+     "approved": true,
+     "sensitivity": 10
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Check closed again.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.594,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.12
+   },
+   {
+    "step": 11,
+    "policy": "rules",
+    "rationale": "A looser threshold must not turn resting into a selection.",
+    "tool": "self_test",
+    "input": {
+     "look": "straight"
+    },
+    "result": {
+     "look": "straight",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.012,
+     "median_margin": 0.244,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.09
+   },
+   {
+    "step": 12,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Every look passed its self test."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "strict_threshold_denied",
+  "description": "As above, but the caregiver declines the change.",
+  "policy": "rules",
+  "outcome": "needs_help",
+  "designed_outcome": "needs_help",
+  "ground_truth_ok": false,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 66.9,
+  "wall_seconds": 6.8,
+  "approvals_requested": 1,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "rules"
+  ],
+  "fallback_reason": null,
+  "summary": "These looks are still not recognised reliably: closed. Recalibrate with a caregiver, or check the camera position.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 0.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": false
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "propose_sensitivity",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "rules",
+    "rationale": "Check the camera first.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 5707.8,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.61
+   },
+   {
+    "step": 2,
+    "policy": "rules",
+    "rationale": "Look for templates that are too alike.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2556
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5329
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5386
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "rules",
+    "rationale": "Self test left.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.05
+   },
+   {
+    "step": 4,
+    "policy": "rules",
+    "rationale": "Self test right.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.259,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.0
+   },
+   {
+    "step": 5,
+    "policy": "rules",
+    "rationale": "Self test up.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.243,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.03
+   },
+   {
+    "step": 6,
+    "policy": "rules",
+    "rationale": "Self test left-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.02
+   },
+   {
+    "step": 7,
+    "policy": "rules",
+    "rationale": "Self test right-up.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.014,
+     "median_margin": 0.255,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.05
+   },
+   {
+    "step": 8,
+    "policy": "rules",
+    "rationale": "Self test closed.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.592,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.02
+   },
+   {
+    "step": 9,
+    "policy": "rules",
+    "rationale": "The right looks win but the threshold rejects them.",
+    "tool": "propose_sensitivity",
+    "input": {
+     "value": 10,
+     "reason": "closed: the right look is the closest match but rejected. The worst, closed, has error 0.105 against a limit of 0.08."
+    },
+    "result": {
+     "approved": false,
+     "sensitivity": 4
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 10,
+    "policy": "rules",
+    "rationale": "Done.",
+    "tool": "finish",
+    "input": {
+     "outcome": "needs_help",
+     "summary": "These looks are still not recognised reliably: closed. Recalibrate with a caregiver, or check the camera position."
+    },
+    "result": {
+     "outcome": "needs_help",
+     "summary": "These looks are still not recognised reliably: closed. Recalibrate with a caregiver, or check the camera position."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ }
+]

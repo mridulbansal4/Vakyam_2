@@ -111,6 +111,10 @@ Each one has a number to report in the evaluation (§4).
 
 ### 3b. The agent loop (Agentic Vision Award)
 
+**Built (17 Oct):** [`eyelab/coach`](../../eyelab/coach/README.md). The rule policy handles 11/11 simulated faults
+correctly against an independent ground truth. The Claude policy is still to be evaluated, which needs AWS
+credentials.
+
 The rule requires that the vision output change the next action. One loop:
 
 1. **Perceive.** After calibration, the phone sends a diagnostics JSON with no raw video:

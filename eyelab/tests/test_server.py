@@ -14,7 +14,7 @@ from server.app import create_app
 from server.config import Settings
 from server.metrics import SessionStats
 from server.sentence import SentenceService, acceptable, clean_keywords, fallback_sentence
-from synthetic import FakeDetector, render
+from simulation.face import FakeDetector, render
 
 
 class FakeClaude:
@@ -178,3 +178,46 @@ def test_session_metrics_are_cloudwatch_emf():
     names = {m["Name"] for m in record["_aws"]["CloudWatchMetrics"][0]["Metrics"]}
     assert {"Frames", "FrameMsAvg", "Selections", "QualityIssueRate"} <= names
     assert record["Frames"] == 2 and record["Selections"] == 1 and record["QualityIssueRate"] == 0.5
+
+
+def test_coach_runs_live_over_the_socket():
+    """Real time: the rule coach checks the camera, the templates and every look while frames keep flowing."""
+    client, detector = make_client(coach_policy="rules")
+    labels = {look.label: look for look in Look}
+    with client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        ws.send_text(json.dumps({"type": "coach_start"}))
+        assert ws.receive_json()["error"] == "not_calibrated"
+        ws.send_text(json.dumps({"type": "calibrate"}))
+        ws.receive_json()
+        seed = 0
+        for look in CALIBRATION_ORDER:
+            for _ in range(2000):
+                seed += 1
+                data, detector.face = jpeg(look, seed)
+                ws.send_bytes(data)
+                msg = ws.receive_json()
+                if msg.get("calibration", {}).get("captured") == look.label:
+                    break
+        ws.send_text(json.dumps({"type": "coach_start"}))
+        target, tools, done = Look.STRAIGHT, [], None
+        while done is None:
+            seed += 1
+            data, detector.face = jpeg(target, seed)
+            ws.send_bytes(data)
+            while True:  # coach events arrive between frame replies
+                msg = ws.receive_json()
+                if msg["type"] != "coach":
+                    break
+                if msg["event"] == "instruct":
+                    target = labels.get(msg.get("look"), Look.STRAIGHT)
+                elif msg["event"] == "instruct_done":
+                    target = Look.STRAIGHT
+                elif msg["event"] == "step":
+                    tools.append(msg["tool"])
+                elif msg["event"] == "done":
+                    done = msg
+                    break
+    assert done["outcome"] == "ready", done
+    assert tools[0] == "inspect_camera" and tools[-1] == "finish"
+    assert tools.count("self_test") == 6

@@ -28,6 +28,8 @@ class Settings:
     max_frame_bytes: int
     session_idle_s: float
     debug_crops_every: int
+    coach_policy: str
+    coach_effort: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -44,4 +46,6 @@ class Settings:
             max_frame_bytes=int(e("EYELAB_MAX_FRAME_BYTES", str(200 * 1024))),
             session_idle_s=float(e("EYELAB_SESSION_IDLE_S", "120")),
             debug_crops_every=int(e("EYELAB_DEBUG_CROPS_EVERY", "3")),
+            coach_policy=e("EYELAB_COACH_POLICY", "claude"),
+            coach_effort=e("EYELAB_COACH_EFFORT", "medium"),
         )

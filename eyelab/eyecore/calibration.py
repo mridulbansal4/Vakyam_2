@@ -20,7 +20,9 @@ from .quality import QualityIssue
 
 SETTLE_MS = 700             # after the prompt, let the eyes get there
 HOLD_MS = 400               # then the crops must stay the same this long
-STEADY_ERROR = 0.10         # frame-to-frame error (summed over both eyes) that still counts as still
+STEADY_ERROR = 0.10         # frame-to-frame error (summed over both eyes) that still counts as still; each
+                            # re-prompt loosens it by half again, as the phone's gate loosens, so a noisy camera
+                            # (closed eyes have little texture, so noise dominates) cannot stall a step forever
 MIN_DISTINCT_ERROR = 0.06   # per eye: a template closer than this to an earlier look cannot be told apart from it
 REPROMPT_MS = 5000          # repeat the prompt, and loosen the rules a step, if nothing was captured by then
 QUALITY_STRICT_UNTIL = 2    # after this many re-prompts only a blocking quality issue refuses a capture
@@ -89,6 +91,8 @@ class Calibrator:
         self._steady_since: int | None = None
         self._previous: tuple[np.ndarray, np.ndarray] | None = None
         self._anchor_samples: list[EyeAnchors] = []
+        self.single: Look | None = None   # re-recording one look, the rest of the calibration kept
+        self._prompt_override: str | None = None
 
     @property
     def look(self) -> Look | None:
@@ -97,8 +101,21 @@ class Calibrator:
     def start(self, now_ms: int) -> CalibrationEvent:
         self.calibration = Calibration()
         self.running = True
+        self.single = None
         self.step = 0
         self.leniency = 0
+        self._begin_step(now_ms)
+        return self._event(Status.SETTLING, 0.0, reprompt=True)
+
+    def start_single(self, look: Look, now_ms: int, prompt: str | None = None) -> CalibrationEvent:
+        """Re-record one look. The frozen eye anchors are kept, so the other templates stay valid."""
+        if not self.calibration.complete:
+            raise ValueError("calibrate fully before re-recording one look")
+        self.running = True
+        self.single = look
+        self.step = CALIBRATION_ORDER.index(look)
+        self.leniency = 0
+        self._prompt_override = prompt
         self._begin_step(now_ms)
         return self._event(Status.SETTLING, 0.0, reprompt=True)
 
@@ -129,7 +146,7 @@ class Calibrator:
             return self._event(Status.NO_FACE, 0.0, reprompt=reprompt)
 
         steady = self._previous is not None and sum(
-            template_error(c, template_core(p)) for c, p in zip(crops, self._previous)) < STEADY_ERROR
+            template_error(c, template_core(p)) for c, p in zip(crops, self._previous)) <             STEADY_ERROR * (1 + 0.5 * self.leniency)
         self._previous = crops
         if now_ms - self._step_start_ms < SETTLE_MS:
             return self._event(Status.SETTLING, 0.0, reprompt=reprompt)
@@ -155,6 +172,8 @@ class Calibrator:
 
         min_distinct = MIN_DISTINCT_ERROR / (2 if self.leniency >= 3 else 1)
         for look, earlier in self.calibration.crops.items():
+            if self.single is not None and look == int(self.single):
+                continue  # the template being replaced
             per_eye = [template_error(c, template_core(e)) for c, e in zip(crops, earlier)]
             if sum(per_eye) / 2 < min_distinct:
                 self._steady_since = None
@@ -162,6 +181,11 @@ class Calibrator:
 
         captured = CALIBRATION_ORDER[self.step]
         self.calibration.crops[int(captured)] = (crops[0].copy(), crops[1].copy())
+        if self.single is not None:
+            self.running = False
+            self.single = None
+            return CalibrationEvent(False, len(CALIBRATION_ORDER), None, "", Status.DONE, Status.DONE.value, 1.0,
+                                    captured=captured, finished=True)
         if captured == Look.STRAIGHT and self._anchor_samples:
             self.calibration.anchors = EyeAnchors.mean(self._anchor_samples)
         self.step += 1
@@ -176,5 +200,7 @@ class Calibrator:
     def _event(self, status: Status, progress: float, text: str | None = None, captured: Look | None = None,
                reprompt: bool = False) -> CalibrationEvent:
         look = self.look
-        return CalibrationEvent(self.running, self.step, look, CALIBRATION_PROMPTS[look] if look is not None else "",
+        prompt = (self._prompt_override if self.single is not None and self._prompt_override
+                  else CALIBRATION_PROMPTS[look] if look is not None else "")
+        return CalibrationEvent(self.running, self.step, look, prompt,
                                 status, text or status.value, progress, captured=captured, reprompt=reprompt)

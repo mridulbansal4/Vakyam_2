@@ -4,7 +4,7 @@ import pytest
 
 from eyecore.looks import CALIBRATION_ORDER, Look
 from eyecore.pipeline import EyePipeline, PipelineConfig
-from synthetic import FakeDetector, render
+from simulation.face import FakeDetector, render
 
 TARGETS = [Look.LEFT, Look.RIGHT, Look.UP, Look.LEFT_UP, Look.RIGHT_UP, Look.CLOSED]
 

@@ -15,7 +15,7 @@ const $ = (id) => document.getElementById(id);
 const screens = ["intro", "calibrate", "talk"];
 const state = {
   ws: null, stream: null, inFlight: false, lastSent: 0, maxFps: 12, polly: false,
-  mode: "intro", questionIndex: 0, words: [], speaking: false, frames: [], camera: false,
+  mode: "intro", questionIndex: 0, words: [], speaking: false, frames: [], camera: false, coaching: false,
 };
 
 function show(name) {
@@ -23,6 +23,7 @@ function show(name) {
   for (const s of screens) $(s).hidden = s !== name;
   document.querySelector(".preview").hidden = !state.camera;
   $("recalibrate").hidden = !(state.camera && name === "talk");
+  $("coachBtn").hidden = !(state.camera && name === "talk");
   $("hoodToggle").hidden = !(state.camera && name === "talk");
 }
 
@@ -96,6 +97,7 @@ function onMessage(msg) {
   }
   if (msg.type === "calibration") return onCalibration(msg);
   if (msg.type === "sentence") return onSentence(msg);
+  if (msg.type === "coach") return onCoach(msg);
   if (msg.type !== "frame") return;
   state.inFlight = false;
   requestAnimationFrame(pump);
@@ -104,7 +106,7 @@ function onMessage(msg) {
   if (state.frames.length > 20) state.frames.shift();
   drawFace(msg.face);
   if (msg.calibration) onCalibration(msg.calibration);
-  if (state.mode === "talk") onTalkFrame(msg);
+  if (state.mode === "talk" && !state.coaching) onTalkFrame(msg);
   updateHood(msg);
 }
 
@@ -254,6 +256,124 @@ function setStatus(text, kind) {
   el.textContent = text;
   el.dataset.kind = kind;
 }
+// ---------- Calibration Coach ----------
+const TOOL_LABELS = {
+  inspect_camera: "Inspect camera", check_templates: "Compare templates", self_test: "Self test",
+  instruct_user: "Instruct user", recalibrate_look: "Re-record look", ask_caregiver: "Ask caregiver",
+  propose_sensitivity: "Propose setting", finish: "Finish",
+};
+function startCoach() {
+  state.coaching = true;
+  $("coachSteps").innerHTML = "";
+  $("coachResult").hidden = true;
+  $("coachPanel").hidden = false;
+  document.body.classList.add("coach-open");
+  for (const tile of document.querySelectorAll(".tile")) tile.style.setProperty("--fill", 0);
+  send({ type: "coach_start" });
+}
+function stopCoach() { send({ type: "coach_stop" }); }
+function saw(tool, r) {
+  if (!r) return "";
+  if (r.error) return r.error;
+  const cam = r.camera_after || (tool === "inspect_camera" ? r : null);
+  if (cam) {
+    const issues = Object.entries(cam.issues || {}).map(([k, v]) => `${k.toLowerCase().replace("_", " ")} ${Math.round(v * 100)}%`);
+    return `face ${Math.round((cam.face_found_rate || 0) * 100)}% · brightness ${cam.face_brightness ?? "–"} · yaw ${cam.yaw_deg ?? "–"}°` +
+      (issues.length ? ` · ${issues.join(", ")}` : " · no issues");
+  }
+  if (tool === "check_templates") {
+    const c = r.confusable || [];
+    const p = (r.closest_pairs || [])[0];
+    return c.length ? `look-alikes: ${c.map((x) => `${x.looks.join("/")} ${x.distance}`).join(", ")}`
+      : p ? `closest: ${p.looks.join("/")} ${p.distance} (limit ${r.threshold})` : "";
+  }
+  if (tool === "self_test") return `${r.look}: recognised ${Math.round(r.recognised_rate * 100)}% · best ${Math.round((r.best_match_rate || 0) * 100)}% · error ${r.median_error ?? "–"}`;
+  if (tool === "recalibrate_look") return r.captured ? "captured" : `not captured (${r.status})`;
+  if (tool === "ask_caregiver") return `caregiver: ${r.answer}`;
+  if (tool === "propose_sensitivity") return r.approved ? `approved, sensitivity ${r.sensitivity}` : "declined";
+  if (tool === "finish") return r.summary;
+  return "";
+}
+function onCoach(e) {
+  const steps = $("coachSteps");
+  if (e.event === "step_start") {
+    const li = document.createElement("li");
+    li.className = "running";
+    li.id = `coachStep${e.step}`;
+    const tool = document.createElement("span"); tool.className = "tool"; tool.textContent = TOOL_LABELS[e.tool] || e.tool;
+    const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = e.policy;
+    const what = e.input && (e.input.look || e.input.message || e.input.instruction || (e.input.value ? `→ ${e.input.value}` : ""));
+    const why = document.createElement("span"); why.className = "why"; why.textContent = [what, e.rationale].filter(Boolean).join(" — ");
+    const out = document.createElement("span"); out.className = "saw";
+    li.append(tool, tag, why, out);
+    steps.appendChild(li);
+    li.scrollIntoView({ block: "nearest" });
+  } else if (e.event === "step") {
+    const li = $(`coachStep${e.step}`);
+    if (li) {
+      li.classList.remove("running");
+      const out = li.querySelector(".saw");
+      out.textContent = saw(e.tool, e.result);
+      if (e.is_error) out.classList.add("err");
+    }
+  } else if (e.event === "instruct") {
+    showBanner(e.text, e.look);
+    say(e.text);
+  } else if (e.event === "instruct_done") {
+    hideBanner();
+  } else if (e.event === "caregiver" || e.event === "approval") {
+    openAsk(e);
+  } else if (e.event === "caregiver_timeout" || e.event === "approval_timeout") {
+    $("coachAsk").hidden = true;
+  } else if (e.event === "fallback") {
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="tool">Fallback</span>';
+    const why = document.createElement("span"); why.className = "why";
+    why.textContent = `${e.from} unavailable (${e.reason}); the rule policy continues.`;
+    li.appendChild(why); steps.appendChild(li);
+  } else if (e.event === "done") {
+    state.coaching = false;
+    hideBanner();
+    $("coachAsk").hidden = true;
+    const box = $("coachResult");
+    box.className = `coach-result ${e.outcome}`;
+    box.textContent = `${e.outcome === "ready" ? "Ready" : e.outcome === "needs_help" ? "Needs help" : "Stopped"}: ${e.summary}`;
+    box.hidden = false;
+    say(e.outcome === "ready" ? "All looks are working. You can talk now." : e.summary);
+  }
+}
+function showBanner(text, look) {
+  $("coachBannerText").textContent = text;
+  $("coachBanner").hidden = false;
+  for (const el of document.querySelectorAll(".tile, .preview")) el.classList.remove("target");
+  if (look === "straight") document.querySelector(".preview").classList.add("target");
+  else if (look) { const t = document.querySelector(`.tile[data-look="${look}"]`); if (t) t.classList.add("target"); }
+}
+function hideBanner() {
+  $("coachBanner").hidden = true;
+  for (const el of document.querySelectorAll(".tile, .preview")) el.classList.remove("target");
+}
+let askKind = null;
+function openAsk(e) {
+  askKind = e.event;
+  const approval = e.event === "approval";
+  $("coachAskKind").textContent = approval ? "Approval needed" : "For the caregiver";
+  $("coachAskTitle").textContent = approval ? `${e.change}?` : e.text;
+  $("coachAskReason").textContent = approval ? e.reason : "";
+  $("coachAskYes").textContent = approval ? "Approve" : "Done";
+  $("coachAskNo").textContent = approval ? "Decline" : "I can't";
+  $("coachAsk").hidden = false;
+  say(approval ? "A caregiver needs to approve a change." : e.text);
+  $("coachAskYes").focus();
+}
+function answerAsk(yes) {
+  if (!askKind) return;
+  const value = askKind === "approval" ? yes : (yes ? "done" : "cannot");
+  send({ type: "coach_answer", kind: askKind, value });
+  askKind = null;
+  $("coachAsk").hidden = true;
+}
+
 function showIntroError(text) { show("intro"); const e = $("introError"); e.textContent = text; e.hidden = false; }
 
 // ---------- wiring ----------
@@ -278,6 +398,10 @@ $("noCamera").addEventListener("click", async () => {
   setStatus("Tap a tile to choose it.", "hint");
 });
 $("recalibrate").addEventListener("click", startCalibration);
+$("coachBtn").addEventListener("click", startCoach);
+$("coachStop").addEventListener("click", stopCoach);
+$("coachAskYes").addEventListener("click", () => answerAsk(true));
+$("coachAskNo").addEventListener("click", () => answerAsk(false));
 $("nextQuestion").addEventListener("click", () => { state.questionIndex = (state.questionIndex + 1) % QUESTIONS.length; renderQuestion(); });
 $("sentenceClose").addEventListener("click", closeSentence);
 $("hoodToggle").addEventListener("click", (e) => {

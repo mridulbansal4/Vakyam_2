@@ -7,7 +7,7 @@ from eyecore.face import Face
 from eyecore.geometry import (CROP_HEIGHT, CROP_WIDTH, EYE_CROP_WIDTH, LIVE_HEIGHT, LIVE_WIDTH, CropGeometry,
                               EyeAnchors, center_of_live, eye_geometry)
 from eyecore.looks import Look
-from synthetic import render
+from simulation.face import render
 
 
 def test_forward_and_inverse_agree():

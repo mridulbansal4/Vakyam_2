@@ -101,6 +101,33 @@ h1 { font-size: clamp(40px, 7vw, 68px); line-height: 1.02; letter-spacing: -.02e
 .said { font-size: clamp(28px, 4vw, 46px); line-height: 1.15; font-weight: 700; margin: 0 0 12px; letter-spacing: -.01em; }
 .source { color: var(--ink-soft); margin: 0 0 24px; }
 
+.small { padding: 6px 12px; font-size: 14px; }
+.coach { position: fixed; left: 16px; bottom: 16px; top: 76px; width: 360px; overflow-y: auto; background: var(--surface);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; font-size: 14px; }
+.coach-head { display: flex; align-items: center; justify-content: space-between; }
+.coach-head h3 { margin: 0; font-size: 16px; }
+.coach-sub { color: var(--ink-soft); margin: 6px 0 12px; }
+.coach-steps { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+.coach-steps li { line-height: 1.35; }
+.coach-steps .tool { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 600; }
+.coach-steps .why { color: var(--ink-soft); display: block; }
+.coach-steps .saw { color: var(--accent); display: block; font-variant-numeric: tabular-nums; }
+.coach-steps .err { color: var(--warning); }
+.coach-steps .tag { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--outline); margin-left: 4px; }
+.coach-steps li.running .saw::after { content: "…"; }
+.coach-result { margin-top: 14px; padding: 12px; border-radius: 12px; background: var(--key); font-weight: 600; }
+.coach-result.needs_help, .coach-result.incomplete { background: var(--key-alt); }
+.coach-banner { position: fixed; left: 50%; top: 76px; transform: translateX(-50%); z-index: 5; background: var(--chrome);
+  color: var(--on-chrome); border-radius: 999px; padding: 12px 24px; font-size: 20px; font-weight: 650; box-shadow: var(--shadow);
+  max-width: calc(100% - 32px); text-align: center; }
+.tile.target { outline: 5px solid var(--selecting); outline-offset: -5px; }
+.preview.target { outline: 5px solid var(--selecting); }
+.ask { position: fixed; inset: 0; background: rgba(38, 52, 47, .55); display: grid; place-items: center; padding: 24px; z-index: 10; }
+.ask-card { background: var(--surface); border-radius: 24px; box-shadow: var(--shadow); max-width: 560px; padding: 32px; }
+.ask-card h3 { font-size: 24px; margin: 4px 0 8px; }
+@media (min-width: 1101px) { body.coach-open #talk { padding-left: 392px; } }
+@media (max-width: 1100px) { .coach { position: static; width: auto; margin: 16px 24px; } }
+
 @media (max-width: 760px) {
   .grid { grid-template-columns: 1fr 1fr 1fr; height: auto; grid-template-rows: repeat(3, 110px); }
   .centre { grid-column: 2; }

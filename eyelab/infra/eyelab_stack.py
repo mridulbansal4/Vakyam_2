@@ -39,7 +39,7 @@ class EyeLabStack(Stack):
 
         image = ecs.ContainerImage.from_asset(
             str(REPO_ROOT), file="eyelab/Dockerfile", platform=Platform.LINUX_ARM64, ignore_mode=IgnoreMode.DOCKER,
-            exclude=["**", "!eyelab/requirements.txt", "!eyelab/eyecore/**", "!eyelab/server/**", "!eyelab/Dockerfile",
+            exclude=["**", "!eyelab/requirements.txt", "!eyelab/eyecore/**", "!eyelab/server/**", "!eyelab/coach/**", "!eyelab/Dockerfile",
                      "!app/src/main/assets/face_detection_yunet_2023mar.onnx", "**/__pycache__"])
         log_group = logs.LogGroup(self, "Logs", retention=logs.RetentionDays.ONE_MONTH,
                                   removal_policy=RemovalPolicy.DESTROY)

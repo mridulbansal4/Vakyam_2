@@ -40,6 +40,19 @@ between them.
 
 Closed eyes are a seventh calibrated template here, because ML Kit's eye-open probability is phone-only.
 
+## Calibration Coach
+
+After calibrating, **Calibration Coach** starts an agent that checks the camera, the templates and every look with
+OpenCV 5, fixes what it can (instructing the user, re-recording one look, asking the caregiver), and asks the
+caregiver before changing any setting. Claude on Bedrock decides; a rule policy is the baseline and the fallback.
+Design, human control, traces and the evaluation (11/11 simulated faults handled correctly by the rule policy) are in
+[`coach/README.md`](coach/README.md).
+
+| Variable | Default | |
+|---|---|---|
+| `EYELAB_COACH_POLICY` | `claude` | `rules` to run the baseline only |
+| `EYELAB_COACH_EFFORT` | `medium` | Claude effort for coaching decisions |
+
 ## Run it locally
 
 Python 3.12. From the repository root:
@@ -63,7 +76,8 @@ cd eyelab
 ../.venv/Scripts/python -m pytest -q
 ```
 
-67 tests: the pipeline stages, a drawn face (`tests/synthetic.py`) calibrated and driven through every look under
+89 tests: the pipeline stages, the Calibration Coach (tools, approval gate, fallback, a scripted Claude loop,
+real simulated scenarios, and a live 30-second coaching run over the WebSocket), a drawn face (`tests/synthetic.py`) calibrated and driven through every look under
 head tilt and movement in both anchor modes, the WebSocket service with a stand-in for Claude, the guard rails and
 fallbacks, and the CloudWatch metric format. Set `EYELAB_FACE_IMAGE=/path/to/face.jpg` to also run YuNet and the
 quality meter on a real photo.

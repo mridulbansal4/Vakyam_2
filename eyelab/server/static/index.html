@@ -15,6 +15,7 @@
       <span>Vakyam <em>Eye Lab</em></span>
     </div>
     <div class="bar-actions">
+      <button id="coachBtn" class="ghost" hidden>Calibration Coach</button>
       <button id="hoodToggle" class="ghost" aria-pressed="false" hidden>Under the hood</button>
       <button id="recalibrate" class="ghost" hidden>Recalibrate</button>
     </div>
@@ -96,6 +97,31 @@
         clearly ahead.</p>
     </aside>
   </main>
+
+  <div class="coach-banner" id="coachBanner" hidden role="status" aria-live="assertive"><span id="coachBannerText"></span></div>
+
+  <aside class="coach" id="coachPanel" hidden aria-label="Calibration Coach">
+    <div class="coach-head">
+      <h3>Calibration Coach</h3>
+      <button id="coachStop" class="ghost small">Stop</button>
+    </div>
+    <p class="coach-sub" id="coachSub">Checks the camera and every look with OpenCV 5, decides what to fix, and asks before
+      changing anything.</p>
+    <ol class="coach-steps" id="coachSteps"></ol>
+    <div class="coach-result" id="coachResult" hidden></div>
+  </aside>
+
+  <div class="ask" id="coachAsk" hidden role="dialog" aria-modal="true" aria-labelledby="coachAskTitle">
+    <div class="ask-card">
+      <p class="eyebrow" id="coachAskKind">For the caregiver</p>
+      <h3 id="coachAskTitle"></h3>
+      <p id="coachAskReason" class="fine"></p>
+      <div class="cta">
+        <button id="coachAskYes" class="primary">Done</button>
+        <button id="coachAskNo" class="ghost">I can't</button>
+      </div>
+    </div>
+  </div>
 
   <div class="sentence" id="sentence" hidden role="dialog" aria-live="assertive" aria-label="Your sentence">
     <div class="sentence-card">

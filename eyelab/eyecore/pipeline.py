@@ -51,6 +51,11 @@ class EyePipeline:
         self._cores = None
         return self.calibrator.start(now_ms).to_json()
 
+    def recalibrate_look(self, look: Look, now_ms: int, prompt: str | None = None) -> dict:
+        """Re-record one look; the other templates and the frozen anchors are kept."""
+        self.dwell.reset()
+        return self.calibrator.start_single(look, now_ms, prompt).to_json()
+
     def eye_crops(self, bgr: np.ndarray, face: Face, gray: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
         """Live (52x22) CLAHE-normalised crops of the image-left and image-right eye, or None."""
         frozen = self.calibrator.calibration.anchors if self.config.anchor_mode == "frozen" else None
@@ -110,7 +115,7 @@ class EyePipeline:
                     observed = match.look
                 result["look"] = {
                     "tag": match.look, "name": Look(match.look).label if match.look is not None else None,
-                    "ok": match.ok, "error": round(match.error, 4),
+                    "ok": match.ok, "error": round(match.error, 4), "eyes": match.eyes,
                     "errors": {Look(k).label: round(v, 4) for k, v in match.errors.items()},
                 }
             elif self.gate.blocks_input:

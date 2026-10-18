@@ -231,6 +231,9 @@ function setTab(tab) {
   state.tab = tab;
   const panels = { quick: "panelQuick", type: "panelType", spell: "panelSpell", settings: "panelSettings" };
   for (const [name, id] of Object.entries(panels)) $(id).hidden = name !== tab;
+  // The camera and readout live in the middle resting area of the open screen, or under it
+  const slot = document.querySelector(`#${panels[tab]} .cam-slot`);
+  if (slot) slot.append($("camrow")); else $("hood").before($("camrow"));
   if (state.mode !== "talk") show("talk"); else show("talk");
   if (tab === "spell") startScan(); else stopScan();
   if (tab === "quick") renderQuick();

@@ -270,3 +270,47 @@ kbd { font: 600 12px/1 var(--font); border: 1px solid var(--outline); border-bot
 .tab, .bar .ghost { white-space: nowrap; }
 .bar-actions { flex-wrap: wrap; }
 @media (max-width: 900px) { .tab { font-size: 15px; padding: 6px 12px; } .wordmark { font-size: 21px; } }
+
+/* ---------- Edge layout: each box sits where its calibration circle was ---------- */
+#talk { padding: 0; }
+.edges { display: grid; height: calc(100vh - 66px); padding: 14px 18px; gap: 14px;
+  grid-template-columns: minmax(170px, 23vw) 1fr minmax(170px, 23vw);
+  grid-template-rows: minmax(110px, 21vh) 1fr minmax(96px, 16vh);
+  grid-template-areas: "tl up tr" "l centre r" ". cl ."; }
+.a-tl { grid-area: tl; } .a-up { grid-area: up; } .a-tr { grid-area: tr; }
+.a-l { grid-area: l; } .a-r { grid-area: r; } .a-cl { grid-area: cl; }
+.a-up, .a-cl { justify-self: center; width: min(420px, 100%); }
+.centre-area { grid-area: centre; display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  width: min(680px, 100%); justify-self: center; min-height: 0; }
+.centre-area .textline, .centre-area .llm { min-height: 58px; }
+.rest-hint { margin: 0; text-align: center; color: var(--ink-soft); font-size: 17px; }
+.cam-slot .camrow { margin: 4px 0 0; justify-content: center; }
+
+.tile.edge.key { padding: 52px 14px 12px; }
+.tile.edge.key .badge { top: 12px; left: 14px; width: 50px; }
+.tile.edge.key.a-tr .badge, .tile.edge.key.a-r .badge { left: auto; right: 14px; }
+.tile.edge.key .main { font-size: clamp(22px, 2.6vw, 40px); padding: 0 4px; }
+.tile.edge.key .sub { font-size: clamp(16px, 1.6vw, 24px); }
+.tile.edge.fn { min-height: 0; height: 100%; }
+.tile.edge.qc { padding: 48px 18px 18px; }
+.tile.edge.qc.a-tl .badge, .tile.edge.qc.a-l .badge { left: 16px; right: auto; transform: none; }
+.tile.edge.qc.a-tr .badge, .tile.edge.qc.a-r .badge { right: 16px; left: auto; transform: none; }
+.tile.edge.qc.a-up .badge, .tile.edge.qc.a-cl .badge { left: 50%; transform: translateX(-50%); }
+.tile.edge.qc .badge { top: 12px; width: 50px; }
+.tile.edge.qc[data-look="closed"] .badge { width: 50px; }
+
+/* Finish: Speak at the left edge, Back in the top-right corner, the sentence in the middle */
+.sentence { padding: 0; }
+.finish { width: min(760px, calc(100% - 48vw)); }
+.tile.fn.finish-btn { position: fixed; width: min(320px, 22vw); height: 120px; z-index: 11; }
+.tile.fn.finish-btn.at-l { left: 18px; top: 50%; transform: translateY(-50%); background: var(--key); }
+.tile.fn.finish-btn.at-tr { right: 18px; top: 80px; }
+.coach-banner { top: auto; bottom: 18vh; }
+
+@media (max-width: 860px) {
+  .edges { height: auto; grid-template-columns: 1fr 1fr; grid-template-rows: auto;
+    grid-template-areas: "up up" "tl tr" "l r" "centre centre" "cl cl"; }
+  .tile.edge.key, .tile.edge.qc { min-height: 130px; }
+  .finish { width: calc(100% - 32px); }
+  .tile.fn.finish-btn { position: static; width: auto; transform: none; }
+}

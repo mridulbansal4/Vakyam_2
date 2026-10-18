@@ -3,7 +3,8 @@ Eye Lab: the Vakyam eye pipeline as a web service.
 
 One WebSocket per browser session. The browser sends webcam frames as JPEG binary messages, at most one in flight,
 and control messages as JSON text; the server answers every frame with the pipeline's result. Frames are decoded,
-processed in memory and dropped: nothing about the image is stored or logged.
+processed in memory and dropped: nothing about the image is stored or logged (unless the local-only
+troubleshooting switches in server/debug.py or server/recorder.py are set).
 
     uvicorn server.app:app --host 0.0.0.0 --port 8080
 """
@@ -33,6 +34,7 @@ from coach.runner import CoachRunner
 
 from .coach_session import SessionCoachEnv
 from .debug import FrameDebugger
+from .recorder import SessionRecorder
 from .config import Settings
 from .metrics import SessionStats, emit, opencv_build
 from .sentence import SentenceService, clean_keywords
@@ -124,6 +126,7 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
         coach = {"env": SessionCoachEnv(pipeline, send), "task": None}
         app.state.sessions_started = getattr(app.state, "sessions_started", 0) + 1
         debugger = FrameDebugger(app.state.sessions_started)
+        recorder = SessionRecorder(app.state.sessions_started)
         # The browser paces itself at max_fps; network and timer jitter can bunch two frames together, so the
         # server only refuses bursts above twice that rate.
         min_gap = 0.5 / settings.max_fps
@@ -148,8 +151,9 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                     if image is None:
                         await send({"type": "error", "error": "bad_frame"})
                         continue
+                    now_ms = int(now * 1000)   # the pipeline's clock, recorded so a replay sees the same times
                     try:
-                        result = await run_in_threadpool(pipeline.process, image)
+                        result = await run_in_threadpool(pipeline.process, image, now_ms)
                     except Exception:  # noqa: BLE001 - one bad frame must not end the session
                         log.exception("frame failed")
                         await send({"type": "error", "error": "frame_failed"})
@@ -158,15 +162,17 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                     coach["env"].on_frame(result)
                     if debugger.enabled:
                         debugger.frame(image, result, pipeline)
+                    recorder.frame(data, now_ms, result)
                     await send({"type": "frame", **result})
                 elif message.get("text") is not None:
-                    await handle_control(ws, message["text"], pipeline, stats, coach, send)
+                    await handle_control(ws, message["text"], pipeline, stats, coach, send, recorder)
         except (WebSocketDisconnect, asyncio.TimeoutError):
             pass
         finally:
             if coach["task"] is not None:
                 coach["task"].cancel()
             app.state.active -= 1
+            recorder.stop()
             stats.summary()
 
     async def run_coach(env: SessionCoachEnv) -> None:
@@ -186,16 +192,26 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
               "tools": [step["tool"] for step in result.trace]})
 
     async def handle_control(ws: WebSocket, text: str, pipeline: EyePipeline, stats: SessionStats, coach: dict,
-                             send) -> None:
+                             send, recorder: SessionRecorder | None = None) -> None:
         try:
             msg = json.loads(text)
         except json.JSONDecodeError:
             await send({"type": "error", "error": "bad_json"})
             return
         kind = msg.get("type") if isinstance(msg, dict) else None
+        now_ms = int(time.monotonic() * 1000)
         if kind == "calibrate":
             stats.calibration_started = time.monotonic()
-            await send({"type": "calibration", **pipeline.start_calibration(int(time.monotonic() * 1000))})
+            if recorder is not None:
+                recorder.control("calibrate", now_ms)
+            await send({"type": "calibration", **pipeline.start_calibration(now_ms)})
+        elif kind == "look_test":
+            if not pipeline.calibrated:
+                await send({"type": "error", "error": "not_calibrated", "message": "Calibrate before the look test."})
+                return
+            if recorder is not None:
+                recorder.control("look_test", now_ms, order=[look.label for look in pipeline.look_test.order])
+            await send({"type": "look_test", **pipeline.start_look_test(now_ms)})
         elif kind == "sentence":
             keywords = clean_keywords(msg.get("keywords"))
             question = str(msg.get("question", ""))[:200]
@@ -227,6 +243,8 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
             value = msg.get("sensitivity")
             if isinstance(value, int) and not isinstance(value, bool) and 5 <= value <= 100:
                 pipeline.config.sensitivity = value
+                if recorder is not None:
+                    recorder.control("settings", now_ms, sensitivity=value)
             await send({"type": "settings", "sensitivity": pipeline.config.sensitivity})
         elif kind == "ping":
             await send({"type": "pong"})

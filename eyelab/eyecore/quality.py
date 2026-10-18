@@ -37,9 +37,10 @@ class FaceQuality:
 
 
 class QualityIssue(Enum):
-    """In the order a caregiver should fix them. Only TURNED_AWAY blocks live input."""
+    """In the order a caregiver should fix them. Only TURNED_AWAY and HEAD_MOVED block live input."""
 
     TURNED_AWAY = (True, "Turn your face towards the screen.")
+    HEAD_MOVED = (True, "Your head has tilted since calibrating. Move it back, or press Calibrate.")
     TOO_FAR = (False, "Come a little closer to the camera.")
     TOO_DARK = (False, "Too dark. Add light on your face.")
     BACKLIT = (False, "The light is behind you. Face the light.")
@@ -104,8 +105,10 @@ class FaceQualityGate:
         order = list(QualityIssue)
         return min(self.active, key=order.index) if self.active else None
 
-    def update(self, quality: FaceQuality | None, now_ms: int) -> set[QualityIssue]:
-        self.current = issues_of(quality) if quality is not None else set()
+    def update(self, quality: FaceQuality | None, now_ms: int,
+               extra: frozenset[QualityIssue] | set[QualityIssue] = frozenset()) -> set[QualityIssue]:
+        """extra: issues judged over many frames (HEAD_MOVED, by the pipeline), held the same way."""
+        self.current = (issues_of(quality) if quality is not None else set()) | set(extra)
         self._first_seen = {i: t for i, t in self._first_seen.items() if i in self.current}
         for issue in self.current:
             self._first_seen.setdefault(issue, now_ms)

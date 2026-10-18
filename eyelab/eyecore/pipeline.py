@@ -14,12 +14,15 @@ from .dwell import UNRELIABLE, LookDwellSelector
 from .face import Face, YuNetDetector
 from .geometry import EyeAnchors, center_of_live, eye_geometry
 from .looks import Look
+from .looktest import LookTest
 from .matching import classify
-from .quality import FaceQualityGate, measure
+from .quality import FaceQualityGate, QualityIssue, measure
 
 CLAHE_CLIP_LIMIT = 2.0   # Model.CLAHE_CLIP_LIMIT
 CLAHE_TILES = 4          # Model.CLAHE_TILES
 CLAHE_GROW = 0.15        # the CLAHE region is the face box grown by this much on each side
+PITCH_SMOOTHING = 0.25   # weight of each new frame in the smoothed head pitch (solvePnP on 5 points is jumpy)
+HEAD_MOVED_CLEAR = 0.7   # HEAD_MOVED clears once the tilt is back under this fraction of its limit
 
 
 @dataclass
@@ -27,6 +30,8 @@ class PipelineConfig:
     sensitivity: int = 20             # same scale as the phone's setting; 20 accepts a correlation of 0.6 per eye
     anchor_mode: str = "frozen"       # "frozen" nose-relative anchors, or "landmark" (YuNet eye points); see geometry
     debug_crops_every: int = 0        # attach PNG eye crops every N frames (0 = never)
+    rest_bias: float = 0.0            # see matching.classify; 0 = rank looks as the phone does
+    head_moved_deg: float = 10.0      # head pitch change since calibrating that stops input (0 = never)
 
 
 class EyePipeline:
@@ -41,6 +46,9 @@ class EyePipeline:
         self._clahe = cv2.createCLAHE(CLAHE_CLIP_LIMIT, (CLAHE_TILES, CLAHE_TILES))
         self._cores = None
         self._frames = 0
+        self.pitch: float | None = None                 # smoothed head pitch, degrees
+        self._head_moved = False
+        self.look_test = LookTest()
         self.last_face: Face | None = None              # for troubleshooting snapshots only
         self.last_live: tuple | None = None
         self.last_eye_centers: list | None = None
@@ -50,9 +58,30 @@ class EyePipeline:
         return self.calibrator.calibration.complete
 
     def start_calibration(self, now_ms: int) -> dict:
+        self.look_test.cancel()
         self.dwell.reset()
         self._cores = None
         return self.calibrator.start(now_ms).to_json()
+
+    def start_look_test(self, now_ms: int, order: tuple[Look, ...] | None = None) -> dict:
+        if not self.calibrated:
+            raise ValueError("calibrate before the look test")
+        self.dwell.reset()
+        return self.look_test.start(now_ms, order)
+
+    def head_tilt(self) -> float | None:
+        """Smoothed head pitch minus the pitch at calibration, in degrees, when both are known."""
+        reference = self.calibrator.calibration.pitch_deg
+        return None if self.pitch is None or reference is None else self.pitch - reference
+
+    def _head_moved_issue(self) -> set[QualityIssue]:
+        limit = self.config.head_moved_deg
+        tilt = self.head_tilt()
+        if not limit or tilt is None or self.calibrator.running:
+            self._head_moved = False
+        else:
+            self._head_moved = abs(tilt) > (limit * HEAD_MOVED_CLEAR if self._head_moved else limit)
+        return {QualityIssue.HEAD_MOVED} if self._head_moved else set()
 
     def recalibrate_look(self, look: Look, now_ms: int, prompt: str | None = None) -> dict:
         """Re-record one look; the other templates and the frozen anchors are kept."""
@@ -88,7 +117,10 @@ class EyePipeline:
         self.last_face = face
         gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
         quality = measure(gray, face) if face is not None else None
-        self.gate.update(quality, now_ms)
+        if quality is not None and quality.pitch_deg == quality.pitch_deg:   # not NaN
+            self.pitch = quality.pitch_deg if self.pitch is None else \
+                self.pitch + PITCH_SMOOTHING * (quality.pitch_deg - self.pitch)
+        self.gate.update(quality, now_ms, self._head_moved_issue())
         live = self.eye_crops(bgr, face, gray) if face is not None else None
         self.last_live = live
 
@@ -99,6 +131,7 @@ class EyePipeline:
             "issue": self.gate.primary.name if self.gate.primary else None,
             "issue_text": self.gate.primary.message if self.gate.primary else None,
             "calibrated": self.calibrated,
+            "head_tilt_deg": None if self.head_tilt() is None else round(self.head_tilt(), 1),
             "look": None,
             "selected": None,
         }
@@ -107,6 +140,8 @@ class EyePipeline:
             stored = (center_of_live(live[0]), center_of_live(live[1])) if live is not None else None
             anchors = EyeAnchors.from_face(face) if face is not None else None
             event = self.calibrator.update(stored, anchors, self.gate.current, self.gate.active, now_ms)
+            if event.captured == Look.STRAIGHT:
+                self.calibrator.calibration.pitch_deg = self.pitch
             result["calibration"] = event.to_json()
             if event.finished:
                 self._cores = self.calibrator.calibration.cores()
@@ -116,7 +151,7 @@ class EyePipeline:
                 self._cores = self.calibrator.calibration.cores()
             observed = UNRELIABLE
             if live is not None and not self.gate.blocks_input:
-                match = classify(live[0], live[1], self._cores, self.config.sensitivity)
+                match = classify(live[0], live[1], self._cores, self.config.sensitivity, self.config.rest_bias)
                 if match.ok and match.look is not None:
                     observed = match.look
                 result["look"] = {
@@ -131,6 +166,9 @@ class EyePipeline:
                                  "progress": round(self.dwell.progress(now_ms), 3)}
             if selected:
                 result["selected"] = Look(selected).label
+            if self.look_test.running:   # the test scores selections; nothing is typed
+                result["look_test"] = self.look_test.update(result["look"], result["selected"], self.pitch, now_ms)
+                result["selected"] = None
 
         every = self.config.debug_crops_every
         if every and live is not None and self._frames % every == 0:

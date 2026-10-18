@@ -45,6 +45,7 @@ class Calibration:
 
     crops: dict[int, tuple[np.ndarray, np.ndarray]] = field(default_factory=dict)
     anchors: EyeAnchors | None = None
+    pitch_deg: float | None = None    # head pitch when looking straight was captured (set by the pipeline)
 
     @property
     def complete(self) -> bool:

@@ -72,3 +72,10 @@ are not Graviton numbers:
 (resize, thresholding, contours and similar). So expect large gains on resize, decode and conversion, and a smaller
 whole-frame gain. That is unless COOL's build also speeds up the DNN module. The Graviton run measures this rather
 than assuming it; report what it shows.
+
+## Replaying a look test
+
+With `EYELAB_RECORD_DIR=<folder>` set on a local server (never a shared one: it writes the user's face to disk),
+each session is recorded from Calibrate to the end of the Look test. `python -m bench.replay <recording>` feeds the
+same frames, at the same moments, through a fresh pipeline and prints the look test report; `--sweep` compares the
+resting bias and sensitivity settings on that one face.

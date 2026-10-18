@@ -10,6 +10,7 @@ import numpy as np
 TEMPLATE_MARGIN = 2           # cut off each side of a stored crop, as EyeDetection.TEMPLATE_MARGIN
 CLEAR_MATCH_RATIO = 0.9       # best must beat the runner-up by this factor, as EyeDetection.CLEAR_MATCH_RATIO
 NO_MATCH = 1_000_000.0
+STRAIGHT = 0                  # Look.STRAIGHT
 
 
 def template_core(stored: np.ndarray) -> np.ndarray:
@@ -45,12 +46,18 @@ class Match:
 
 
 def classify(live_left: np.ndarray | None, live_right: np.ndarray | None,
-             cores: dict[int, tuple[np.ndarray, np.ndarray]], sensitivity: int) -> Match:
-    """Sums both eyes' errors per look, as the phone does when the eyes disagree, which is also right when they agree."""
+             cores: dict[int, tuple[np.ndarray, np.ndarray]], sensitivity: int, rest_bias: float = 0.0) -> Match:
+    """Sums both eyes' errors per look, as the phone does when the eyes disagree, which is also right when they agree.
+
+    rest_bias scales looking straight's error down by that fraction before ranking, so a target must beat resting
+    by a margin: resting is the most common look, and the one whose misreading types something unasked for.
+    """
     eyes = [(i, crop) for i, crop in enumerate((live_left, live_right)) if crop is not None]
     if not eyes or not cores:
         return Match(None, False, NO_MATCH, 0, {})
     errors = {look: sum(template_error(crop, pair[i]) for i, crop in eyes) for look, pair in cores.items()}
+    if rest_bias and STRAIGHT in errors:
+        errors[STRAIGHT] *= 1.0 - rest_bias
     ranked = sorted(errors.items(), key=lambda kv: kv[1])
     best_look, best = ranked[0]
     second = ranked[1][1] if len(ranked) > 1 else NO_MATCH

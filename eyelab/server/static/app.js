@@ -34,6 +34,8 @@ function show(name) {
   document.querySelector(".preview").hidden = !state.camera || !$("showCamera").checked;
   $("tabs").hidden = !(name === "talk" || name === "calibrate");
   $("recalibrate").hidden = !state.camera;
+  $("lookTestBtn").hidden = !state.camera;
+  $("lookTestBtn").classList.toggle("active", name === "calibrate" && state.lookTest);
   for (const t of document.querySelectorAll(".tab[data-tab]")) t.classList.toggle("active", name === "talk" && t.dataset.tab === state.tab);
   $("recalibrate").classList.toggle("active", name === "calibrate");
   if (name !== "talk") stopScan();
@@ -110,6 +112,7 @@ function onMessage(msg) {
     state.inFlight = false; requestAnimationFrame(pump); return;
   }
   if (msg.type === "calibration") return onCalibration(msg);
+  if (msg.type === "look_test") return onLookTest(msg);
   if (msg.type === "sentence") return onSentence(msg);
   if (msg.type === "coach") return onCoach(msg);
   if (msg.type === "settings") { $("sensitivity").value = msg.sensitivity; $("sensValue").textContent = msg.sensitivity; return; }
@@ -120,7 +123,9 @@ function onMessage(msg) {
   state.frames.push(performance.now());
   if (state.frames.length > 20) state.frames.shift();
   drawFace(msg.face);
+  state.lastCalibrated = msg.calibrated;
   if (msg.calibration) onCalibration(msg.calibration);
+  if (msg.look_test) onLookTest(msg.look_test);
   if (state.mode === "talk" && !state.coaching) onTalkFrame(msg);
   updateHood(msg);
 }
@@ -149,8 +154,60 @@ function onCalibration(c) {
   if (c.reprompt) say(c.prompt);
 }
 function startCalibration() {
+  state.lookTest = false;
+  $("calibrate").classList.remove("reporting");
+  $("lookReport").hidden = true;
   show("calibrate");
   send({ type: "calibrate" });
+}
+
+// ---------- look test: a minute of prompted looks, scored, so you can see what is read as what ----------
+function startLookTest() {
+  if (!state.lastCalibrated) { setStatus("Calibrate first, then run the look test.", "warn"); return startCalibration(); }
+  state.lookTest = true;
+  $("calibrate").classList.remove("reporting");
+  $("lookReport").hidden = true;
+  show("calibrate");
+  send({ type: "look_test" });
+}
+function onLookTest(c) {
+  if (c.finished) return showLookReport(c.report);
+  const target = $("target");
+  if (c.reprompt) {
+    beep(c.look === "closed" ? 520 : 880, 120);
+    say(c.prompt);
+  }
+  target.dataset.look = c.look;
+  $("ring").style.strokeDashoffset = String(100 - 100 * c.progress);
+  $("calibStep").textContent = `Look test · ${c.step + 1} of ${c.steps}`;
+  $("calibPrompt").textContent = c.prompt;
+  $("calibStatus").textContent = c.status_text;
+}
+const pct = (x) => `${Math.round(100 * x)}%`;
+function showLookReport(r) {
+  state.lookTest = false;
+  beep(1046, 180);
+  $("calibrate").classList.add("reporting");
+  $("calibStep").textContent = "Look test finished";
+  $("calibPrompt").textContent = "";
+  $("calibStatus").textContent = "";
+  $("lookSummary").textContent = `${pct(r.accuracy)} of moments read right · ${r.wrong_selections} wrong selection${r.wrong_selections === 1 ? "" : "s"}`;
+  const rows = $("lookRows");
+  rows.innerHTML = "";
+  for (const [name, v] of Object.entries(r.looks)) {
+    const tr = document.createElement("tr");
+    const readAs = Object.entries(v.read_as).filter(([, f]) => f >= 0.03).map(([k, f]) => `${LOOK_NAMES[k] || k} ${pct(f)}`).join(", ");
+    for (const [text, bad] of [[LOOK_NAMES[name] || name, false], [pct(v.correct), v.correct < 0.6], [pct(v.unsure), false],
+      [readAs || "–", v.wrong >= 0.1], [String(v.wrong_selections), v.wrong_selections > 0]]) {
+      const td = document.createElement("td"); td.textContent = text; if (bad) td.className = "bad"; tr.append(td);
+    }
+    rows.append(tr);
+  }
+  const rest = r.looks.straight;
+  $("lookAdvice").textContent = rest && rest.wrong_selections > 0
+    ? "Resting your eyes picked something. Calibrate again sitting the way you will type, then test again."
+    : "Resting your eyes picked nothing. Unsure moments are fine: they never type.";
+  $("lookReport").hidden = false;
 }
 
 // ---------- typing, as on the app's Type screen ----------
@@ -538,6 +595,9 @@ $("noCamera").addEventListener("click", async () => {
   setStatus("Tap a tile to choose it.", "hint");
 });
 $("recalibrate").addEventListener("click", startCalibration);
+$("lookTestBtn").addEventListener("click", startLookTest);
+$("lookAgain").addEventListener("click", startLookTest);
+$("lookDone").addEventListener("click", () => { $("calibrate").classList.remove("reporting"); $("lookReport").hidden = true; setTab(state.tab); });
 $("coachBtn").addEventListener("click", startCoach);
 $("coachStop").addEventListener("click", stopCoach);
 $("coachAskYes").addEventListener("click", () => answerAsk(true));

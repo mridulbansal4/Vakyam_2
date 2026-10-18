@@ -36,9 +36,11 @@ class FakeDetector:
 
 def render(look: Look, roll_deg: float = 0.0, shift=(0.0, 0.0), pupil_follow: float = 0.6,
            noise: float = 3.0, seed: int = 0, scale: float = 1.0, brightness: float = 1.0,
-           head_turn_px: float = 0.0, iris: tuple[int, int] | None = None) -> tuple[np.ndarray, Face]:
+           head_turn_px: float = 0.0, iris: tuple[int, int] | None = None,
+           head_nod_px: float = 0.0) -> tuple[np.ndarray, Face]:
     """scale < 1 moves the face away; brightness < 1 darkens the room; head_turn_px moves the nose landmark
-    sideways (what YuNet reports for a turned head); iris overrides the pupil offset for this look."""
+    sideways (what YuNet reports for a turned head); head_nod_px moves the nose and mouth landmarks down (a head
+    tilted forward, as solvePnP sees it); iris overrides the pupil offset for this look."""
     rng = np.random.default_rng(seed)
     cx, cy = FRAME_W / 2, FRAME_H / 2 - 20
     img = np.full((FRAME_H, FRAME_W), 70, np.uint8)
@@ -71,8 +73,9 @@ def render(look: Look, roll_deg: float = 0.0, shift=(0.0, 0.0), pupil_follow: fl
         img = np.clip(img.astype(np.float32) + rng.normal(0, noise, img.shape), 0, 255).astype(np.uint8)
 
     follow = np.array([dx, dy]) * pupil_follow
-    nose = nose + np.array([head_turn_px, 0.0])
-    points = np.array([eyes[0] + follow, eyes[1] + follow, nose, mouth[0], mouth[1]])
+    nose = nose + np.array([head_turn_px, head_nod_px])
+    nod = np.array([0.0, head_nod_px])
+    points = np.array([eyes[0] + follow, eyes[1] + follow, nose, mouth[0] + nod, mouth[1] + nod])
     points = (m[:, :2] @ points.T).T + m[:, 2]
     box_center = m[:, :2] @ np.array([cx, cy + 30]) + m[:, 2]
     face = Face(float(box_center[0] - 100 * scale), float(box_center[1] - 130 * scale), 200.0 * scale,

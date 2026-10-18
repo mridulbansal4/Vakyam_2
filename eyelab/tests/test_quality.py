@@ -31,8 +31,8 @@ def test_unmeasured_values_never_raise_issues():
     assert issues_of(FaceQuality()) == set()
 
 
-def test_only_turning_away_blocks_input():
-    assert [i for i in QualityIssue if i.blocks_input] == [QualityIssue.TURNED_AWAY]
+def test_only_turning_away_and_a_moved_head_block_input():
+    assert [i for i in QualityIssue if i.blocks_input] == [QualityIssue.TURNED_AWAY, QualityIssue.HEAD_MOVED]
 
 
 def test_issue_is_held_before_it_is_reported_and_clears_at_once():

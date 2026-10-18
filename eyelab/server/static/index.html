@@ -18,6 +18,7 @@
         <button class="tab" data-tab="spell">Spell</button>
         <span class="tab-sep" aria-hidden="true"></span>
         <button class="tab" id="recalibrate">Calibrate</button>
+        <button class="tab" id="lookTestBtn" title="A one-minute test of which looks are read as which">Look test</button>
         <button class="tab" data-tab="settings">Settings</button>
       </nav>
     </div>
@@ -65,6 +66,14 @@
         <p class="step" id="calibStep">Step 1 of 7</p>
         <p class="prompt" id="calibPrompt">Look at the centre of the screen.</p>
         <p class="status" id="calibStatus" aria-live="polite">Listen to the instruction…</p>
+        <div class="look-report" id="lookReport" hidden>
+          <p class="summary" id="lookSummary"></p>
+          <table><thead><tr><th>Look</th><th>Read right</th><th>Unsure</th><th>Read as</th><th>Wrong picks</th></tr></thead>
+            <tbody id="lookRows"></tbody></table>
+          <p class="fine" id="lookAdvice"></p>
+          <div class="report-actions"><button id="lookAgain" class="ghost">Test again</button>
+            <button id="lookDone" class="primary">Back to typing</button></div>
+        </div>
       </div>
     </div>
   </main>

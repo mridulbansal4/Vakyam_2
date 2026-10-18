@@ -20,7 +20,7 @@ from typing import Callable
 import cv2
 import numpy as np
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.concurrency import run_in_threadpool
 
@@ -32,6 +32,7 @@ from coach.rules import RulePolicy
 from coach.runner import CoachRunner
 
 from .coach_session import SessionCoachEnv
+from .debug import FrameDebugger
 from .config import Settings
 from .metrics import SessionStats, emit, opencv_build
 from .sentence import SentenceService, clean_keywords
@@ -63,6 +64,9 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
         return (ClaudePolicy(coach_client_factory, settings.bedrock_model, effort=settings.coach_effort),
                 RulePolicy())
 
+    import threading
+    threading.Thread(target=sentences.warm, name="credential-check", daemon=True).start()
+
     app = FastAPI(title="Vakyam Eye Lab", version=__version__, docs_url=None, redoc_url=None)
     app.state.active = 0
     app.state.settings = settings
@@ -71,9 +75,29 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
     def healthz():
         return {"ok": True, "version": __version__, "sessions": app.state.active, **opencv_build()}
 
+    # Every static file is fingerprinted into index.html (?v=<hash>), so a browser can never mix a new page with an
+    # old cached stylesheet or script; the page itself is always revalidated.
+    import hashlib
+
+    def fingerprint(name: str) -> str:
+        return hashlib.sha256((STATIC / name).read_bytes()).hexdigest()[:10]
+
     @app.get("/")
     def index():
-        return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        for name in ("app.css", "app.js", "keyboard.js"):
+            html = html.replace(f"/static/{name}\"", f"/static/{name}?v={fingerprint(name)}\"")
+        return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
+
+    # The app's own word lists for the ambiguous keyboard; only these two files, never a path from the request
+    word_lists = {"words": "EnglishWords.txt", "bigrams": "EnglishBigrams.txt"}
+
+    @app.get("/words/{name}")
+    def words(name: str):
+        if name not in word_lists:
+            return JSONResponse({"error": "unknown list"}, status_code=404)
+        return FileResponse(pathlib.Path(settings.assets_dir) / word_lists[name], media_type="text/plain",
+                            headers={"Cache-Control": "public, max-age=86400"})
 
     @app.get("/config.json")
     def client_config():
@@ -98,6 +122,8 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                 await ws.send_json(payload)
 
         coach = {"env": SessionCoachEnv(pipeline, send), "task": None}
+        app.state.sessions_started = getattr(app.state, "sessions_started", 0) + 1
+        debugger = FrameDebugger(app.state.sessions_started)
         # The browser paces itself at max_fps; network and timer jitter can bunch two frames together, so the
         # server only refuses bursts above twice that rate.
         min_gap = 0.5 / settings.max_fps
@@ -130,6 +156,8 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                         continue
                     stats.frame(result)
                     coach["env"].on_frame(result)
+                    if debugger.enabled:
+                        debugger.frame(image, result, pipeline)
                     await send({"type": "frame", **result})
                 elif message.get("text") is not None:
                     await handle_control(ws, message["text"], pipeline, stats, coach, send)
@@ -178,7 +206,8 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                   "SentenceFallback": (int(sentence.source == "fallback"), "Count")},
                  {"event": "sentence", "source": sentence.source, "reason": sentence.reason,
                   "keywords": len(keywords)})
-            reply = {"type": "sentence", "text": sentence.text, "source": sentence.source, "ms": sentence.ms}
+            reply = {"type": "sentence", "text": sentence.text, "source": sentence.source, "ms": sentence.ms,
+                     "id": msg.get("id")}
             if speech is not None:
                 reply["audio"] = await run_in_threadpool(speech.synthesize, sentence.text)
             await send(reply)

@@ -32,7 +32,8 @@ COOL_VENV = "/opt/cool/venvs/python_3.12"
 # What the service needs from the repository, for the container image and the COOL code bundle alike
 SERVICE_FILES = ["**", "!eyelab/requirements.txt", "!eyelab/requirements-cool.txt", "!eyelab/eyecore/**",
                  "!eyelab/server/**", "!eyelab/coach/**", "!eyelab/Dockerfile",
-                 "!app/src/main/assets/face_detection_yunet_2023mar.onnx", "**/__pycache__"]
+                 "!app/src/main/assets/face_detection_yunet_2023mar.onnx", "!app/src/main/assets/EnglishWords.txt",
+                 "!app/src/main/assets/EnglishBigrams.txt", "**/__pycache__"]
 
 
 class EyeLabStack(Stack):

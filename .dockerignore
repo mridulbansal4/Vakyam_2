@@ -5,4 +5,6 @@
 !eyelab/server/**
 !eyelab/coach/**
 !app/src/main/assets/face_detection_yunet_2023mar.onnx
+!app/src/main/assets/EnglishWords.txt
+!app/src/main/assets/EnglishBigrams.txt
 **/__pycache__

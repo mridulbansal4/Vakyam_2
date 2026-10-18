@@ -29,9 +29,11 @@
       <p class="lede">For the next minute, imagine you cannot move or speak. Your eyes are all you have left.
         Answer a question with them, and hear your own sentence.</p>
       <ol class="steps">
-        <li><strong>Calibrate</strong> seven looks: the centre, four edges and corners, and closed eyes. About fifteen seconds.</li>
-        <li><strong>Choose words</strong> by holding a look on a tile. Look up to speak, close your eyes to undo.</li>
-        <li><strong>Hear the sentence</strong> Claude writes from your words and the question.</li>
+        <li><strong>Calibrate</strong> your eyes: centre, left, right, up, top left, top right, and closed. About fifteen
+          seconds.</li>
+        <li><strong>Type with six eye gestures</strong>, exactly like the Vakyam app: each corner is a letter group, so a
+          word takes one look per letter. Close your eyes to switch to the word list; look up to delete, or to finish.</li>
+        <li><strong>Hear the sentence</strong> Claude writes from your words and the caregiver's question.</li>
       </ol>
       <div class="cta">
         <button id="start" class="primary">Start camera</button>
@@ -61,25 +63,40 @@
     </div>
   </main>
 
-  <!-- 3. Talk -->
+  <!-- 3. Talk: the app's Type screen -->
   <main id="talk" class="screen" hidden>
-    <h2 class="question" id="question">What would you like right now?</h2>
-    <div class="grid">
-      <button class="tile" data-look="left-up"><span class="word"></span><span class="hint">look top left</span></button>
-      <button class="tile action" data-look="up"><span class="word">Speak</span><span class="hint">look up</span></button>
-      <button class="tile" data-look="right-up"><span class="word"></span><span class="hint">look top right</span></button>
-      <button class="tile" data-look="left"><span class="word"></span><span class="hint">look left</span></button>
-      <div class="centre">
-        <div class="preview"><video id="video" playsinline muted></video><canvas id="overlay"></canvas></div>
-        <div class="chips" id="chips" aria-live="polite"><span class="chip empty">Your words appear here</span></div>
-        <p class="live-status" id="liveStatus" aria-live="polite"></p>
+    <div class="type">
+      <button class="tile key tl" data-look="left-up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="16" cy="10" r="7"/></svg><span class="main"></span><span class="rule"></span><span class="sub"></span></button>
+      <div class="topbar">
+        <button class="tile fn" data-look="closed"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="closed" d="M5 12 Q24 28 43 12"/><path class="closed" d="M12 19 L9 25 M24 22 L24 28 M36 19 L39 25"/></svg><span class="main">Switch</span></button>
+        <button class="tile fn alt" data-look="up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="24" cy="8" r="7"/></svg><span class="main">Delete</span></button>
       </div>
-      <button class="tile" data-look="right"><span class="word"></span><span class="hint">look right</span></button>
-      <div></div>
-      <button class="tile action soft" data-look="closed"><span class="word">Undo</span><span class="hint">close your eyes</span></button>
-      <div></div>
+      <button class="tile key tr" data-look="right-up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="32" cy="10" r="7"/></svg><span class="main"></span><span class="rule"></span><span class="sub"></span></button>
+      <div class="textline" id="textLine" aria-live="polite">Text:</div>
+      <button class="tile key bl" data-look="left"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="13" cy="15" r="7"/></svg><span class="main"></span><span class="rule"></span><span class="sub"></span></button>
+      <div class="middle">
+        <div class="llm" id="llm" aria-live="polite">LLM: All ALS patients should have a voice in the digital world.</div>
+        <div class="heard">
+          <button class="mic" id="mic" aria-label="Listen to the caregiver's question">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-2.1A7 7 0 0 0 19 12Z"/></svg>
+          </button>
+          <input id="question" type="text" maxlength="200" autocomplete="off"
+                 placeholder="Caregiver: say or type a question, e.g. What would you like to drink?">
+        </div>
+      </div>
+<button class="tile key br" data-look="right"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="35" cy="15" r="7"/></svg><span class="main"></span><span class="rule"></span><span class="sub"></span></button>
     </div>
-    <div class="talk-actions"><button id="nextQuestion" class="ghost">Next question</button></div>
+
+    <div class="camrow">
+      <div class="preview"><video id="video" playsinline muted></video><canvas id="overlay"></canvas></div>
+      <div class="seeing" id="seeing">
+        <p class="seeing-look"><span class="label">Seeing</span> <strong id="seeLook">–</strong> <span id="seeOk" class="ok"></span></p>
+        <div class="holdbar"><span id="seeHold"></span></div>
+        <p class="live-status" id="liveStatus" aria-live="polite"></p>
+        <p class="keys">Test without eyes: <kbd>Q</kbd> top-left · <kbd>E</kbd> top-right · <kbd>A</kbd> bottom-left ·
+          <kbd>D</kbd> bottom-right · <kbd>W</kbd> up · <kbd>S</kbd> blink</p>
+      </div>
+    </div>
 
     <aside class="hood" id="hood" hidden aria-label="Under the hood">
       <h3>Under the hood · OpenCV <span id="cvVersion">5</span></h3>
@@ -123,15 +140,21 @@
     </div>
   </div>
 
-  <div class="sentence" id="sentence" hidden role="dialog" aria-live="assertive" aria-label="Your sentence">
-    <div class="sentence-card">
-      <p class="said" id="sentenceText"></p>
-      <p class="source" id="sentenceSource"></p>
-      <button id="sentenceClose" class="primary">Continue</button>
+  <div class="sentence" id="sentence" hidden role="dialog" aria-live="assertive" aria-label="Finish">
+    <div class="finish">
+      <div class="sentence-card">
+        <p class="said" id="sentenceText"></p>
+        <p class="source" id="sentenceSource"></p>
+      </div>
+      <div class="finish-actions">
+        <button class="tile fn speak" data-look="left" data-finish="speak"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="13" cy="15" r="7"/></svg><span class="main">Speak</span></button>
+        <button class="tile fn alt" data-look="right-up" data-finish="back"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="32" cy="10" r="7"/></svg><span class="main">Back</span></button>
+      </div>
     </div>
   </div>
 
   <canvas id="grab" hidden></canvas>
+  <script src="/static/keyboard.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

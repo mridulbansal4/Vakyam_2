@@ -2,21 +2,25 @@
 
 // Vakyam Eye Lab client: webcam frames to the server, one in flight at a time; results drive the page.
 
-const QUESTIONS = [
-  { q: "What would you like right now?", words: { "left-up": "water", "right-up": "tea", left: "rest", right: "music" } },
-  { q: "How are you feeling today?", words: { "left-up": "good", "right-up": "tired", left: "pain", right: "cold" } },
-  { q: "Who should we call?", words: { "left-up": "family", "right-up": "nurse", left: "doctor", right: "friend" } },
-];
 const FRAME_WIDTH = 480;       // frames are scaled to this width before JPEG encoding
 const JPEG_QUALITY = 0.75;
-const MAX_WORDS = 3;
 
 const $ = (id) => document.getElementById(id);
 const screens = ["intro", "calibrate", "talk"];
 const state = {
   ws: null, stream: null, inFlight: false, lastSent: 0, maxFps: 12, polly: false,
-  mode: "intro", questionIndex: 0, words: [], speaking: false, frames: [], camera: false, coaching: false,
+  mode: "intro", speaking: false, frames: [], camera: false, coaching: false,
+  kb: null, sentenceId: 0, audio: null, spoken: false, sentenceSource: null,
 };
+
+// The app's keyboard, with the app's own word lists
+async function loadKeyboard() {
+  if (state.kb) return;
+  const [words, bigrams] = await Promise.all(["words", "bigrams"].map((n) =>
+    fetch(`/words/${n}`).then((r) => { if (!r.ok) throw new Error("word lists unavailable"); return r.text(); })));
+  const dict = new VakyamKeyboard.Dictionary(words.split(/\r?\n/).filter(Boolean), bigrams.split(/\r?\n/));
+  state.kb = new VakyamKeyboard.TypeSession(dict);
+}
 
 function show(name) {
   state.mode = name;
@@ -115,8 +119,8 @@ function onCalibration(c) {
   if (c.finished) {
     $("target").classList.add("captured");
     beep(1046, 180);
-    say("Calibration finished. Now answer with your eyes.");
-    setTimeout(() => { show("talk"); renderQuestion(); }, 700);
+    say("Calibration finished. You can type with your eyes now.");
+    setTimeout(() => { show("talk"); renderType(); }, 700);
     return;
   }
   if (!c.running) return;
@@ -138,70 +142,94 @@ function startCalibration() {
   send({ type: "calibrate" });
 }
 
-// ---------- talking ----------
-function renderQuestion() {
-  const q = QUESTIONS[state.questionIndex];
-  $("question").textContent = q.q;
-  for (const tile of document.querySelectorAll(".tile")) {
-    const look = tile.dataset.look;
-    if (q.words[look]) tile.querySelector(".word").textContent = q.words[look];
+// ---------- typing, as on the app's Type screen ----------
+function renderType() {
+  const kb = state.kb;
+  if (!kb) return;
+  const ui = kb.ui();
+  for (const tile of document.querySelectorAll("#talk .tile")) {
+    const [main, sub] = ui[tile.dataset.look] || [];
+    const mainEl = tile.querySelector(".main");
+    mainEl.textContent = main ?? "";
+    mainEl.classList.toggle("long", (main ?? "").length > 8);
+    const subEl = tile.querySelector(".sub");
+    if (subEl) subEl.textContent = sub ?? "";
+    tile.classList.toggle("empty", main === "No match");
   }
-  state.words = [];
-  renderChips();
+  $("textLine").textContent = `Text: ${kb.text()}`;
+  $("llm").textContent = `LLM: ${kb.sentence}`;
+  if (!$("sentence").hidden) showFinish();
 }
-function renderChips() {
-  const chips = $("chips");
-  chips.innerHTML = "";
-  if (!state.words.length) {
-    chips.innerHTML = '<span class="chip empty">Your words appear here</span>';
-    return;
-  }
-  for (const w of state.words) {
-    const s = document.createElement("span");
-    s.className = "chip"; s.textContent = w; chips.appendChild(s);
+function flash(look) {
+  for (const tile of document.querySelectorAll(`.tile[data-look="${look}"]`)) {
+    tile.classList.remove("fired"); void tile.offsetWidth; tile.classList.add("fired");
   }
 }
 function choose(look) {
-  if (state.speaking) return;
-  const tile = document.querySelector(`.tile[data-look="${look}"]`);
-  if (tile) { tile.classList.remove("fired"); void tile.offsetWidth; tile.classList.add("fired"); }
-  if (look === "up") return speak();
-  if (look === "closed") { state.words.pop(); beep(520); return renderChips(); }
-  const word = QUESTIONS[state.questionIndex].words[look];
-  if (!word || state.words.length >= MAX_WORDS || state.words.includes(word)) return;
-  state.words.push(word);
-  beep();
-  renderChips();
+  const kb = state.kb;
+  if (!kb) return;
+  flash(look);
+  const action = kb.handle(look);
+  beep(look === "closed" ? 520 : 880, 90);
+  if (action === "sentence") requestSentence();
+  else if (action === "finish") showFinish();
+  else if (action === "speak") speakSentence();
+  else if (action === "back") {
+    $("sentence").hidden = true;
+    if (state.spoken) { kb.clear(); state.spoken = false; state.audio = null; }
+  }
+  renderType();
 }
-function speak() {
-  if (!state.words.length) { setStatus("Choose a word first, then look up to speak.", "hint"); return; }
-  state.speaking = true;
-  $("sentenceText").textContent = "…";
-  $("sentenceSource").textContent = "Writing your sentence";
-  $("sentence").hidden = false;
-  if (state.ws) send({ type: "sentence", keywords: state.words, question: QUESTIONS[state.questionIndex].q });
-  else onSentence({ text: offlineSentence(state.words), source: "fallback", ms: 0 });
+function requestSentence() {
+  const kb = state.kb;
+  state.audio = null;
+  state.sentenceSource = null;
+  if (!kb.words.length) { kb.sentence = ""; return; }
+  const id = ++state.sentenceId;
+  if (state.ws) send({ type: "sentence", id, keywords: kb.words.slice(-4), question: kb.question });
+  else onSentence({ id, text: `I want ${kb.words.join(" ")}, please.`, source: "fallback", ms: 0 });
 }
 function onSentence(s) {
-  $("sentenceText").textContent = s.text;
-  $("sentenceSource").textContent = s.source === "claude"
-    ? `Written by Claude on Amazon Bedrock in ${(s.ms / 1000).toFixed(1)} s`
-    : "Built-in sentence (the language model was not available)";
-  if (s.audio) new Audio(s.audio).play().catch(() => say(s.text));
-  else say(s.text);
-  $("sentenceClose").focus();
+  if (s.id !== undefined && s.id !== state.sentenceId) return; // a newer word has been typed since
+  state.kb.sentence = s.text;
+  state.audio = s.audio || null;
+  state.sentenceSource = s;
+  renderType();
 }
-function closeSentence() {
-  $("sentence").hidden = true;
-  state.speaking = false;
-  state.questionIndex = (state.questionIndex + 1) % QUESTIONS.length;
-  renderQuestion();
-  requestAnimationFrame(pump);
+function showFinish() {
+  const kb = state.kb;
+  $("sentenceText").textContent = `LLM: ${kb.sentence}`;
+  const s = state.sentenceSource;
+  $("sentenceSource").textContent = !kb.words.length ? "Type a word first, or look right up to go back."
+    : !s ? "Writing your sentence…"
+    : s.source === "claude" ? `Written by Claude on Amazon Bedrock in ${(s.ms / 1000).toFixed(1)} s · look left to speak`
+    : "Built-in sentence (the language model is not available here) · look left to speak";
+  $("sentence").hidden = false;
 }
-function offlineSentence(words) { return `I want ${words.join(" and ")}, please.`; }
+function speakSentence() {
+  const kb = state.kb;
+  if (!kb.words.length || !state.sentenceSource) return;
+  if (state.audio) new Audio(state.audio).play().catch(() => say(kb.sentence));
+  else say(kb.sentence);
+  state.spoken = true;
+}
+function setQuestion(text) {
+  if (!state.kb) return;
+  state.kb.setQuestion(text);
+  if (state.kb.words.length) requestSentence();
+  renderType();
+}
 
+const LOOK_NAMES = { "left-up": "top-left", "right-up": "top-right", left: "bottom-left", right: "bottom-right",
+  up: "up", closed: "blink (eyes closed)", straight: "centre (resting)" };
 function onTalkFrame(msg) {
   const holding = msg.holding || {};
+  const look = msg.look;
+  $("seeLook").textContent = !msg.face ? "no face" : !msg.calibrated ? "calibrate first" : look ? (LOOK_NAMES[look.name] || look.name) : "–";
+  const ok = $("seeOk");
+  ok.textContent = look ? (look.ok ? "accepted" : "unsure") : "";
+  ok.className = "ok " + (look ? (look.ok ? "yes" : "no") : "");
+  $("seeHold").style.width = `${Math.round(100 * (holding.progress || 0))}%`;
   for (const tile of document.querySelectorAll(".tile")) {
     tile.style.setProperty("--fill", tile.dataset.look === holding.look ? holding.progress : 0);
   }
@@ -382,6 +410,7 @@ $("start").addEventListener("click", async () => {
   try {
     const cfg = await fetch("/config.json").then((r) => r.json());
     state.maxFps = cfg.maxFps; state.polly = cfg.polly;
+    await loadKeyboard();
     await startCamera();
     await connect();
     startCalibration();
@@ -393,8 +422,9 @@ $("start").addEventListener("click", async () => {
   }
 });
 $("noCamera").addEventListener("click", async () => {
+  try { await loadKeyboard(); } catch (e) { return showIntroError(e.message); }
   try { await connect(); } catch (_) { /* tiles still work, with the built-in sentence */ }
-  show("talk"); renderQuestion();
+  show("talk"); renderType();
   setStatus("Tap a tile to choose it.", "hint");
 });
 $("recalibrate").addEventListener("click", startCalibration);
@@ -402,12 +432,28 @@ $("coachBtn").addEventListener("click", startCoach);
 $("coachStop").addEventListener("click", stopCoach);
 $("coachAskYes").addEventListener("click", () => answerAsk(true));
 $("coachAskNo").addEventListener("click", () => answerAsk(false));
-$("nextQuestion").addEventListener("click", () => { state.questionIndex = (state.questionIndex + 1) % QUESTIONS.length; renderQuestion(); });
-$("sentenceClose").addEventListener("click", closeSentence);
+$("question").addEventListener("change", (e) => setQuestion(e.target.value));
+$("question").addEventListener("keydown", (e) => { if (e.key === "Enter") e.target.blur(); });
+$("mic").addEventListener("click", () => {
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) { $("question").focus(); setStatus("This browser cannot listen; type the question instead.", "hint"); return; }
+  const rec = new Recognition();
+  rec.lang = "en-IN"; rec.interimResults = false; rec.maxAlternatives = 1;
+  $("mic").classList.add("listening");
+  rec.onresult = (e) => { const text = e.results[0][0].transcript; $("question").value = text; setQuestion(text); };
+  rec.onend = () => $("mic").classList.remove("listening");
+  rec.onerror = () => $("mic").classList.remove("listening");
+  rec.start();
+});
 $("hoodToggle").addEventListener("click", (e) => {
   const open = $("hood").hidden;
   $("hood").hidden = !open;
   e.currentTarget.setAttribute("aria-pressed", String(open));
 });
 for (const tile of document.querySelectorAll(".tile")) tile.addEventListener("click", () => choose(tile.dataset.look));
+document.addEventListener("keydown", (e) => {  // keyboard stand-ins for the six gestures, handy for a caregiver
+  if (state.mode !== "talk" || e.target.tagName === "INPUT") return;
+  const key = { q: "left-up", e: "right-up", a: "left", d: "right", w: "up", s: "closed" }[e.key.toLowerCase()];
+  if (key) choose(key);
+});
 show("intro");

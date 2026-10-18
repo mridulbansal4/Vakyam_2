@@ -41,6 +41,9 @@ class EyePipeline:
         self._clahe = cv2.createCLAHE(CLAHE_CLIP_LIMIT, (CLAHE_TILES, CLAHE_TILES))
         self._cores = None
         self._frames = 0
+        self.last_face: Face | None = None              # for troubleshooting snapshots only
+        self.last_live: tuple | None = None
+        self.last_eye_centers: list | None = None
 
     @property
     def calibrated(self) -> bool:
@@ -68,6 +71,7 @@ class EyePipeline:
             return None
         region = self._clahe.apply(gray[y0:y1, x0:x1])
         crops = []
+        self.last_eye_centers = [tuple(c) for c in anchors.centers(face)]
         for center in anchors.centers(face):
             geometry = eye_geometry(center, face)
             if geometry is None:
@@ -81,10 +85,12 @@ class EyePipeline:
         self._frames += 1
 
         face = self.detector.detect(bgr)
+        self.last_face = face
         gray = cv2.cvtColor(bgr, cv2.COLOR_BGR2GRAY)
         quality = measure(gray, face) if face is not None else None
         self.gate.update(quality, now_ms)
         live = self.eye_crops(bgr, face, gray) if face is not None else None
+        self.last_live = live
 
         result: dict = {
             "face": face.to_json() if face is not None else None,

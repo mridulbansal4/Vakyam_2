@@ -60,7 +60,11 @@ def test_health_and_page():
     assert health["cool"] is False and health["opencv_file"].endswith(".py")  # the PyPI wheel, not COOL
     page = client.get("/")
     assert page.status_code == 200 and "Speak without hands." in page.text
-    assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/app.js").status_code == 200 and client.get("/static/keyboard.js").status_code == 200
+    words = client.get("/words/words")
+    assert words.status_code == 200 and words.text.split()[:3] == ["the", "be", "and"]
+    assert client.get("/words/bigrams").status_code == 200
+    assert client.get("/words/..%2Fsecrets").status_code == 404 and client.get("/words/passwd").status_code == 404
 
 
 def test_calibrate_then_select_a_look_over_the_socket():
@@ -101,10 +105,11 @@ def test_sentence_comes_from_claude_with_the_question_as_context():
     client, _ = make_client(claude)
     with client.websocket_connect("/ws") as ws:
         ws.receive_json()
-        ws.send_text(json.dumps({"type": "sentence", "keywords": ["water", "cold"], "question": "What would you like?"}))
+        ws.send_text(json.dumps({"type": "sentence", "id": 7, "keywords": ["water", "cold"],
+                                 "question": "What would you like?"}))
         reply = ws.receive_json()
     assert reply == {"type": "sentence", "text": "I would like some cold water, please.", "source": "claude",
-                     "ms": reply["ms"]}
+                     "ms": reply["ms"], "id": 7}  # the id lets the page ignore a reply to an older word
     call = claude.calls[0]
     assert call["model"] == "anthropic.claude-opus-5-5"
     assert call["messages"][-1]["content"] == "Keywords: water, cold. Context: What would you like?"

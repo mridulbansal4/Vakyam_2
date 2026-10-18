@@ -9,6 +9,12 @@ from dataclasses import dataclass
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
+def _default_assets() -> str:
+    bundled = ROOT / "assets"                                  # inside the container
+    in_repo = ROOT.parent / "app/src/main/assets"               # running from the repo, or the COOL bundle
+    return str(bundled if bundled.exists() else in_repo)
+
+
 def _default_model() -> str:
     bundled = ROOT / "models/face_detection_yunet_2023mar.onnx"           # inside the container
     in_repo = ROOT.parent / "app/src/main/assets/face_detection_yunet_2023mar.onnx"  # running from the repo
@@ -18,6 +24,7 @@ def _default_model() -> str:
 @dataclass(frozen=True)
 class Settings:
     model_path: str
+    assets_dir: str
     bedrock_region: str
     bedrock_model: str
     sentence_timeout_s: float
@@ -36,6 +43,7 @@ class Settings:
         e = os.environ.get
         return cls(
             model_path=e("EYELAB_MODEL_PATH", _default_model()),
+            assets_dir=e("EYELAB_ASSETS_DIR", _default_assets()),
             bedrock_region=e("EYELAB_BEDROCK_REGION", e("AWS_REGION", "us-east-1")),
             bedrock_model=e("EYELAB_BEDROCK_MODEL", "anthropic.claude-opus-5-5"),
             sentence_timeout_s=float(e("EYELAB_SENTENCE_TIMEOUT_S", "8")),

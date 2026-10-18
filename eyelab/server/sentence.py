@@ -60,6 +60,8 @@ def clean_keywords(raw) -> list[str]:
 
 def fallback_sentence(keywords: list[str]) -> str:
     """GemmaManager.fallbackSentence for English, extended to join several keywords."""
+    seen = set()
+    keywords = [k for k in keywords if not (k.lower() in seen or seen.add(k.lower()))]  # "tea tea" says it once
     if not keywords:
         return "Yes."
     if len(keywords) == 1:
@@ -97,12 +99,36 @@ class Sentence:
 
 
 class SentenceService:
+    CREDENTIAL_RECHECK_S = 300
+
     def __init__(self, region: str, model: str, timeout_s: float, client_factory: Callable | None = None):
         self.region = region
         self.model = model
         self.timeout_s = timeout_s
         self._client_factory = client_factory
         self._client = None
+        self._no_credentials_until = 0.0
+
+    def _credentials_missing(self) -> bool:
+        """True when no AWS credentials can be found, checked at most every few minutes. Without this every sentence
+        waits seconds for the SDK's credential search before falling back."""
+        if self._client_factory is not None:
+            return False  # an injected client (tests) brings its own
+        now = time.monotonic()
+        if now < self._no_credentials_until:
+            return True
+        try:
+            import botocore.session
+            missing = botocore.session.Session().get_credentials() is None
+        except Exception:  # noqa: BLE001
+            missing = True
+        if missing:
+            self._no_credentials_until = now + self.CREDENTIAL_RECHECK_S
+        return missing
+
+    def warm(self) -> None:
+        """Find out early whether AWS credentials exist, so the first sentence does not wait for the search."""
+        self._credentials_missing()
 
     def _get_client(self):
         if self._client is None:
@@ -129,6 +155,8 @@ class SentenceService:
 
         if not keywords:
             return done(fallback_sentence(keywords), "fallback", "no keywords")
+        if self._credentials_missing():
+            return done(fallback_sentence(keywords), "fallback", "no AWS credentials")
         try:
             import anthropic
             client = self._get_client().with_options(timeout=self.timeout_s, max_retries=1)

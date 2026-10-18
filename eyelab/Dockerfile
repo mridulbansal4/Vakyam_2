@@ -10,6 +10,7 @@ COPY eyelab/requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY app/src/main/assets/face_detection_yunet_2023mar.onnx models/
+COPY app/src/main/assets/EnglishWords.txt app/src/main/assets/EnglishBigrams.txt assets/
 COPY eyelab/eyecore eyecore
 COPY eyelab/server server
 COPY eyelab/coach coach

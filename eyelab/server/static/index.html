@@ -66,6 +66,10 @@
         <p class="step" id="calibStep">Step 1 of 7</p>
         <p class="prompt" id="calibPrompt">Look at the centre of the screen.</p>
         <p class="status" id="calibStatus" aria-live="polite">Listen to the instruction…</p>
+        <div class="report-actions" id="calibDone" hidden>
+          <button id="offerLookTest" class="ghost">Run the look test (1 min)</button>
+          <button id="startTyping" class="primary">Start typing</button>
+        </div>
         <div class="look-report" id="lookReport" hidden>
           <p class="summary" id="lookSummary"></p>
           <table><thead><tr><th>Look</th><th>Read right</th><th>Unsure</th><th>Read as</th><th>Wrong picks</th></tr></thead>

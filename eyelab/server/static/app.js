@@ -109,6 +109,10 @@ function onMessage(msg) {
   if (msg.type === "hello") { $("cvVersion").textContent = msg.opencv; return; }
   if (msg.type === "error") {
     if (msg.error === "busy") showIntroError(msg.message);
+    else if (msg.error === "not_calibrated" && state.mode === "calibrate") {
+      state.lookTest = false;
+      $("calibStatus").textContent = msg.message;
+    }
     state.inFlight = false; requestAnimationFrame(pump); return;
   }
   if (msg.type === "calibration") return onCalibration(msg);
@@ -136,7 +140,13 @@ function onCalibration(c) {
     $("target").classList.add("captured");
     beep(1046, 180);
     say("Calibration finished. You can type with your eyes now.");
-    setTimeout(() => { setTab(state.tab); renderType(); }, 700);
+    // A caregiver can run the look test from here; otherwise typing starts by itself, so no hands are needed
+    $("calibStep").textContent = "Calibration finished";
+    $("calibPrompt").textContent = "Typing starts in a few seconds.";
+    $("calibStatus").textContent = "";
+    $("calibDone").hidden = false;
+    clearTimeout(state.typingTimer);
+    state.typingTimer = setTimeout(startTyping, 8000);
     return;
   }
   if (!c.running) return;
@@ -153,7 +163,14 @@ function onCalibration(c) {
   $("calibStatus").textContent = c.status_text;
   if (c.reprompt) say(c.prompt);
 }
+function startTyping() {
+  clearTimeout(state.typingTimer);
+  $("calibDone").hidden = true;
+  if (state.mode === "calibrate" && !state.lookTest) { setTab(state.tab); renderType(); }
+}
 function startCalibration() {
+  clearTimeout(state.typingTimer);
+  $("calibDone").hidden = true;
   state.lookTest = false;
   $("calibrate").classList.remove("reporting");
   $("lookReport").hidden = true;
@@ -163,6 +180,8 @@ function startCalibration() {
 
 // ---------- look test: a minute of prompted looks, scored, so you can see what is read as what ----------
 function startLookTest() {
+  clearTimeout(state.typingTimer);
+  $("calibDone").hidden = true;
   if (!state.lastCalibrated) { setStatus("Calibrate first, then run the look test.", "warn"); return startCalibration(); }
   state.lookTest = true;
   $("calibrate").classList.remove("reporting");
@@ -596,6 +615,8 @@ $("noCamera").addEventListener("click", async () => {
 });
 $("recalibrate").addEventListener("click", startCalibration);
 $("lookTestBtn").addEventListener("click", startLookTest);
+$("offerLookTest").addEventListener("click", startLookTest);
+$("startTyping").addEventListener("click", startTyping);
 $("lookAgain").addEventListener("click", startLookTest);
 $("lookDone").addEventListener("click", () => { $("calibrate").classList.remove("reporting"); $("lookReport").hidden = true; setTab(state.tab); });
 $("coachBtn").addEventListener("click", startCoach);

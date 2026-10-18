@@ -30,7 +30,7 @@ class PipelineConfig:
     sensitivity: int = 20             # same scale as the phone's setting; 20 accepts a correlation of 0.6 per eye
     anchor_mode: str = "frozen"       # "frozen" nose-relative anchors, or "landmark" (YuNet eye points); see geometry
     debug_crops_every: int = 0        # attach PNG eye crops every N frames (0 = never)
-    rest_bias: float = 0.0            # see matching.classify; 0 = rank looks as the phone does
+    rest_bias: float = 0.1            # see matching.classify; a target must beat resting by ~10% more (0 = as the phone)
     head_moved_deg: float = 10.0      # head pitch change since calibrating that stops input (0 = never)
 
 

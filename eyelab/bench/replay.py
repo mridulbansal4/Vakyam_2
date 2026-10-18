@@ -84,7 +84,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("folder", type=pathlib.Path)
     p.add_argument("--sensitivity", type=int, help="fixed sensitivity (default: as recorded)")
-    p.add_argument("--rest-bias", type=float, default=0.0)
+    p.add_argument("--rest-bias", type=float, default=PipelineConfig.rest_bias)
     p.add_argument("--head-moved-deg", type=float, default=PipelineConfig.head_moved_deg)
     p.add_argument("--sweep", action="store_true", help="rest bias 0..0.3 x sensitivity 15..30")
     p.add_argument("--json", action="store_true", help="print the full report of each run")

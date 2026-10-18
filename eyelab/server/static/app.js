@@ -616,6 +616,15 @@ $("noCamera").addEventListener("click", async () => {
 $("recalibrate").addEventListener("click", startCalibration);
 $("lookTestBtn").addEventListener("click", startLookTest);
 $("offerLookTest").addEventListener("click", startLookTest);
+// A hidden page gets no camera frames, so a look test that was hidden part way scores nothing: start it again
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && state.lookTest) state.lookTestInterrupted = true;
+  else if (!document.hidden && state.lookTestInterrupted) {
+    state.lookTestInterrupted = false;
+    say("The page was hidden, so the look test starts again.");
+    startLookTest();
+  }
+});
 $("startTyping").addEventListener("click", startTyping);
 $("lookAgain").addEventListener("click", startLookTest);
 $("lookDone").addEventListener("click", () => { $("calibrate").classList.remove("reporting"); $("lookReport").hidden = true; setTab(state.tab); });

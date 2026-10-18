@@ -57,6 +57,16 @@ class Dictionary {
     return out;
   }
 
+  // Spell's suggestions: words that start with what has been spelled, bigram followers of the last word first
+  prefix(partial, previousWords) {
+    const p = String(partial).toLowerCase();
+    const out = [];
+    const add = (w) => { if (w && w.toLowerCase().startsWith(p) && w.toLowerCase() !== p && !out.includes(w)) out.push(w); };
+    this.followers(previousWords).forEach(add);
+    for (const w of this.words) { add(w); if (out.length >= 10) break; }
+    return out;
+  }
+
   // BlurryInput.getExactMatchingWords("") after a word: grammar first (bigrams), then the question's words
   nextWords(currentWords, contextWords) {
     const out = [];
@@ -209,4 +219,6 @@ class TypeSession {
   }
 }
 
-window.VakyamKeyboard = { Dictionary, TypeSession, groupCode, contextWords };
+const VakyamKeyboard = { Dictionary, TypeSession, groupCode, contextWords };
+if (typeof window !== "undefined") window.VakyamKeyboard = VakyamKeyboard;
+if (typeof module !== "undefined") module.exports = VakyamKeyboard;

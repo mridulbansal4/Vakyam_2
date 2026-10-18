@@ -205,3 +205,68 @@ kbd { font: 600 12px/1 var(--font); border: 1px solid var(--outline); border-bot
     grid-template-areas: "top top" "text text" "tl tr" "bl br" "mid mid"; }
   .tile.key { min-height: 150px; }
 }
+
+/* ---------- app-style tab bar ---------- */
+.bar { padding: 10px 20px; }
+.brand { gap: 18px; }
+.wordmark { font-size: 24px; font-weight: 700; letter-spacing: .01em; margin-right: 6px; }
+.tabs { display: flex; align-items: center; gap: 4px; }
+.tab { background: transparent; border: 0; color: var(--tab-idle, #C9D3CC); font-size: 17px; font-weight: 500; padding: 8px 16px;
+  border-radius: 999px; }
+.tab:hover { color: var(--on-chrome); }
+.tab.active { background: var(--on-chrome); color: var(--ink); font-weight: 600; }
+.tab-sep { width: 1px; height: 26px; background: rgba(244, 241, 232, .3); margin: 0 8px; }
+.panel[hidden] { display: none !important; }
+
+/* ---------- Quick chat ---------- */
+.quick { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, minmax(170px, 1fr)); gap: 16px;
+  max-width: 1400px; margin: 0 auto; }
+.tile.qc { position: relative; border: 2px solid var(--outline); border-radius: 22px; background: var(--key); box-shadow: none;
+  display: flex; align-items: center; justify-content: center; padding: 58px 24px 24px; color: var(--ink); }
+.tile.qc.alt { background: var(--key-alt); }
+.tile.qc .badge { position: absolute; top: 18px; width: 58px; }
+.tile.qc.pos-l .badge { left: 18px; }
+.tile.qc.pos-r .badge { right: 18px; }
+.tile.qc.pos-c .badge { left: 50%; transform: translateX(-50%); }
+.tile.qc[data-look="closed"] .badge { background: var(--surface); border-radius: 50%; padding: 6px; width: 56px; }
+.tile.qc .main { font-size: clamp(22px, 2.6vw, 38px); font-weight: 650; line-height: 1.2; }
+.tile.qc .main.phrase { font-size: clamp(18px, 1.9vw, 28px); font-weight: 600; }
+.tile.qc .main.note { font-size: 16px; font-weight: 400; color: var(--ink-soft); }
+
+/* ---------- Spell ---------- */
+.spell { max-width: 1400px; margin: 0 auto; display: grid; gap: 14px; }
+.spell-text { background: var(--surface); border-radius: 22px; padding: 20px 28px 12px; display: grid;
+  grid-template-columns: 1fr auto; align-items: center; gap: 4px 20px; box-shadow: var(--shadow); }
+.spelled { margin: 0; font-size: clamp(30px, 3.6vw, 52px); font-weight: 700; min-height: 1.3em; overflow-wrap: anywhere; }
+.spelled .placeholder { color: var(--ink-soft); font-weight: 600; }
+.caret { display: inline-block; width: 10px; height: 1em; background: var(--accent); vertical-align: -0.12em; margin-left: 4px; }
+.spell-hint { margin: 0; text-align: right; color: var(--ink-soft); font-size: 15px; }
+.spell-hint strong { color: var(--ink); font-size: 18px; }
+.spell-progress { grid-column: 1 / -1; height: 6px; background: var(--track); border-radius: 3px; overflow: hidden; }
+.spell-progress span { display: block; height: 100%; width: 0; background: var(--selecting); }
+.spell-keys { background: var(--tray, #DCD7C8); border-radius: 22px; padding: 14px; display: grid; gap: 10px; }
+.krow { display: flex; justify-content: center; gap: 10px; padding: 6px; border-radius: 14px; border: 3px solid transparent; }
+.krow.active { background: #E5D3A0; border-color: var(--ink); }
+.k { min-width: 0; flex: 0 1 9%; padding: 14px 6px; border: 0; border-radius: 12px; background: var(--key-flat, #FBF9F3);
+  font-size: clamp(20px, 2.4vw, 34px); font-weight: 600; color: var(--ink); box-shadow: 0 2px 0 rgba(48, 58, 53, .25); }
+.k.word { flex: 1 1 40%; background: transparent; box-shadow: none; font-weight: 500; }
+.k.action { flex: 1 1 18%; font-size: clamp(16px, 1.8vw, 26px); background: var(--key-function, #C9C3B1); }
+.k.action[data-id="space"] { flex: 2 1 30%; background: var(--key-flat, #FBF9F3); }
+.k.action[data-id="speak"] { background: var(--accent); color: var(--on-chrome); }
+.k.active { outline: 4px solid var(--ink); outline-offset: 0; background: var(--selecting); color: var(--ink); }
+.spell-state { margin: 0; text-align: center; color: var(--ink-soft); }
+
+/* ---------- Settings ---------- */
+.settings { max-width: 720px; margin: 0 auto; background: var(--surface); border-radius: 22px; padding: 28px 32px; box-shadow: var(--shadow);
+  display: grid; gap: 22px; }
+.settings h2 { margin: 0; }
+.setting { display: grid; gap: 8px; }
+.setting.row { display: flex; align-items: center; gap: 12px; }
+.setting input[type="range"] { width: 100%; accent-color: var(--chrome); }
+/* the header never forces sideways scrolling: tabs and actions wrap onto a second line when narrow */
+.bar { flex-wrap: wrap; gap: 8px 16px; }
+.brand { flex-wrap: wrap; min-width: 0; }
+.tabs { flex-wrap: wrap; }
+.tab, .bar .ghost { white-space: nowrap; }
+.bar-actions { flex-wrap: wrap; }
+@media (max-width: 900px) { .tab { font-size: 15px; padding: 6px 12px; } .wordmark { font-size: 21px; } }

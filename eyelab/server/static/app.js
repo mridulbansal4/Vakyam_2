@@ -11,7 +11,10 @@ const state = {
   ws: null, stream: null, inFlight: false, lastSent: 0, maxFps: 12, polly: false,
   mode: "intro", speaking: false, frames: [], camera: false, coaching: false,
   kb: null, sentenceId: 0, audio: null, spoken: false, sentenceSource: null,
+  tab: "type", quick: null, speller: null, phrases: null, scanTimer: null, closing: false,
 };
+
+function storage() { try { return window.localStorage; } catch (_) { return null; } }
 
 // The app's keyboard, with the app's own word lists
 async function loadKeyboard() {
@@ -20,13 +23,20 @@ async function loadKeyboard() {
     fetch(`/words/${n}`).then((r) => { if (!r.ok) throw new Error("word lists unavailable"); return r.text(); })));
   const dict = new VakyamKeyboard.Dictionary(words.split(/\r?\n/).filter(Boolean), bigrams.split(/\r?\n/));
   state.kb = new VakyamKeyboard.TypeSession(dict);
+  state.phrases = new VakyamFeatures.PhraseBook(storage());
+  state.quick = new VakyamFeatures.QuickChat(() => state.phrases.top(5));
+  state.speller = new VakyamFeatures.Speller((partial, previous) => dict.prefix(partial, previous));
 }
 
 function show(name) {
   state.mode = name;
   for (const s of screens) $(s).hidden = s !== name;
-  document.querySelector(".preview").hidden = !state.camera;
-  $("recalibrate").hidden = !(state.camera && name === "talk");
+  document.querySelector(".preview").hidden = !state.camera || !$("showCamera").checked;
+  $("tabs").hidden = !(name === "talk" || name === "calibrate");
+  $("recalibrate").hidden = !state.camera;
+  for (const t of document.querySelectorAll(".tab[data-tab]")) t.classList.toggle("active", name === "talk" && t.dataset.tab === state.tab);
+  $("recalibrate").classList.toggle("active", name === "calibrate");
+  if (name !== "talk") stopScan();
   $("coachBtn").hidden = !(state.camera && name === "talk");
   $("hoodToggle").hidden = !(state.camera && name === "talk");
 }
@@ -102,6 +112,7 @@ function onMessage(msg) {
   if (msg.type === "calibration") return onCalibration(msg);
   if (msg.type === "sentence") return onSentence(msg);
   if (msg.type === "coach") return onCoach(msg);
+  if (msg.type === "settings") { $("sensitivity").value = msg.sensitivity; $("sensValue").textContent = msg.sensitivity; return; }
   if (msg.type !== "frame") return;
   state.inFlight = false;
   requestAnimationFrame(pump);
@@ -120,7 +131,7 @@ function onCalibration(c) {
     $("target").classList.add("captured");
     beep(1046, 180);
     say("Calibration finished. You can type with your eyes now.");
-    setTimeout(() => { show("talk"); renderType(); }, 700);
+    setTimeout(() => { setTab(state.tab); renderType(); }, 700);
     return;
   }
   if (!c.running) return;
@@ -211,8 +222,93 @@ function speakSentence() {
   if (!kb.words.length || !state.sentenceSource) return;
   if (state.audio) new Audio(state.audio).play().catch(() => say(kb.sentence));
   else say(kb.sentence);
+  state.phrases.record(kb.sentence);
   state.spoken = true;
 }
+
+// ---------- tabs ----------
+function setTab(tab) {
+  state.tab = tab;
+  const panels = { quick: "panelQuick", type: "panelType", spell: "panelSpell", settings: "panelSettings" };
+  for (const [name, id] of Object.entries(panels)) $(id).hidden = name !== tab;
+  if (state.mode !== "talk") show("talk"); else show("talk");
+  if (tab === "spell") startScan(); else stopScan();
+  if (tab === "quick") renderQuick();
+  if (tab === "settings") $("phraseCount").textContent = `${state.phrases.top(100).length} saved`;
+}
+// Every gesture goes to whichever screen is open
+function gesture(look) {
+  if (state.tab === "type") return choose(look);
+  if (state.tab === "quick") return quickChoose(look);
+  if (state.tab === "spell" && look === "closed") return spellSelect();
+}
+
+// ---------- Quick chat ----------
+function renderQuick() {
+  const ui = state.quick.ui();
+  for (const tile of document.querySelectorAll("#panelQuick .tile")) {
+    const text = ui[tile.dataset.look] || "";
+    const main = tile.querySelector(".main");
+    main.textContent = text;
+    main.className = "main" + (text === VakyamFeatures.MY_PHRASES_EMPTY ? " note" : text.length > 14 ? " phrase" : "");
+  }
+}
+function quickChoose(look) {
+  flash(look);
+  beep(look === "closed" ? 520 : 880, 90);
+  const out = state.quick.handle(look);
+  if (out && out.speak) { say(out.speak); state.phrases.record(out.speak); }
+  renderQuick();
+}
+
+// ---------- Spell ----------
+function renderSpell() {
+  const sp = state.speller;
+  const spelled = $("spelled");
+  spelled.innerHTML = "";
+  if (sp.text) spelled.append(document.createTextNode(sp.text));
+  else { const ph = document.createElement("span"); ph.className = "placeholder"; ph.textContent = "Start spelling…"; spelled.append(ph); }
+  const caret = document.createElement("span"); caret.className = "caret"; spelled.append(caret);
+  const keys = $("spellKeys");
+  keys.innerHTML = "";
+  sp.rows().forEach((row, r) => {
+    const div = document.createElement("div");
+    div.className = "krow" + (sp.tier !== "paused" && r === sp.row ? " active" : "");
+    row.items.forEach((item, c) => {
+      const b = document.createElement("button");
+      b.className = `k ${item.type}` + (sp.tier === "column" && r === sp.row && c === sp.col ? " active" : "");
+      b.dataset.id = item.id;
+      b.textContent = item.label;
+      b.addEventListener("click", () => { const out = sp.activate(item); if (out) spellSpeak(out.speak); renderSpell(); });
+      div.append(b);
+    });
+    keys.append(div);
+  });
+  $("spellState").textContent = sp.tier === "row" ? "Choosing a row: blink when your row is lit"
+    : sp.tier === "column" ? "Choosing a key: blink when your key is lit" : "Paused: blink (or press Space) to start";
+}
+function startScan() {
+  stopScan();
+  state.speller.start();
+  state.scanTimer = setInterval(() => { state.speller.tick(); renderSpell(); }, VakyamFeatures.SCAN_INTERVAL_MS);
+  renderSpell();
+}
+function stopScan() {
+  if (state.scanTimer) clearInterval(state.scanTimer);
+  state.scanTimer = null;
+  if (state.speller) state.speller.stop();
+}
+function spellSelect() {
+  if (!state.scanTimer) startScan();
+  beep(880, 90);
+  const out = state.speller.select();
+  if (out && out.speak) spellSpeak(out.speak);
+  // restart the interval so the newly lit row or key gets a full turn
+  clearInterval(state.scanTimer);
+  state.scanTimer = setInterval(() => { state.speller.tick(); renderSpell(); }, VakyamFeatures.SCAN_INTERVAL_MS);
+  renderSpell();
+}
+function spellSpeak(text) { say(text); state.phrases.record(text); }
 function setQuestion(text) {
   if (!state.kb) return;
   state.kb.setQuestion(text);
@@ -236,7 +332,14 @@ function onTalkFrame(msg) {
   if (!msg.face) setStatus("Face not found. Look at the camera.", "warn");
   else if (msg.issue_text) setStatus(msg.issue_text, "warn");
   else setStatus("", "hint");
-  if (msg.selected) choose(msg.selected);
+  if (state.tab === "spell") {
+    const closing = holding.look === "closed" && holding.progress > 0;
+    if (closing && !state.closing) state.speller.captureIntent();   // remember what was lit as the eyes closed
+    state.closing = closing;
+    $("spellEyes").textContent = closing ? "Eyes closed" : "Eyes open";
+    $("spellHold").style.width = `${Math.round(100 * (holding.look === "closed" ? holding.progress : 0))}%`;
+  }
+  if (msg.selected) gesture(msg.selected);
 }
 
 // ---------- overlay and hood ----------
@@ -291,6 +394,7 @@ const TOOL_LABELS = {
   propose_sensitivity: "Propose setting", finish: "Finish",
 };
 function startCoach() {
+  if (state.tab !== "type") setTab("type");   // the coach points at the Type screen's six targets
   state.coaching = true;
   $("coachSteps").innerHTML = "";
   $("coachResult").hidden = true;
@@ -375,7 +479,10 @@ function showBanner(text, look) {
   $("coachBanner").hidden = false;
   for (const el of document.querySelectorAll(".tile, .preview")) el.classList.remove("target");
   if (look === "straight") document.querySelector(".preview").classList.add("target");
-  else if (look) { const t = document.querySelector(`.tile[data-look="${look}"]`); if (t) t.classList.add("target"); }
+  else if (look) {
+    const t = document.querySelector(`#talk .panel:not([hidden]) .tile[data-look="${look}"]`);
+    if (t) t.classList.add("target");
+  }
 }
 function hideBanner() {
   $("coachBanner").hidden = true;
@@ -424,7 +531,7 @@ $("start").addEventListener("click", async () => {
 $("noCamera").addEventListener("click", async () => {
   try { await loadKeyboard(); } catch (e) { return showIntroError(e.message); }
   try { await connect(); } catch (_) { /* tiles still work, with the built-in sentence */ }
-  show("talk"); renderType();
+  setTab(state.tab); renderType();
   setStatus("Tap a tile to choose it.", "hint");
 });
 $("recalibrate").addEventListener("click", startCalibration);
@@ -450,10 +557,23 @@ $("hoodToggle").addEventListener("click", (e) => {
   $("hood").hidden = !open;
   e.currentTarget.setAttribute("aria-pressed", String(open));
 });
-for (const tile of document.querySelectorAll(".tile")) tile.addEventListener("click", () => choose(tile.dataset.look));
+for (const tile of document.querySelectorAll(".tile")) {
+  tile.addEventListener("click", () => (tile.closest("#panelQuick") ? quickChoose : choose)(tile.dataset.look));
+}
 document.addEventListener("keydown", (e) => {  // keyboard stand-ins for the six gestures, handy for a caregiver
   if (state.mode !== "talk" || e.target.tagName === "INPUT") return;
+  if (e.key === " " && state.tab === "spell") { e.preventDefault(); return spellSelect(); }
   const key = { q: "left-up", e: "right-up", a: "left", d: "right", w: "up", s: "closed" }[e.key.toLowerCase()];
-  if (key) choose(key);
+  if (key) gesture(key);
+});
+for (const t of document.querySelectorAll(".tab[data-tab]")) t.addEventListener("click", () => setTab(t.dataset.tab));
+$("sensitivity").addEventListener("input", (e) => { $("sensValue").textContent = e.target.value; });
+$("sensitivity").addEventListener("change", (e) => send({ type: "settings", sensitivity: parseInt(e.target.value, 10) }));
+$("showCamera").addEventListener("change", () => show(state.mode));
+$("clearPhrases").addEventListener("click", () => {
+  try { storage()?.removeItem("vakyam.phrases"); } catch (_) { /* private mode */ }
+  state.phrases = new VakyamFeatures.PhraseBook(storage());
+  state.quick.myPhrases = () => state.phrases.top(5);
+  $("phraseCount").textContent = "0 saved";
 });
 show("intro");

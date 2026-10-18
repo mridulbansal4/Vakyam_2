@@ -227,3 +227,14 @@ def test_coach_runs_live_over_the_socket():
     assert done["outcome"] == "ready", done
     assert tools[0] == "inspect_camera" and tools[-1] == "finish"
     assert tools.count("self_test") == 6
+
+
+def test_sensitivity_can_be_tuned_live_within_bounds():
+    client, _ = make_client()
+    with client.websocket_connect("/ws") as ws:
+        ws.receive_json()
+        ws.send_text(json.dumps({"type": "settings", "sensitivity": 30}))
+        assert ws.receive_json() == {"type": "settings", "sensitivity": 30}
+        for bad in (2, 500, "40", True):
+            ws.send_text(json.dumps({"type": "settings", "sensitivity": bad}))
+            assert ws.receive_json() == {"type": "settings", "sensitivity": 30}

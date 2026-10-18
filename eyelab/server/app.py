@@ -85,7 +85,7 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
     @app.get("/")
     def index():
         html = (STATIC / "index.html").read_text(encoding="utf-8")
-        for name in ("app.css", "app.js", "keyboard.js"):
+        for name in ("app.css", "app.js", "keyboard.js", "features.js"):
             html = html.replace(f"/static/{name}\"", f"/static/{name}?v={fingerprint(name)}\"")
         return HTMLResponse(html, headers={"Cache-Control": "no-cache"})
 
@@ -223,6 +223,11 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
             if coach["task"] is not None:
                 coach["task"].cancel()
                 await send({"type": "coach", "event": "done", "outcome": "incomplete", "summary": "Stopped."})
+        elif kind == "settings":
+            value = msg.get("sensitivity")
+            if isinstance(value, int) and not isinstance(value, bool) and 5 <= value <= 100:
+                pipeline.config.sensitivity = value
+            await send({"type": "settings", "sensitivity": pipeline.config.sensitivity})
         elif kind == "ping":
             await send({"type": "pong"})
         else:

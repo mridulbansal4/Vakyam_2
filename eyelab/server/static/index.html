@@ -11,13 +11,19 @@
 <body>
   <header class="bar">
     <div class="brand">
-      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><ellipse cx="16" cy="16" rx="11" ry="6.5"/><circle cx="16" cy="16" r="4"/></svg>
-      <span>Vakyam <em>Eye Lab</em></span>
+      <span class="wordmark">Vakyam</span>
+      <nav class="tabs" id="tabs" hidden aria-label="Screens">
+        <button class="tab" data-tab="quick">Quick chat</button>
+        <button class="tab" data-tab="type">Type</button>
+        <button class="tab" data-tab="spell">Spell</button>
+        <span class="tab-sep" aria-hidden="true"></span>
+        <button class="tab" id="recalibrate">Calibrate</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </nav>
     </div>
     <div class="bar-actions">
       <button id="coachBtn" class="ghost" hidden>Calibration Coach</button>
       <button id="hoodToggle" class="ghost" aria-pressed="false" hidden>Under the hood</button>
-      <button id="recalibrate" class="ghost" hidden>Recalibrate</button>
     </div>
   </header>
 
@@ -65,6 +71,44 @@
 
   <!-- 3. Talk: the app's Type screen -->
   <main id="talk" class="screen" hidden>
+    <section class="panel" id="panelQuick" hidden>
+      <div class="quick">
+        <button class="tile qc pos-l" data-look="left-up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="16" cy="10" r="7"/></svg><span class="main"></span></button><button class="tile qc pos-c alt" data-look="up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="24" cy="8" r="7"/></svg><span class="main"></span></button><button class="tile qc pos-r" data-look="right-up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="32" cy="10" r="7"/></svg><span class="main"></span></button>
+        <button class="tile qc pos-l" data-look="left"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="13" cy="15" r="7"/></svg><span class="main"></span></button><button class="tile qc pos-c" data-look="closed"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="closed" d="M5 12 Q24 28 43 12"/><path class="closed" d="M12 19 L9 25 M24 22 L24 28 M36 19 L39 25"/></svg><span class="main"></span></button><button class="tile qc pos-r" data-look="right"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="35" cy="15" r="7"/></svg><span class="main"></span></button>
+      </div>
+    </section>
+
+    <section class="panel" id="panelSpell" hidden>
+      <div class="spell">
+        <div class="spell-text">
+          <p class="spelled" id="spelled"><span class="placeholder">Start spelling…</span><span class="caret"></span></p>
+          <p class="spell-hint"><strong id="spellEyes">Eyes open</strong><br>Close your eyes ½–1 s to select · or press <kbd>Space</kbd></p>
+          <div class="spell-progress"><span id="spellHold"></span></div>
+        </div>
+        <div class="spell-keys" id="spellKeys"></div>
+        <p class="spell-state" id="spellState">Choosing a row</p>
+      </div>
+    </section>
+
+    <section class="panel" id="panelSettings" hidden>
+      <div class="settings">
+        <h2>Settings</h2>
+        <label class="setting">
+          <span>Sensitivity <strong id="sensValue">20</strong></span>
+          <input id="sensitivity" type="range" min="10" max="60" step="1" value="20">
+          <span class="fine">Higher accepts looser matches (more selections, more mistakes). Same scale as the phone; the
+            limit is sensitivity ÷ 50 per eye.</span>
+        </label>
+        <label class="setting row"><input id="showCamera" type="checkbox" checked> Show the camera preview</label>
+        <div class="setting row"><button id="clearPhrases" class="ghost">Clear My phrases</button>
+          <span class="fine" id="phraseCount"></span></div>
+        <div class="setting"><span>Test the six gestures without eyes</span>
+          <span class="fine"><kbd>Q</kbd> top-left · <kbd>E</kbd> top-right · <kbd>A</kbd> bottom-left · <kbd>D</kbd>
+            bottom-right · <kbd>W</kbd> up · <kbd>S</kbd> blink · <kbd>Space</kbd> select in Spell</span></div>
+      </div>
+    </section>
+
+    <section class="panel" id="panelType">
     <div class="type">
       <button class="tile key tl" data-look="left-up"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="16" cy="10" r="7"/></svg><span class="main"></span><span class="rule"></span><span class="sub"></span></button>
       <div class="topbar">
@@ -86,6 +130,8 @@
       </div>
 <button class="tile key br" data-look="right"><svg class="badge" viewBox="0 0 48 30" aria-hidden="true"><path class="lid" d="M3 15 Q24 -5 45 15 Q24 35 3 15Z"/><circle class="pupil" cx="35" cy="15" r="7"/></svg><span class="main"></span><span class="rule"></span><span class="sub"></span></button>
     </div>
+
+    </section>
 
     <div class="camrow">
       <div class="preview"><video id="video" playsinline muted></video><canvas id="overlay"></canvas></div>
@@ -155,6 +201,7 @@
 
   <canvas id="grab" hidden></canvas>
   <script src="/static/keyboard.js"></script>
+  <script src="/static/features.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

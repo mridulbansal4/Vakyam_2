@@ -1,5 +1,5 @@
 """
-The rule policy: a fixed procedure over the same tools. It is the baseline the Claude policy is evaluated against,
+The rule policy: a fixed procedure over the same tools. It is the baseline the Gemini policy is evaluated against,
 and the fallback whenever the model cannot be reached.
 """
 

@@ -2,7 +2,7 @@
 Evaluate the Calibration Coach on simulated faults.
 
     python coach_eval.py                      # rule policy, every scenario
-    python coach_eval.py --policy claude      # Claude on Bedrock (falls back to rules if unreachable)
+    python coach_eval.py --policy gemini      # Gemini, key from GEMINI_API_KEY (falls back to rules without one)
     python coach_eval.py --scenario weak_up dark_room
 
 Each run: calibrate a drawn face under the scenario's conditions, inject the fault, run the coach, then measure the
@@ -23,27 +23,30 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from coach.claude import ClaudePolicy  # noqa: E402
+from coach.gemini import GeminiPolicy  # noqa: E402
 from coach.rules import RulePolicy  # noqa: E402
 from coach.runner import CoachRunner  # noqa: E402
+from server.llm import GeminiKey, gemini_client  # noqa: E402
 from simulation.coach_env import SCENARIOS, SimEnvironment  # noqa: E402
 
 
-def make_policy(name: str, region: str, model: str):
+def make_policy(name: str, secret: str, model: str):
     if name == "rules":
         return RulePolicy(), None
+    key = GeminiKey(secret)
 
     def client():
-        from anthropic import AnthropicBedrockMantle
-        return AnthropicBedrockMantle(aws_region=region)
+        if (value := key.get()) is None:
+            raise LookupError("no Gemini API key")
+        return gemini_client(value, timeout_s=30)
 
-    return ClaudePolicy(client, model), RulePolicy()
+    return GeminiPolicy(client, model), RulePolicy()
 
 
-async def run_one(scenario, policy_name: str, region: str, model: str, seed: int) -> dict:
+async def run_one(scenario, policy_name: str, secret: str, model: str, seed: int) -> dict:
     env = SimEnvironment(scenario, seed=seed)
     env.calibrate()
-    policy, fallback = make_policy(policy_name, region, model)
+    policy, fallback = make_policy(policy_name, secret, model)
     started = time.perf_counter()
     result = await CoachRunner(env, policy, fallback).run()
     wall = time.perf_counter() - started
@@ -78,20 +81,21 @@ def markdown(rows: list[dict]) -> str:
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--policy", choices=["rules", "claude", "both"], default="rules")
+    parser.add_argument("--policy", choices=["rules", "gemini", "both"], default="rules")
     parser.add_argument("--scenario", nargs="*", help="scenario names (default: all)")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--out", default=str(pathlib.Path(__file__).resolve().parent / "eval_results" / "coach"))
-    parser.add_argument("--region", default=os.environ.get("EYELAB_BEDROCK_REGION", "us-east-1"))
-    parser.add_argument("--model", default=os.environ.get("EYELAB_BEDROCK_MODEL", "anthropic.claude-opus-5-5"))
+    parser.add_argument("--secret", default=os.environ.get("EYELAB_GEMINI_SECRET", ""),
+                        help="Secrets Manager name of the key, when GEMINI_API_KEY is not set")
+    parser.add_argument("--model", default=os.environ.get("EYELAB_GEMINI_MODEL", "gemini-3.8-flash"))
     args = parser.parse_args()
 
     scenarios = [s for s in SCENARIOS if not args.scenario or s.name in args.scenario]
-    policies = ["rules", "claude"] if args.policy == "both" else [args.policy]
+    policies = ["rules", "gemini"] if args.policy == "both" else [args.policy]
     rows = []
     for policy in policies:
         for scenario in scenarios:
-            row = await run_one(scenario, policy, args.region, args.model, args.seed)
+            row = await run_one(scenario, policy, args.secret, args.model, args.seed)
             rows.append(row)
             print(f"{row['scenario']:24s} {policy:6s} {row['outcome']:10s} truth={'works' if row['ground_truth_ok'] else 'fails':5s} "
                   f"correct={row['correct']} steps={row['steps']} {' > '.join(row['tools'])}", flush=True)

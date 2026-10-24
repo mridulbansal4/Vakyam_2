@@ -348,7 +348,7 @@ Vakyam/
 │   └── assets/screenshots/           # README screenshots, captured from the device
 ├── eyelab/                           # Eye Lab: the eye pipeline in Python + OpenCV 5 as a web service on AWS
 │   ├── eyecore/                      #   YuNet · quality gate · CLAHE · warpAffine · matchTemplate · dwell
-│   ├── server/                       #   FastAPI WebSocket service, Claude on Bedrock, Polly, web page
+│   ├── server/                       #   FastAPI WebSocket service, Gemini, Polly, web page
 │   ├── infra/                        #   AWS CDK: Fargate (Graviton) · ALB · CloudFront · CloudWatch
 │   └── tests/                        #   pytest, including a drawn face driven through every look
 ├── eval/                             # desktop OpenCV 5 checks of the vision pipeline (pinned requirements)

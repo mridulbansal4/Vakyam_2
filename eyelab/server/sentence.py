@@ -1,8 +1,8 @@
 """
-Keywords + the question asked -> one first-person sentence, with Claude on Amazon Bedrock.
+Keywords + the question asked -> one first-person sentence, with Gemini.
 
-Same task, prompt and examples as the phone's on-device Gemma (GemmaManager.promptAndExamples), and the same
-never-silent rule: whatever happens (no credentials, timeout, refusal, an echo of the keywords), the user gets a
+Same task, prompt and examples as the phone's on-device model (GemmaManager.promptAndExamples), and the same
+never-silent rule: whatever happens (no API key, timeout, a blocked answer, an echo of the keywords), the user gets a
 complete sentence from fallback_sentence().
 """
 
@@ -13,6 +13,8 @@ import re
 import time
 from dataclasses import dataclass
 from typing import Callable
+
+from .llm import GeminiKey, answer_text, blocked, failure_kind, gemini_client
 
 log = logging.getLogger("eyelab.sentence")
 
@@ -93,58 +95,40 @@ def tidy(text: str) -> str:
 @dataclass(frozen=True)
 class Sentence:
     text: str
-    source: str   # "claude" or "fallback"
+    source: str   # "gemini" or "fallback"
     ms: int
     reason: str = ""
 
 
 class SentenceService:
-    CREDENTIAL_RECHECK_S = 300
-
-    def __init__(self, region: str, model: str, timeout_s: float, client_factory: Callable | None = None):
-        self.region = region
+    def __init__(self, key: GeminiKey, model: str, timeout_s: float, client_factory: Callable | None = None):
+        self.key = key
         self.model = model
         self.timeout_s = timeout_s
-        self._client_factory = client_factory
+        self._client_factory = client_factory  # tests inject a stand-in; otherwise built from the key
         self._client = None
-        self._no_credentials_until = 0.0
-
-    def _credentials_missing(self) -> bool:
-        """True when no AWS credentials can be found, checked at most every few minutes. Without this every sentence
-        waits seconds for the SDK's credential search before falling back."""
-        if self._client_factory is not None:
-            return False  # an injected client (tests) brings its own
-        now = time.monotonic()
-        if now < self._no_credentials_until:
-            return True
-        try:
-            import botocore.session
-            missing = botocore.session.Session().get_credentials() is None
-        except Exception:  # noqa: BLE001
-            missing = True
-        if missing:
-            self._no_credentials_until = now + self.CREDENTIAL_RECHECK_S
-        return missing
 
     def warm(self) -> None:
-        """Find out early whether AWS credentials exist, so the first sentence does not wait for the search."""
-        self._credentials_missing()
+        """Read the key early (from Secrets Manager on AWS), so the first sentence does not wait for it."""
+        if self._client_factory is None:
+            self.key.get()
 
     def _get_client(self):
+        """The client, or None when there is no key."""
         if self._client is None:
             if self._client_factory is not None:
                 self._client = self._client_factory()
-            else:
-                from anthropic import AnthropicBedrockMantle
-                self._client = AnthropicBedrockMantle(aws_region=self.region)
+            elif (key := self.key.get()) is not None:
+                self._client = gemini_client(key, self.timeout_s)
         return self._client
 
-    def _messages(self, keywords: list[str], question: str) -> list[dict]:
-        messages = []
-        for user, assistant in EXAMPLES:
-            messages += [{"role": "user", "content": user}, {"role": "assistant", "content": assistant}]
-        messages.append({"role": "user", "content": f"Keywords: {', '.join(keywords)}. Context: {question}"})
-        return messages
+    @staticmethod
+    def _contents(keywords: list[str], question: str) -> list[dict]:
+        contents = []
+        for user, model in EXAMPLES:
+            contents += [{"role": "user", "parts": [{"text": user}]}, {"role": "model", "parts": [{"text": model}]}]
+        contents.append({"role": "user", "parts": [{"text": f"Keywords: {', '.join(keywords)}. Context: {question}"}]})
+        return contents
 
     def generate(self, keywords: list[str], question: str) -> Sentence:
         """Blocking; call it from a worker thread."""
@@ -155,42 +139,27 @@ class SentenceService:
 
         if not keywords:
             return done(fallback_sentence(keywords), "fallback", "no keywords")
-        if self._credentials_missing():
-            return done(fallback_sentence(keywords), "fallback", "no AWS credentials")
         try:
-            import anthropic
-            client = self._get_client().with_options(timeout=self.timeout_s, max_retries=1)
-            response = client.messages.create(
+            client = self._get_client()
+            if client is None:
+                return done(fallback_sentence(keywords), "fallback", "no Gemini API key")
+            response = client.models.generate_content(
                 model=self.model,
-                max_tokens=1024,
-                system=SYSTEM_PROMPT,
-                messages=self._messages(keywords, question[:200]),
-                output_config={"effort": "low"},  # a one-sentence rewrite: low effort keeps latency down
+                contents=self._contents(keywords, question[:200]),
+                config={
+                    "system_instruction": SYSTEM_PROMPT,
+                    "max_output_tokens": 2048,  # thinking counts towards it
+                    "thinking_config": {"thinking_level": "low"},  # a one-sentence rewrite: low keeps latency down
+                },
             )
-        except Exception as e:  # noqa: BLE001 - every failure becomes a spoken fallback, logged by kind below
-            reason = _failure_kind(e)
+        except Exception as e:  # noqa: BLE001 - every failure becomes a spoken fallback, logged by kind
+            reason = failure_kind(e)
             log.warning("sentence fallback: %s", reason)
             return done(fallback_sentence(keywords), "fallback", reason)
 
-        if response.stop_reason == "refusal":
-            return done(fallback_sentence(keywords), "fallback", "refusal")
-        text = tidy("".join(b.text for b in response.content if b.type == "text"))
+        if blocked(response):
+            return done(fallback_sentence(keywords), "fallback", "blocked")
+        text = tidy(answer_text(response))
         if not acceptable(text, keywords):
             return done(fallback_sentence(keywords), "fallback", "rejected output")
-        return done(text, "claude")
-
-
-def _failure_kind(e: Exception) -> str:
-    try:
-        import anthropic
-    except ImportError:
-        return "anthropic SDK not installed"
-    if isinstance(e, anthropic.APITimeoutError):
-        return "timeout"
-    if isinstance(e, anthropic.RateLimitError):
-        return "rate limited"
-    if isinstance(e, anthropic.APIStatusError):
-        return f"HTTP {e.status_code}"
-    if isinstance(e, anthropic.APIConnectionError):
-        return "connection error"
-    return type(e).__name__  # e.g. missing AWS credentials or region
+        return done(text, "gemini")

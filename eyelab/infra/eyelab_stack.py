@@ -2,7 +2,7 @@
 Eye Lab on AWS, with two compute options behind the same front door:
 
     browser --HTTPS/WSS--> CloudFront --HTTP + secret header--> ALB --> compute
-                                                                          |-> Amazon Bedrock (Claude)
+                                                                          |-> Gemini API (key in Secrets Manager)
                                                                           |-> Amazon Polly
                                                                           '-> CloudWatch Logs
 
@@ -21,7 +21,8 @@ import pathlib
 from aws_cdk import (CfnOutput, Duration, Fn, IgnoreMode, RemovalPolicy, Stack, aws_autoscaling as autoscaling,
                      aws_cloudfront as cloudfront, aws_cloudfront_origins as origins, aws_cloudwatch as cw,
                      aws_ec2 as ec2, aws_ecs as ecs, aws_ecs_patterns as ecs_patterns,
-                     aws_elasticloadbalancingv2 as elbv2, aws_iam as iam, aws_logs as logs, aws_s3_assets as s3_assets)
+                     aws_elasticloadbalancingv2 as elbv2, aws_iam as iam, aws_logs as logs, aws_s3_assets as s3_assets,
+                     aws_secretsmanager as secretsmanager)
 from aws_cdk.aws_ecr_assets import Platform
 from constructs import Construct
 
@@ -37,7 +38,7 @@ SERVICE_FILES = ["**", "!eyelab/requirements.txt", "!eyelab/requirements-cool.tx
 
 
 class EyeLabStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, *, bedrock_model: str, max_sessions: int,
+    def __init__(self, scope: Construct, construct_id: str, *, gemini_model: str, gemini_secret: str, max_sessions: int,
                  polly_voice: str, compute: str = "fargate", cool_ami: str | None = None,
                  cool_instance_type: str = "c8g.xlarge", **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -52,8 +53,9 @@ class EyeLabStack(Stack):
         log_group = logs.LogGroup(self, "Logs", retention=logs.RetentionDays.ONE_MONTH,
                                   removal_policy=RemovalPolicy.DESTROY)
         environment = {
-            "EYELAB_BEDROCK_REGION": self.region,
-            "EYELAB_BEDROCK_MODEL": bedrock_model,
+            "AWS_REGION": self.region,
+            "EYELAB_GEMINI_MODEL": gemini_model,
+            "EYELAB_GEMINI_SECRET": gemini_secret,  # only the name: the service reads the key at run time
             "EYELAB_POLLY": "1",
             "EYELAB_POLLY_VOICE": polly_voice,
             "EYELAB_MAX_SESSIONS": str(max_sessions),
@@ -65,8 +67,8 @@ class EyeLabStack(Stack):
         else:
             alb, compute_metrics, role = self._cool(vpc, log_group, environment, token, cool_ami, cool_instance_type)
 
-        role.add_to_principal_policy(iam.PolicyStatement(
-            sid="ClaudeOnBedrock", actions=["bedrock-mantle:CreateInference"], resources=["*"]))
+        # Created once by hand (see the README), so the key never passes through CDK or CloudFormation
+        secretsmanager.Secret.from_secret_name_v2(self, "GeminiKey", gemini_secret).grant_read(role)
         role.add_to_principal_policy(iam.PolicyStatement(
             sid="Speech", actions=["polly:SynthesizeSpeech"], resources=["*"]))
 
@@ -108,7 +110,7 @@ class EyeLabStack(Stack):
                  alarm_description="Eye Lab frames take over 150 ms at p95: users will feel lag",
                  treat_missing_data=cw.TreatMissingData.NOT_BREACHING)
         cw.Alarm(self, "SentenceFallbacks", metric=metric("SentenceFallback", "Sum"), threshold=5, evaluation_periods=1,
-                 alarm_description="Claude on Bedrock failed five times in five minutes; users get built-in sentences",
+                 alarm_description="Gemini failed five times in five minutes; users get built-in sentences",
                  treat_missing_data=cw.TreatMissingData.NOT_BREACHING)
 
         CfnOutput(self, "EyeLabUrl", value=f"https://{distribution.distribution_domain_name}")

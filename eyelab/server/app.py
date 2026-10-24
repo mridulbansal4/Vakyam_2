@@ -28,7 +28,7 @@ from starlette.concurrency import run_in_threadpool
 from eyecore import EyePipeline, PipelineConfig, __version__
 from eyecore.face import YuNetDetector
 
-from coach.claude import ClaudePolicy
+from coach.gemini import GeminiPolicy
 from coach.rules import RulePolicy
 from coach.runner import CoachRunner
 
@@ -37,6 +37,7 @@ from .debug import FrameDebugger
 from .recorder import SessionRecorder
 from .config import Settings
 from .metrics import SessionStats, emit, opencv_build
+from .llm import GeminiKey, gemini_client
 from .sentence import SentenceService, clean_keywords
 from .speech import PollySpeech
 
@@ -50,24 +51,26 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                coach_client_factory: Callable | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     detector_factory = detector_factory or (lambda: YuNetDetector(settings.model_path))
-    sentences = sentences or SentenceService(settings.bedrock_region, settings.bedrock_model,
-                                             settings.sentence_timeout_s)
+    gemini_key = GeminiKey(settings.gemini_secret, settings.aws_region)
+    sentences = sentences or SentenceService(gemini_key, settings.gemini_model, settings.sentence_timeout_s)
     speech = speech if speech is not None else (
-        PollySpeech(settings.bedrock_region, settings.polly_voice) if settings.polly_enabled else None)
+        PollySpeech(settings.aws_region, settings.polly_voice) if settings.polly_enabled else None)
 
     if coach_client_factory is None:
         def coach_client_factory():
-            from anthropic import AnthropicBedrockMantle
-            return AnthropicBedrockMantle(aws_region=settings.bedrock_region)
+            key = gemini_key.get()
+            if key is None:
+                raise LookupError("no Gemini API key")
+            return gemini_client(key, timeout_s=30)
 
     def coach_policy():
         if settings.coach_policy == "rules":
             return RulePolicy(), None
-        return (ClaudePolicy(coach_client_factory, settings.bedrock_model, effort=settings.coach_effort),
+        return (GeminiPolicy(coach_client_factory, settings.gemini_model, effort=settings.coach_effort),
                 RulePolicy())
 
     import threading
-    threading.Thread(target=sentences.warm, name="credential-check", daemon=True).start()
+    threading.Thread(target=sentences.warm, name="key-check", daemon=True).start()
 
     app = FastAPI(title="Vakyam Eye Lab", version=__version__, docs_url=None, redoc_url=None)
     app.state.active = 0

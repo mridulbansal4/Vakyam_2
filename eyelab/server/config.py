@@ -25,8 +25,9 @@ def _default_model() -> str:
 class Settings:
     model_path: str
     assets_dir: str
-    bedrock_region: str
-    bedrock_model: str
+    aws_region: str
+    gemini_model: str
+    gemini_secret: str
     sentence_timeout_s: float
     polly_enabled: bool
     polly_voice: str
@@ -44,8 +45,9 @@ class Settings:
         return cls(
             model_path=e("EYELAB_MODEL_PATH", _default_model()),
             assets_dir=e("EYELAB_ASSETS_DIR", _default_assets()),
-            bedrock_region=e("EYELAB_BEDROCK_REGION", e("AWS_REGION", "us-east-1")),
-            bedrock_model=e("EYELAB_BEDROCK_MODEL", "anthropic.claude-opus-5-5"),
+            aws_region=e("AWS_REGION", "us-east-1"),
+            gemini_model=e("EYELAB_GEMINI_MODEL", "gemini-3.8-flash"),
+            gemini_secret=e("EYELAB_GEMINI_SECRET", ""),  # Secrets Manager name; GEMINI_API_KEY wins when set
             sentence_timeout_s=float(e("EYELAB_SENTENCE_TIMEOUT_S", "8")),
             polly_enabled=e("EYELAB_POLLY", "0") == "1",
             polly_voice=e("EYELAB_POLLY_VOICE", "Joanna"),
@@ -54,6 +56,6 @@ class Settings:
             max_frame_bytes=int(e("EYELAB_MAX_FRAME_BYTES", str(200 * 1024))),
             session_idle_s=float(e("EYELAB_SESSION_IDLE_S", "120")),
             debug_crops_every=int(e("EYELAB_DEBUG_CROPS_EVERY", "3")),
-            coach_policy=e("EYELAB_COACH_POLICY", "claude"),
+            coach_policy=e("EYELAB_COACH_POLICY", "gemini"),
             coach_effort=e("EYELAB_COACH_EFFORT", "medium"),
         )

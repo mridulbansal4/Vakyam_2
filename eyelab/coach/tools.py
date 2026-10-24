@@ -1,5 +1,5 @@
 """
-The coach's tools: Anthropic tool definitions and one executor shared by every policy.
+The coach's tools: tool definitions (JSON Schema) and one executor shared by every policy.
 
 Inputs are validated here, not trusted: an unknown look, a long message or an out-of-range setting comes back as an
 error result for the policy to correct, and a settings change never happens without the caregiver's approval.

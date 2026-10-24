@@ -1,4 +1,4 @@
-"""The Eye Lab service end to end over its WebSocket, with a drawn face and a stand-in for Claude."""
+"""The Eye Lab service end to end over its WebSocket, with a drawn face and a stand-in for Gemini."""
 
 import io
 import json
@@ -13,26 +13,27 @@ from eyecore.looks import CALIBRATION_ORDER, Look
 from server.app import create_app
 from server.config import Settings
 from server.metrics import SessionStats
+from server.llm import GeminiKey
 from server.sentence import SentenceService, acceptable, clean_keywords, fallback_sentence
 from simulation.face import FakeDetector, render
 
 
-class FakeClaude:
-    """Answers like the Messages API; records what it was sent."""
+class FakeGemini:
+    """Answers like generate_content; records what it was sent."""
 
-    def __init__(self, text="I would like some cold water, please.", stop_reason="end_turn", error=None):
-        self.text, self.stop_reason, self.error, self.calls = text, stop_reason, error, []
-        self.messages = self
+    def __init__(self, text="I would like some cold water, please.", finish_reason="STOP", block_reason=None,
+                 error=None):
+        self.text, self.finish_reason, self.block_reason, self.error, self.calls = (
+            text, finish_reason, block_reason, error, [])
+        self.models = self
 
-    def with_options(self, **options):
-        self.options = options
-        return self
-
-    def create(self, **kwargs):
+    def generate_content(self, **kwargs):
         self.calls.append(kwargs)
         if self.error:
             raise self.error
-        return SimpleNamespace(stop_reason=self.stop_reason, content=[SimpleNamespace(type="text", text=self.text)])
+        content = SimpleNamespace(role="model", parts=[SimpleNamespace(text=self.text, thought=False)])
+        return SimpleNamespace(prompt_feedback=SimpleNamespace(block_reason=self.block_reason),
+                               candidates=[SimpleNamespace(finish_reason=self.finish_reason, content=content)])
 
 
 def settings(**overrides):
@@ -46,9 +47,9 @@ def jpeg(look, seed):
     return data.tobytes(), face
 
 
-def make_client(claude=None, **overrides):
+def make_client(gemini=None, **overrides):
     detector = FakeDetector()
-    sentences = SentenceService("us-east-1", "anthropic.claude-opus-5-5", 5, client_factory=lambda: claude or FakeClaude())
+    sentences = SentenceService(GeminiKey(), "gemini-3.8-flash", 5, client_factory=lambda: gemini or FakeGemini())
     app = create_app(settings(**overrides), detector_factory=lambda: detector, sentences=sentences, speech=None)
     return TestClient(app), detector
 
@@ -100,33 +101,71 @@ def test_calibrate_then_select_a_look_over_the_socket():
         assert msg["look"]["name"] == "right-up" and msg["face"] is not None
 
 
-def test_sentence_comes_from_claude_with_the_question_as_context():
-    claude = FakeClaude()
-    client, _ = make_client(claude)
+def test_sentence_comes_from_gemini_with_the_question_as_context():
+    gemini = FakeGemini()
+    client, _ = make_client(gemini)
     with client.websocket_connect("/ws") as ws:
         ws.receive_json()
         ws.send_text(json.dumps({"type": "sentence", "id": 7, "keywords": ["water", "cold"],
                                  "question": "What would you like?"}))
         reply = ws.receive_json()
-    assert reply == {"type": "sentence", "text": "I would like some cold water, please.", "source": "claude",
+    assert reply == {"type": "sentence", "text": "I would like some cold water, please.", "source": "gemini",
                      "ms": reply["ms"], "id": 7}  # the id lets the page ignore a reply to an older word
-    call = claude.calls[0]
-    assert call["model"] == "anthropic.claude-opus-5-5"
-    assert call["messages"][-1]["content"] == "Keywords: water, cold. Context: What would you like?"
-    assert call["output_config"] == {"effort": "low"}
+    call = gemini.calls[0]
+    assert call["model"] == "gemini-3.8-flash"
+    assert call["contents"][-1] == {"role": "user",
+                                    "parts": [{"text": "Keywords: water, cold. Context: What would you like?"}]}
+    assert call["contents"][1]["role"] == "model"  # the few-shot answers are the model's turns
+    assert call["config"]["thinking_config"] == {"thinking_level": "low"}
 
 
-@pytest.mark.parametrize("claude,reason", [
-    (FakeClaude(error=RuntimeError("no credentials")), "RuntimeError"),
-    (FakeClaude(stop_reason="refusal"), "refusal"),
-    (FakeClaude(text="water"), "rejected output"),
-    (FakeClaude(text="water cold"), "rejected output"),
+@pytest.mark.parametrize("gemini,reason", [
+    (FakeGemini(error=RuntimeError("network down")), "RuntimeError"),
+    (FakeGemini(finish_reason="SAFETY"), "blocked"),
+    (FakeGemini(block_reason="OTHER"), "blocked"),
+    (FakeGemini(text="water"), "rejected output"),
+    (FakeGemini(text="water cold"), "rejected output"),
 ])
-def test_the_user_is_never_left_without_a_sentence(claude, reason):
-    service = SentenceService("us-east-1", "m", 5, client_factory=lambda: claude)
+def test_the_user_is_never_left_without_a_sentence(gemini, reason):
+    service = SentenceService(GeminiKey(), "m", 5, client_factory=lambda: gemini)
     s = service.generate(["water", "cold"], "")
     assert s.source == "fallback" and s.reason == reason
     assert s.text == "I would like some water, please. I am feeling cold, please help."
+
+
+def test_no_key_means_the_built_in_sentence(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    s = SentenceService(GeminiKey(), "m", 5).generate(["water"], "")
+    assert s.source == "fallback" and s.reason == "no Gemini API key" and s.text == "I would like some water, please."
+
+
+def test_the_key_is_read_from_secrets_manager_once(monkeypatch):
+    import boto3
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    asked = []
+
+    class SecretsManager:
+        def get_secret_value(self, SecretId):
+            asked.append(SecretId)
+            return {"SecretString": " test-key \n"}
+
+    monkeypatch.setattr(boto3, "client", lambda service, region_name: SecretsManager())
+    key = GeminiKey("vakyam/gemini-api-key", "us-east-1")
+    assert key.get() == "test-key" and key.get() == "test-key" and asked == ["vakyam/gemini-api-key"]
+
+
+def test_a_missing_secret_is_not_retried_on_every_sentence(monkeypatch):
+    import boto3
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    asked = []
+
+    def no_secret(service, region_name):
+        asked.append(service)
+        raise RuntimeError("ResourceNotFoundException")
+
+    monkeypatch.setattr(boto3, "client", no_secret)
+    key = GeminiKey("vakyam/gemini-api-key")
+    assert key.get() is None and key.get() is None and asked == ["secretsmanager"]
 
 
 def test_keywords_are_cleaned():

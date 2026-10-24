@@ -12,7 +12,7 @@ flowchart LR
         S["self_test<br/>live recognition of one look"]
     end
     subgraph D["Decide"]
-        CL["Claude on Bedrock<br/>tool use"]
+        CL["Gemini<br/>function calling"]
         R["Rule policy<br/>baseline + fallback"]
     end
     subgraph A["Act"]
@@ -36,11 +36,12 @@ flowchart LR
     0.15.
   - `self_test` asks the user to hold one look for 2.5 s. It reports the recognised rate, the best-match rate, the
     per-eye error against the threshold, and what the look was confused with.
-- **Decide.** [`claude.py`](claude.py) runs a manual tool-use loop with Claude on Amazon Bedrock. The tools are
+- **Decide.** [`gemini.py`](gemini.py) runs a manual function-calling loop with Gemini. The tools are
   async and drive a live camera session, and the fallback must share the same runner, so a manual loop fits better
-  than the SDK's runner. The model writes one sentence of reasoning before each tool call, which becomes the trace.
-  The assistant turns are appended back exactly as returned. [`rules.py`](rules.py) is a fixed procedure over the
-  same tools: it is the baseline Claude is evaluated against, and it takes over mid-run if Claude fails.
+  than the SDK's automatic function calling. The model writes one sentence of reasoning before each tool call, which becomes the trace.
+  The model's turns are appended back exactly as returned, which keeps Gemini's thought signatures. [`rules.py`](rules.py)
+  is a fixed procedure over the same tools: it is the baseline Gemini is evaluated against, and it takes over mid-run
+  if Gemini fails.
 - **Act.**
   - `instruct_user` handles what the user can fix.
   - `recalibrate_look` re-records one template and keeps the others.
@@ -63,7 +64,7 @@ flowchart LR
 
 ## Failure handling and observability
 
-- **Fallback.** If Claude cannot be reached (no credentials, timeout, rate limit, HTTP error), refuses, or stops
+- **Fallback.** If Gemini cannot be reached (no API key, timeout, rate limit, HTTP error), blocks the answer, or stops
   without finishing, the rule policy continues from the same state. The trace marks the hand-over and the reason.
 - **Trace.** Every step is traced: the policy, its one-line reasoning, the tool, the input, the full OpenCV result
   and the duration. The page shows it live in the Coach panel.
@@ -135,8 +136,8 @@ Running it found four problems in the first version, each fixed and re-measured:
 
 ### Limitations
 
-- **The Claude policy has not been evaluated yet.** It needs AWS credentials and Bedrock model access:
-  `python coach_eval.py --policy both`. Its loop, append-only history, fallback and tool handling are covered by
+- **The Gemini policy has not been evaluated yet.** It needs a Gemini API key (`GEMINI_API_KEY`, or
+  `--secret vakyam/gemini-api-key` with AWS credentials): `python coach_eval.py --policy both`. Its loop, append-only history, fallback and tool handling are covered by
   tests with a scripted stand-in (`tests/test_coach.py`).
 - **The faces are drawn, and the user and caregiver are simulated**, reacting to keywords. Real users will be
   slower, misunderstand instructions and get tired. The scenarios test the decisions, not the human factors.

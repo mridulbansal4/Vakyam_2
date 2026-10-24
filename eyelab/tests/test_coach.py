@@ -1,4 +1,4 @@
-"""The Calibration Coach: tools, runner, the Claude loop (scripted), and real scenarios on the simulator."""
+"""The Calibration Coach: tools, runner, the Gemini loop (scripted), and real scenarios on the simulator."""
 
 import asyncio
 import json
@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from coach.claude import ClaudePolicy
+from coach.gemini import FUNCTIONS, GeminiPolicy
 from coach.rules import RulePolicy, camera_problem
 from coach.runner import CoachRunner
 from coach.tools import TOOLS, execute
@@ -149,68 +149,81 @@ def test_tools_after_finish_are_refused():
     assert policy.second.is_error
 
 
-# ---------- Claude policy, scripted ----------
+# ---------- Gemini policy, scripted ----------
 
-class ScriptedClaude:
-    """Stands in for Claude: chooses its next tool from the last tool result, as the real model must."""
+class ScriptedGemini:
+    """Stands in for Gemini: chooses its next tool from the last tool result, as the real model must."""
 
     def __init__(self, fail_at=None):
-        self.requests = []
-        self.messages = self
+        self.requests, self.responses = [], []
+        self.models = self
         self.fail_at = fail_at
 
-    def with_options(self, **_):
-        return self
-
-    def create(self, **kwargs):
+    def generate_content(self, **kwargs):
         self.requests.append(kwargs)
         if self.fail_at is not None and len(self.requests) == self.fail_at:
             raise TimeoutError("simulated timeout")
-        last = kwargs["messages"][-1]["content"]
-        if isinstance(last, str):
-            return self._tool("inspect_camera", {}, "Start by checking the camera.")
-        result = json.loads(last[0]["content"])
-        if result.get("issues", {}).get("TURNED_AWAY", 0) >= 0.5:
-            return self._tool("instruct_user", {"message": "Please turn your face towards the screen."},
-                              "The camera shows the head turned away.")
-        if "instructed" in result or "issues" in result:
-            return self._tool("finish", {"outcome": "ready", "summary": "Camera fixed."}, "The picture is fine now.")
-        return SimpleNamespace(stop_reason="end_turn", content=[SimpleNamespace(type="text", text="Done.")])
+        part = kwargs["contents"][-1]["parts"][0]
+        if "text" in part:
+            response = self._tool("inspect_camera", {}, "Start by checking the camera.")
+        else:
+            result = part["function_response"]["response"]
+            if result.get("issues", {}).get("TURNED_AWAY", 0) >= 0.5:
+                response = self._tool("instruct_user", {"message": "Please turn your face towards the screen."},
+                                      "The camera shows the head turned away.")
+            elif "instructed" in result or "issues" in result:
+                response = self._tool("finish", {"outcome": "ready", "summary": "Camera fixed."},
+                                      "The picture is fine now.")
+            else:
+                response = self._answer([SimpleNamespace(text="Done.", thought=False, function_call=None)])
+        self.responses.append(response)
+        return response
 
     @staticmethod
-    def _tool(name, args, text):
-        return SimpleNamespace(stop_reason="tool_use", content=[
-            SimpleNamespace(type="text", text=text),
-            SimpleNamespace(type="tool_use", id=f"toolu_{name}", name=name, input=args)])
+    def _answer(parts):
+        return SimpleNamespace(prompt_feedback=None, candidates=[
+            SimpleNamespace(finish_reason="STOP", content=SimpleNamespace(role="model", parts=parts))])
+
+    @classmethod
+    def _tool(cls, name, args, text):
+        return cls._answer([
+            SimpleNamespace(text="(thinking)", thought=True, function_call=None),
+            SimpleNamespace(text=text, thought=False, function_call=None),
+            SimpleNamespace(text=None, thought=False, function_call=SimpleNamespace(id=None, name=name, args=args))])
 
 
-def test_claude_loop_acts_on_the_opencv_result():
+def test_gemini_loop_acts_on_the_opencv_result():
     env = FakeEnv([{"face_found_rate": 1.0, "issues": {"TURNED_AWAY": 0.9}}, {"face_found_rate": 1.0, "issues": {}}])
-    claude = ScriptedClaude()
-    result = run(CoachRunner(env, ClaudePolicy(lambda: claude, "anthropic.claude-opus-5-5"), RulePolicy()).run())
+    gemini = ScriptedGemini()
+    result = run(CoachRunner(env, GeminiPolicy(lambda: gemini, "gemini-3.8-flash"), RulePolicy()).run())
     assert [s["tool"] for s in result.trace] == ["inspect_camera", "instruct_user", "finish"]
-    assert result.trace[1]["rationale"] == "The camera shows the head turned away."
-    assert result.outcome == "ready" and result.policies == ["claude"]
-    request = claude.requests[1]
-    assert request["model"] == "anthropic.claude-opus-5-5" and request["tools"] == TOOLS
-    assert request["output_config"] == {"effort": "medium"}
-    # append-only: the first assistant turn is passed back exactly as it was returned
-    assert claude.requests[2]["messages"][1]["content"] is claude.requests[1]["messages"][1]["content"]
+    assert result.trace[1]["rationale"] == "The camera shows the head turned away."  # thoughts are not rationale
+    assert result.outcome == "ready" and result.policies == ["gemini"]
+    request = gemini.requests[1]
+    assert request["model"] == "gemini-3.8-flash"
+    assert request["config"]["tools"] == [{"function_declarations": FUNCTIONS}]
+    assert [f["name"] for f in FUNCTIONS] == [t["name"] for t in TOOLS]
+    assert request["config"]["thinking_config"] == {"thinking_level": "medium"}
+    assert request["config"]["automatic_function_calling"] == {"disable": True}
+    # append-only: the model's first turn is passed back exactly as returned (it carries thought signatures)
+    assert request["contents"][1] is gemini.responses[0].candidates[0].content
+    reply = request["contents"][2]["parts"][0]["function_response"]
+    assert reply["name"] == "inspect_camera" and reply["response"]["issues"] == {"TURNED_AWAY": 0.9}
 
 
-def test_claude_failure_falls_back_to_rules_without_losing_progress():
-    claude = ScriptedClaude(fail_at=2)
-    result = run(CoachRunner(FakeEnv(), ClaudePolicy(lambda: claude, "m"), RulePolicy()).run())
-    assert result.policies == ["claude", "rules"] and result.fallback_reason == "TimeoutError"
-    assert result.outcome == "ready" and result.trace[0]["policy"] == "claude"
+def test_gemini_failure_falls_back_to_rules_without_losing_progress():
+    gemini = ScriptedGemini(fail_at=2)
+    result = run(CoachRunner(FakeEnv(), GeminiPolicy(lambda: gemini, "m"), RulePolicy()).run())
+    assert result.policies == ["gemini", "rules"] and result.fallback_reason == "model timeout"
+    assert result.outcome == "ready" and result.trace[0]["policy"] == "gemini"
 
 
 def test_no_credentials_falls_back_immediately():
     def no_client():
-        raise RuntimeError("no AWS credentials")
+        raise LookupError("no Gemini API key")
 
-    result = run(CoachRunner(FakeEnv(), ClaudePolicy(no_client, "m"), RulePolicy()).run())
-    assert result.policies == ["claude", "rules"] and "client unavailable" in result.fallback_reason
+    result = run(CoachRunner(FakeEnv(), GeminiPolicy(no_client, "m"), RulePolicy()).run())
+    assert result.policies == ["gemini", "rules"] and "client unavailable" in result.fallback_reason
 
 
 # ---------- the rule policy on real simulated scenarios ----------

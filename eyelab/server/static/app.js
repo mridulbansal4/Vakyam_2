@@ -289,7 +289,7 @@ function showFinish() {
   const s = state.sentenceSource;
   $("sentenceSource").textContent = !kb.words.length ? "Type a word first, or look right up to go back."
     : !s ? "Writing your sentence…"
-    : s.source === "claude" ? `Written by Claude on Amazon Bedrock in ${(s.ms / 1000).toFixed(1)} s · look left to speak`
+    : s.source === "gemini" ? `Written by Gemini in ${(s.ms / 1000).toFixed(1)} s · look left to speak`
     : "Built-in sentence (the language model is not available here) · look left to speak";
   $("sentence").hidden = false;
 }

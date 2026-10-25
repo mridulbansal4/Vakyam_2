@@ -8,7 +8,7 @@ const JPEG_QUALITY = 0.75;
 const $ = (id) => document.getElementById(id);
 const screens = ["intro", "calibrate", "talk"];
 const state = {
-  ws: null, stream: null, inFlight: false, lastSent: 0, maxFps: 12, polly: false,
+  ws: null, stream: null, inFlight: 0, pumpScheduled: false, lastSent: 0, maxFps: 12, polly: false,
   mode: "intro", speaking: false, frames: [], camera: false, coaching: false,
   kb: null, sentenceId: 0, audio: null, spoken: false, sentenceSource: null,
   tab: "type", quick: null, speller: null, phrases: null, scanTimer: null, closing: false,
@@ -71,7 +71,7 @@ function connect() {
     ws.binaryType = "arraybuffer";
     ws.onopen = () => { state.ws = ws; resolve(ws); };
     ws.onerror = () => reject(new Error("Could not reach the Eye Lab server."));
-    ws.onclose = () => { state.ws = null; state.inFlight = false; };
+    ws.onclose = () => { state.ws = null; state.inFlight = 0; };
     ws.onmessage = (e) => onMessage(JSON.parse(e.data));
   });
 }
@@ -85,23 +85,36 @@ async function startCamera() {
   await video.play();
   state.camera = true;
 }
+// A few frames stay in flight, so a long round trip (India to us-east-1 is about 300 ms) does not cap the frame
+// rate at one per round trip; the server handles each in about 10 ms and answers in order.
+const MAX_IN_FLIGHT = 4;
+function schedulePump() {
+  if (state.pumpScheduled) return;
+  state.pumpScheduled = true;
+  requestAnimationFrame(() => { state.pumpScheduled = false; pump(); });
+}
+function frameAnswered() {
+  state.inFlight = Math.max(0, state.inFlight - 1);
+  schedulePump();
+}
 function pump() {
   if (!state.camera || !state.ws || state.ws.readyState !== 1) return;
-  if (state.inFlight || state.speaking) return requestAnimationFrame(pump);
+  if (state.inFlight >= MAX_IN_FLIGHT || state.speaking) return schedulePump();
   const now = performance.now();
-  if (now - state.lastSent < 1000 / state.maxFps) return requestAnimationFrame(pump);
+  if (now - state.lastSent < 1000 / state.maxFps) return schedulePump();
   const video = $("video");
-  if (!video.videoWidth) return requestAnimationFrame(pump);
+  if (!video.videoWidth) return schedulePump();
   const grab = $("grab");
   grab.width = FRAME_WIDTH;
   grab.height = Math.round(FRAME_WIDTH * video.videoHeight / video.videoWidth);
   grab.getContext("2d").drawImage(video, 0, 0, grab.width, grab.height);
-  state.inFlight = true;
+  state.inFlight += 1;
   state.lastSent = now;
   grab.toBlob((blob) => {
-    if (!blob || !state.ws) { state.inFlight = false; return requestAnimationFrame(pump); }
+    if (!blob || !state.ws) return frameAnswered();
     blob.arrayBuffer().then((buf) => state.ws.send(buf));
   }, "image/jpeg", JPEG_QUALITY);
+  schedulePump();
 }
 
 // ---------- messages ----------
@@ -113,7 +126,8 @@ function onMessage(msg) {
       state.lookTest = false;
       $("calibStatus").textContent = msg.message;
     }
-    state.inFlight = false; requestAnimationFrame(pump); return;
+    if (msg.error.startsWith("frame_") || msg.error === "bad_frame") frameAnswered();
+    return;
   }
   if (msg.type === "calibration") return onCalibration(msg);
   if (msg.type === "look_test") return onLookTest(msg);
@@ -121,8 +135,7 @@ function onMessage(msg) {
   if (msg.type === "coach") return onCoach(msg);
   if (msg.type === "settings") { $("sensitivity").value = msg.sensitivity; $("sensValue").textContent = msg.sensitivity; return; }
   if (msg.type !== "frame") return;
-  state.inFlight = false;
-  requestAnimationFrame(pump);
+  frameAnswered();
   if (msg.skipped) return;
   state.frames.push(performance.now());
   if (state.frames.length > 20) state.frames.shift();
@@ -600,7 +613,7 @@ $("start").addEventListener("click", async () => {
     await startCamera();
     await connect();
     startCalibration();
-    requestAnimationFrame(pump);
+    schedulePump();
   } catch (e) {
     showIntroError(e && e.name === "NotAllowedError"
       ? "Camera access was refused. Allow the camera, or use the tiles instead."

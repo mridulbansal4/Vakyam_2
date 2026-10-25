@@ -44,6 +44,7 @@ from .speech import PollySpeech
 log = logging.getLogger("eyelab")
 STATIC = pathlib.Path(__file__).resolve().parent / "static"
 CLOSE_TRY_LATER = 1013
+FRAME_BURST = 6  # frames a client may send back to back; the browser keeps at most 4 in flight
 
 
 def create_app(settings: Settings | None = None, detector_factory: Callable | None = None,
@@ -130,10 +131,12 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
         app.state.sessions_started = getattr(app.state, "sessions_started", 0) + 1
         debugger = FrameDebugger(app.state.sessions_started)
         recorder = SessionRecorder(app.state.sessions_started)
-        # The browser paces itself at max_fps; network and timer jitter can bunch two frames together, so the
-        # server only refuses bursts above twice that rate.
-        min_gap = 0.5 / settings.max_fps
-        last_frame = 0.0
+        # The browser paces itself at max_fps and keeps a few frames in flight, so on a long network path frames
+        # can arrive bunched together. A token bucket lets such a bunch through and only refuses a client that
+        # sends faster than twice max_fps on average.
+        refill_per_s = 2.0 * settings.max_fps
+        tokens = float(FRAME_BURST)
+        last_frame = time.monotonic()
         try:
             await send({"type": "hello", "version": __version__, "opencv": cv2.__version__})
             while True:
@@ -146,10 +149,12 @@ def create_app(settings: Settings | None = None, detector_factory: Callable | No
                     if len(data) > settings.max_frame_bytes:
                         await send({"type": "error", "error": "frame_too_large"})
                         continue
-                    if now - last_frame < min_gap:  # the client paces itself; this guards against one that doesn't
+                    tokens = min(float(FRAME_BURST), tokens + (now - last_frame) * refill_per_s)
+                    last_frame = now
+                    if tokens < 1.0:  # the client paces itself; this guards against one that doesn't
                         await send({"type": "frame", "skipped": True})
                         continue
-                    last_frame = now
+                    tokens -= 1.0
                     image = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)
                     if image is None:
                         await send({"type": "error", "error": "bad_frame"})

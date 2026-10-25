@@ -12,6 +12,13 @@ Eye Lab on AWS, with two compute options behind the same front door:
 
 CloudFront gives the page HTTPS, which browsers require before they allow the webcam, and carries the WebSocket.
 The ALB answers 403 to anything that did not come through CloudFront.
+
+A third option skips CloudFront and the ALB, for a domain that can only point at a fixed IP (such as DuckDNS):
+
+    browser --HTTPS/WSS--> Elastic IP --> one EC2 Graviton instance: Caddy (Let's Encrypt) --> the same container
+
+    compute=ec2                needs -c domain=... and -c eip_allocation=eipalloc-... (allocated beforehand, so the
+                               domain can point at it before the first deploy); the cheapest way to keep it running
 """
 
 from __future__ import annotations
@@ -19,10 +26,12 @@ from __future__ import annotations
 import pathlib
 
 from aws_cdk import (CfnOutput, Duration, Fn, IgnoreMode, RemovalPolicy, Stack, aws_autoscaling as autoscaling,
-                     aws_cloudfront as cloudfront, aws_cloudfront_origins as origins, aws_cloudwatch as cw,
+                     aws_budgets as budgets, aws_cloudfront as cloudfront, aws_cloudfront_origins as origins,
+                     aws_cloudwatch as cw,
                      aws_ec2 as ec2, aws_ecs as ecs, aws_ecs_patterns as ecs_patterns,
                      aws_elasticloadbalancingv2 as elbv2, aws_iam as iam, aws_logs as logs, aws_s3_assets as s3_assets,
                      aws_secretsmanager as secretsmanager)
+from aws_cdk import aws_ecr_assets as ecr_assets
 from aws_cdk.aws_ecr_assets import Platform
 from constructs import Construct
 
@@ -40,12 +49,17 @@ SERVICE_FILES = ["**", "!eyelab/requirements.txt", "!eyelab/requirements-cool.tx
 class EyeLabStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, *, gemini_model: str, gemini_secret: str, max_sessions: int,
                  polly_voice: str, compute: str = "fargate", cool_ami: str | None = None,
-                 cool_instance_type: str = "c8g.xlarge", **kwargs) -> None:
+                 cool_instance_type: str = "c8g.xlarge", task_cpu: int = 512, task_memory: int = 1024,
+                 max_tasks: int = 1, budget_usd: int = 30, budget_email: str | None = None,
+                 domain: str | None = None, eip_allocation: str | None = None, ec2_instance_type: str = "t4g.small",
+                 **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
-        if compute not in ("fargate", "cool"):
-            raise ValueError("compute must be 'fargate' or 'cool'")
+        if compute not in ("fargate", "cool", "ec2"):
+            raise ValueError("compute must be 'fargate', 'cool' or 'ec2'")
         if compute == "cool" and not cool_ami:
             raise ValueError("compute=cool needs -c cool_ami=ami-... (the COOL Graviton4 AMI after subscribing)")
+        if compute == "ec2" and not (domain and eip_allocation):
+            raise ValueError("compute=ec2 needs -c domain=... and -c eip_allocation=eipalloc-...")
 
         # Public subnets only: compute reaches AWS APIs directly, so there is no NAT bill.
         vpc = ec2.Vpc(self, "Vpc", max_azs=2, nat_gateways=0, subnet_configuration=[
@@ -63,28 +77,37 @@ class EyeLabStack(Stack):
         token = Fn.select(2, Fn.split("/", self.stack_id))  # CloudFront sends it; the ALB requires it
 
         if compute == "fargate":
-            alb, compute_metrics, role = self._fargate(vpc, log_group, environment, token)
+            alb, compute_metrics, role = self._fargate(vpc, log_group, environment, token, task_cpu, task_memory,
+                                                       max_tasks)
+        elif compute == "cool":
+            alb, compute_metrics, role = self._cool(vpc, log_group, environment, token, cool_ami, cool_instance_type,
+                                                    max_tasks)
         else:
-            alb, compute_metrics, role = self._cool(vpc, log_group, environment, token, cool_ami, cool_instance_type)
+            alb = None
+            compute_metrics, role = self._ec2(vpc, log_group, environment, ec2_instance_type, domain, eip_allocation)
 
         # Created once by hand (see the README), so the key never passes through CDK or CloudFormation
         secretsmanager.Secret.from_secret_name_v2(self, "GeminiKey", gemini_secret).grant_read(role)
         role.add_to_principal_policy(iam.PolicyStatement(
             sid="Speech", actions=["polly:SynthesizeSpeech"], resources=["*"]))
 
-        distribution = cloudfront.Distribution(
-            self, "Cdn", comment=f"Vakyam Eye Lab ({compute})",
-            default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.LoadBalancerV2Origin(
-                    alb, protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-                    custom_headers={ORIGIN_HEADER: token}, read_timeout=Duration.seconds(60)),
-                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-                allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
-                cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
-                origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,  # forwards the WebSocket upgrade
-                response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
-            ),
-        )
+        if alb is not None:
+            distribution = cloudfront.Distribution(
+                self, "Cdn", comment=f"Vakyam Eye Lab ({compute})",
+                default_behavior=cloudfront.BehaviorOptions(
+                    origin=origins.LoadBalancerV2Origin(
+                        alb, protocol_policy=cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+                        custom_headers={ORIGIN_HEADER: token}, read_timeout=Duration.seconds(60)),
+                    viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                    allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+                    cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+                    origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER,  # forwards the WebSocket upgrade
+                    response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+                ),
+            )
+            url = f"https://{distribution.distribution_domain_name}"
+        else:
+            url = f"https://{domain}"
 
         # Observability: the service's own EMF metrics next to the platform's
         def metric(name: str, stat: str = "Average") -> cw.Metric:
@@ -113,18 +136,35 @@ class EyeLabStack(Stack):
                  alarm_description="Gemini failed five times in five minutes; users get built-in sentences",
                  treat_missing_data=cw.TreatMissingData.NOT_BREACHING)
 
-        CfnOutput(self, "EyeLabUrl", value=f"https://{distribution.distribution_domain_name}")
+        # Cost guard: emails at a third, two thirds and 90% of the budget, and when the forecast passes it. A quarterly
+        # budget covers the whole competition (build in October, judging into November) in one running total.
+        if budget_email:
+            subscriber = [budgets.CfnBudget.SubscriberProperty(subscription_type="EMAIL", address=budget_email)]
+            budgets.CfnBudget(self, "Budget", budget=budgets.CfnBudget.BudgetDataProperty(
+                budget_name=f"{construct_id}-budget", budget_type="COST", time_unit="QUARTERLY",
+                budget_limit=budgets.CfnBudget.SpendProperty(amount=budget_usd, unit="USD")),
+                notifications_with_subscribers=[
+                    budgets.CfnBudget.NotificationWithSubscribersProperty(
+                        notification=budgets.CfnBudget.NotificationProperty(
+                            notification_type=kind, comparison_operator="GREATER_THAN", threshold=percent,
+                            threshold_type="PERCENTAGE"),
+                        subscribers=subscriber)
+                    for kind, percent in (("ACTUAL", 33), ("ACTUAL", 67), ("ACTUAL", 90), ("FORECASTED", 100))])
+
+        CfnOutput(self, "EyeLabUrl", value=url)
         CfnOutput(self, "Compute", value=compute)
         CfnOutput(self, "DashboardName", value=dashboard.dashboard_name)
         CfnOutput(self, "LogGroupName", value=log_group.log_group_name)
 
     # ---------- compute: Fargate (stock OpenCV 5 in a container) ----------
-    def _fargate(self, vpc, log_group, environment, token):
-        cluster = ecs.Cluster(self, "Cluster", vpc=vpc, container_insights_v2=ecs.ContainerInsights.ENABLED)
+    def _fargate(self, vpc, log_group, environment, token, task_cpu, task_memory, max_tasks):
+        # Container Insights is off: its per-task metrics cost more than this demo's budget allows, and the
+        # dashboard already has the service's CPU and memory from the standard ECS metrics.
+        cluster = ecs.Cluster(self, "Cluster", vpc=vpc, container_insights_v2=ecs.ContainerInsights.DISABLED)
         image = ecs.ContainerImage.from_asset(str(REPO_ROOT), file="eyelab/Dockerfile", platform=Platform.LINUX_ARM64,
                                               ignore_mode=IgnoreMode.DOCKER, exclude=SERVICE_FILES)
         service = ecs_patterns.ApplicationLoadBalancedFargateService(
-            self, "Service", cluster=cluster, cpu=1024, memory_limit_mib=2048, desired_count=1,
+            self, "Service", cluster=cluster, cpu=task_cpu, memory_limit_mib=task_memory, desired_count=1,
             public_load_balancer=True, assign_public_ip=True,
             task_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             runtime_platform=ecs.RuntimePlatform(cpu_architecture=ecs.CpuArchitecture.ARM64,
@@ -146,15 +186,70 @@ class EyeLabStack(Stack):
             "Type": "fixed-response",
             "FixedResponseConfig": {"StatusCode": "403", "ContentType": "text/plain", "MessageBody": "Forbidden"},
         }])
-        scaling = service.service.auto_scale_task_count(min_capacity=1, max_capacity=4)
-        scaling.scale_on_cpu_utilization("Cpu", target_utilization_percent=60,
-                                         scale_in_cooldown=Duration.minutes(5), scale_out_cooldown=Duration.minutes(1))
+        if max_tasks > 1:
+            scaling = service.service.auto_scale_task_count(min_capacity=1, max_capacity=max_tasks)
+            scaling.scale_on_cpu_utilization("Cpu", target_utilization_percent=60,
+                                             scale_in_cooldown=Duration.minutes(5),
+                                             scale_out_cooldown=Duration.minutes(1))
         return (service.load_balancer,
                 [service.service.metric_cpu_utilization(), service.service.metric_memory_utilization()],
                 service.task_definition.task_role)
 
+    # ---------- compute: one EC2 Graviton instance on a fixed IP, Caddy for HTTPS ----------
+    def _ec2(self, vpc, log_group, environment, instance_type, domain, eip_allocation):
+        role = iam.Role(self, "ServerRole", assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"), managed_policies=[
+            iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore")])  # shell without SSH
+        image = ecr_assets.DockerImageAsset(self, "Image", directory=str(REPO_ROOT), file="eyelab/Dockerfile",
+                                            platform=Platform.LINUX_ARM64, ignore_mode=IgnoreMode.DOCKER,
+                                            exclude=SERVICE_FILES)
+        image.repository.grant_pull(role)
+        log_group.grant_write(role)
+
+        # Only the web ports: Caddy answers the Let's Encrypt challenge on 80 and redirects the rest to 443
+        sg = ec2.SecurityGroup(self, "Web", vpc=vpc, description="Eye Lab: HTTP and HTTPS only")
+        sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(80), "HTTP, for the certificate and the redirect")
+        sg.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(443), "HTTPS and the WebSocket")
+
+        # Host networking for both containers: the service reaches the instance role through IMDSv2 without an
+        # extra network hop, and Caddy reaches the service on localhost; the security group keeps 8080 private.
+        env_flags = " ".join(f"-e {k}={v}" for k, v in environment.items())
+        registry = f"{self.account}.dkr.ecr.{self.region}.{self.url_suffix}"
+        user_data = ec2.UserData.for_linux()
+        user_data.add_commands(
+            "set -euxo pipefail",
+            "dnf install -y docker",
+            "systemctl enable --now docker",
+            f"aws ecr get-login-password --region {self.region} | docker login --username AWS --password-stdin "
+            f"{registry}",
+            f"docker run -d --name eyelab --restart always --network host {env_flags} "
+            f"--log-driver awslogs --log-opt awslogs-region={self.region} "
+            f"--log-opt awslogs-group={log_group.log_group_name} --log-opt awslogs-stream=eyelab {image.image_uri}",
+            "mkdir -p /etc/caddy",
+            f"printf '%s {{\\n  reverse_proxy 127.0.0.1:8080\\n}}\\n' '{domain}' > /etc/caddy/Caddyfile",
+            "docker run -d --name caddy --restart always --network host -v /etc/caddy:/etc/caddy:ro "
+            "-v caddy_data:/data -v caddy_config:/config public.ecr.aws/docker/library/caddy:2.10.2",
+        )
+
+        # Standard CPU credits: once the credits run out the instance slows to its baseline instead of billing extra
+        server = ec2.Instance(
+            self, "Server", vpc=vpc, vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+            instance_type=ec2.InstanceType(instance_type),
+            machine_image=ec2.MachineImage.latest_amazon_linux2023(cpu_type=ec2.AmazonLinuxCpuType.ARM_64),
+            role=role, security_group=sg, user_data=user_data, user_data_causes_replacement=True,
+            require_imdsv2=True, credit_specification=ec2.CpuCredits.STANDARD,
+            block_devices=[ec2.BlockDevice(device_name="/dev/xvda", volume=ec2.BlockDeviceVolume.ebs(
+                12, volume_type=ec2.EbsDeviceVolumeType.GP3, encrypted=True))])
+        ec2.CfnEIPAssociation(self, "Ip", allocation_id=eip_allocation, instance_id=server.instance_id)
+
+        def instance_metric(name):
+            return cw.Metric(namespace="AWS/EC2", metric_name=name, dimensions_map={"InstanceId": server.instance_id},
+                             statistic="Average", period=Duration.minutes(5))
+
+        CfnOutput(self, "InstanceId", value=server.instance_id)
+        return [instance_metric("CPUUtilization"), instance_metric("CPUCreditBalance")], role
+
     # ---------- compute: EC2 Graviton4 from the COOL AMI ----------
-    def _cool(self, vpc, log_group, environment, token, ami_id, instance_type):
+    def _cool(self, vpc, log_group, environment, token, ami_id, instance_type, max_instances):
         role = iam.Role(self, "CoolRole", assumed_by=iam.ServicePrincipal("ec2.amazonaws.com"), managed_policies=[
             iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"),   # shell without SSH
             iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchAgentServerPolicy")])
@@ -201,10 +296,11 @@ class EyeLabStack(Stack):
             self, "CoolAsg", vpc=vpc, vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             associate_public_ip_address=True, instance_type=ec2.InstanceType(instance_type),
             machine_image=ec2.MachineImage.generic_linux({self.region: ami_id}), role=role, user_data=user_data,
-            require_imdsv2=True, min_capacity=1, max_capacity=4,
+            require_imdsv2=True, min_capacity=1, max_capacity=max_instances,
             health_checks=autoscaling.HealthChecks.with_additional_checks(
                 additional_types=[autoscaling.AdditionalHealthCheckType.ELB], grace_period=Duration.minutes(10)))
-        asg.scale_on_cpu_utilization("Cpu", target_utilization_percent=60)
+        if max_instances > 1:
+            asg.scale_on_cpu_utilization("Cpu", target_utilization_percent=60)
 
         alb = elbv2.ApplicationLoadBalancer(self, "CoolAlb", vpc=vpc, internet_facing=True,
                                             idle_timeout=Duration.seconds(300))

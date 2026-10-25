@@ -64,7 +64,7 @@ python -m venv .venv
 ```
 
 Open <http://localhost:8080>. Browsers allow the webcam on `localhost`; anywhere else the page needs HTTPS, which
-CloudFront provides in the deployed stack. Without a Gemini API key everything works except Gemini: the sentence
+the deployed stack provides (CloudFront, or Caddy in `compute=ec2`). Without a Gemini API key everything works except Gemini: the sentence
 comes from the same built-in fallback the phone uses, and the coach runs its rule policy. Without AWS credentials the
 browser's own voice reads the sentence instead of Polly.
 
@@ -118,14 +118,31 @@ the COOL AMI, inside COOL's own Python environment. An instance refuses to serve
 service log is shipped to the same CloudWatch log group. The [COOL benchmark](bench/README.md) compares COOL with
 stock OpenCV 5 on the same instance.
 
+**On one instance with a fixed IP (the live endpoint).** For a domain that can only point at an IP address, such as
+DuckDNS, allocate an Elastic IP once, point the domain at it, then deploy:
+
+```bash
+aws ec2 allocate-address --domain vpc --tag-specifications "ResourceType=elastic-ip,Tags=[{Key=project,Value=vakyam}]"
+npx aws-cdk@2.1145.0 deploy --app ".venv/Scripts/python app.py" -c compute=ec2 -c domain=eyelab.duckdns.org -c eip_allocation=eipalloc-...
+```
+
+This runs the same container on one Graviton `t4g.small` (`-c ec2_instance_type=…`) with standard CPU credits, so a
+busy instance slows down instead of billing more. Caddy on the instance gets a Let's Encrypt certificate for the
+domain and proxies HTTPS and the WebSocket to the service; only ports 80 and 443 are open. There is no load balancer
+or CloudFront, which makes it the cheapest mode to keep running (about USD 0.6 a day in `us-east-1`).
+
 The stack prints `EyeLabUrl` (the HTTPS page), `DashboardName` and `LogGroupName`. Context values
 (`-c gemini_model=…` (default `gemini-3.8-flash`), `-c gemini_secret=…` (default `vakyam/gemini-api-key`),
-`-c max_sessions=…`, `-c polly_voice=…`) override the defaults. `cdk destroy` removes it.
+`-c max_sessions=…`, `-c polly_voice=…`, `-c task_cpu=…`, `-c task_memory=…`, `-c max_tasks=…`) override the
+defaults. `-c budget_email=…` adds an AWS Budget (USD 30 a quarter, `-c budget_usd=…`) that emails at a third, two
+thirds and 90% of it, and when the forecast passes it. `cdk destroy` removes it all.
+
+The Fargate mode:
 
 | Resource | Why |
 |---|---|
 | VPC, 2 public subnets, no NAT | the task reaches AWS APIs directly; no NAT bill |
-| ECS Fargate, arm64 (Graviton), 1 vCPU / 2 GB, 1-4 tasks on CPU | one uvicorn worker per task; sessions live in memory |
+| ECS Fargate, arm64 (Graviton), 0.5 vCPU / 1 GB, 1 task (`-c max_tasks=4` scales on CPU) | one uvicorn worker per task; sessions live in memory |
 | Application Load Balancer, 300 s idle timeout | long-lived WebSockets; default action is 403 |
 | CloudFront, caching off, all viewer headers forwarded | HTTPS for the webcam; carries the WebSocket upgrade; adds the header the ALB checks |
 | Task role: read the one Gemini secret, `polly:SynthesizeSpeech` | nothing else |
@@ -153,7 +170,7 @@ The stack prints `EyeLabUrl` (the HTTPS page), `DashboardName` and `LogGroupName
 | `GEMINI_API_KEY` | unset | the key itself; for running locally |
 | `EYELAB_GEMINI_SECRET` | unset | Secrets Manager name of the key, used when `GEMINI_API_KEY` is unset (set by the stack) |
 | `AWS_REGION` | `us-east-1` | for Secrets Manager and Polly |
-| `EYELAB_SENTENCE_TIMEOUT_S` | `8` | then the fallback sentence |
+| `EYELAB_SENTENCE_TIMEOUT_S` | `10` | then the fallback sentence (Gemini refuses deadlines under 10 s) |
 | `EYELAB_POLLY`, `EYELAB_POLLY_VOICE` | `0`, `Joanna` | `1` in the AWS stack |
 | `EYELAB_MAX_SESSIONS`, `EYELAB_MAX_FPS`, `EYELAB_MAX_FRAME_BYTES` | `20`, `15`, `204800` | |
 | `EYELAB_SESSION_IDLE_S` | `120` | |

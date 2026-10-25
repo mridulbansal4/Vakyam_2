@@ -1,0 +1,2949 @@
+[
+ {
+  "scenario": "clean",
+  "description": "Nothing wrong: the coach should confirm and finish quickly.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 9,
+  "simulated_seconds": 52.5,
+  "wall_seconds": 33.0,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) were tested and recognised with a 100% success rate. The system is ready for communication.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "Calibration has just finished, so I will inspect the camera image to check lighting and framing.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 4282.2,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.41
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera picture is clear and well-centered, so I will now compare the calibrated eye templates.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The template pairs are well separated, so I will now self-test the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The left look passed reliably, so I will now test the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.7
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The right look passed reliably, so I will now test the up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.221,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.47
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The up look passed reliably, so I will now test the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.44
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The left-up look passed reliably, so I will now test the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.3
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The right-up look passed reliably, so I will now test the closed look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.666,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.48
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "All choosable looks were recognised with a perfect success rate, so I am concluding the coaching session as ready.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) were tested and recognised with a 100% success rate. The system is ready for communication."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) were tested and recognised with a 100% success rate. The system is ready for communication."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "weak_up",
+  "description": "While calibrating 'up' the user only glanced up a little, so up and straight are look-alikes.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 11,
+  "simulated_seconds": 53.7,
+  "wall_seconds": 39.3,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 1,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are distinct and recognised reliably with high accuracy. Vakyam is ready for use.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "recalibrate_look",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "Calibration has just completed, so I am inspecting the camera to check image quality and face positioning.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 4282.2,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.94
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera feed is clear and well-positioned, so I will now compare the calibrated templates to check for potential confusion.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.1234
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5871
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5893
+      }
+     ],
+     "confusable": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.1234
+      }
+     ],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The template check showed 'up' is too close to 'straight', so I will recalibrate 'up' with an instruction to look higher.",
+    "tool": "recalibrate_look",
+    "input": {
+     "instruction": "Please look further up, at the very top edge of the screen.",
+     "look": "up"
+    },
+    "result": {
+     "captured": true,
+     "status": "captured",
+     "closest_pairs_with_this_look": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2521
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5345
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5369
+      }
+     ],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.45
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The look 'up' was captured cleanly with safe template distances, so I am checking all templates again to be certain.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2521
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5345
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5369
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The templates are well separated, so I will now test how reliably the look 'left' is recognised.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.5
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The look 'left' passed reliably with a perfect recognition rate, so I will now test 'right'.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.53
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The look 'right' passed reliably, so I will now test 'up'.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.221,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.55
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The look 'up' passed reliably, so I will now test 'left-up'.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.55
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The look 'left-up' passed reliably, so I will now test 'right-up'.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.255,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.64
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "The look 'right-up' passed reliably, so I will now test 'closed'.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.664,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.58
+   },
+   {
+    "step": 11,
+    "policy": "gemini",
+    "rationale": "All choosable looks passed self-testing with 100% recognition, so I am finishing the coaching session.",
+    "tool": "finish",
+    "input": {
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are distinct and recognised reliably with high accuracy. Vakyam is ready for use.",
+     "outcome": "ready"
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are distinct and recognised reliably with high accuracy. Vakyam is ready for use."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "turned_away",
+  "description": "The user has turned their head well away from the screen.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 58.5,
+  "wall_seconds": 39.1,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "Face orientation was centered, all calibrated templates are distinct, and every choosable look (left, right, up, left-up, right-up, closed) passed self-testing with 100% recognition rate. The system is ready for communication.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "instruct_user",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "The calibration has finished, so I will inspect the camera image to verify face position and lighting.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 4282.2,
+     "yaw_deg": -41.2,
+     "pitch_deg": 3.6,
+     "issues": {
+      "TURNED_AWAY": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.77
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera report shows your head is turned away at minus 41 degrees, so I will ask you to face the screen.",
+    "tool": "instruct_user",
+    "input": {
+     "message": "Please turn your face gently toward the center of the screen.",
+     "wait_seconds": 4
+    },
+    "result": {
+     "instructed": "Please turn your face gently toward the center of the screen.",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4281.5,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 2.44
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The camera alignment is now clear with no issues, so I will check the distinctness of the calibrated templates.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.02
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "All template pairs are well above the confusable threshold, so I will now test recognition of the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.14
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The left look passed with a full recognition rate, so I will now test the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.33
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The right look passed with a full recognition rate, so I will test the up look next.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.221,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.39
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The up look passed reliably, so I will now test the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.47
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The left-up look passed reliably, so I will now test the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.41
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The right-up look passed reliably, so I will test the closed look next.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.25
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "Every choosable look achieved reliable recognition during self-testing, so I will now complete the coaching session.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Face orientation was centered, all calibrated templates are distinct, and every choosable look (left, right, up, left-up, right-up, closed) passed self-testing with 100% recognition rate. The system is ready for communication."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Face orientation was centered, all calibrated templates are distinct, and every choosable look (left, right, up, left-up, right-up, closed) passed self-testing with 100% recognition rate. The system is ready for communication."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "too_far",
+  "description": "The user has slumped back, far from the camera.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 58.5,
+  "wall_seconds": 43.0,
+  "approvals_requested": 0,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are recognised reliably with high accuracy. Calibration is complete and ready for use.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "instruct_user",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "We are starting the coaching session by checking camera image quality and face position.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 80.0,
+     "face_brightness": 125.9,
+     "frame_brightness": 71.0,
+     "sharpness": 4456.7,
+     "yaw_deg": 0.0,
+     "pitch_deg": 2.5,
+     "issues": {
+      "TOO_FAR": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.84
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera shows you are a bit too far, so I am asking you to come closer.",
+    "tool": "instruct_user",
+    "input": {
+     "message": "Please lean a little closer to the screen.",
+     "wait_seconds": 4
+    },
+    "result": {
+     "instructed": "Please lean a little closer to the screen.",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4281.5,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 2.53
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The camera view is now clear, so I am checking template distances between looks.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The templates are distinct, so I am now testing whether the left look is recognised reliably.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The left look passed, so I am now testing the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.2
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The right look passed, so I am now testing the up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.221,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The up look passed, so I am now testing the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.47
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The left-up look passed, so I am now testing the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.5
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The right-up look passed, so I am now testing the closed eyes look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.38
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "All choosable looks have passed their self tests, so I am finishing the coaching session as ready.",
+    "tool": "finish",
+    "input": {
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are recognised reliably with high accuracy. Calibration is complete and ready for use.",
+     "outcome": "ready"
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are recognised reliably with high accuracy. Calibration is complete and ready for use."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "dark_room",
+  "description": "The room light went off; the caregiver can switch it on.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 57.5,
+  "wall_seconds": 39.8,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "Lighting was adjusted by the caregiver, and all six choosable looks (left, right, up, left-up, right-up, closed) were recognized with 100% accuracy. The system is ready for communication.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "Starting the coaching session by inspecting the camera image to check lighting, framing, and head pose.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 30.6,
+     "frame_brightness": 18.9,
+     "sharpness": 971.1,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {
+      "TOO_DARK": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 0.92
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera image is too dark, so I am asking the caregiver to turn on a light or open the curtains.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The camera view is too dark; please turn on a room light or open curtains to illuminate their face."
+    },
+    "result": {
+     "answer": "done",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4279.3,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 2.23
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "With lighting resolved, I am now checking template distances between looks to detect potential confusions.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The templates show no confusable pairs, so I will now self-test the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.55
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The left look passed with a perfect recognition rate, so I will now self-test the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.45
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The right look passed reliably, so I am proceeding to self-test the up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.221,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.59
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The up look passed reliably, so I will now self-test the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.69
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The left-up look passed reliably, so I will now self-test the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.58
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The right-up look passed reliably, so I will now self-test the closed look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.61
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "All choosable looks passed self-testing with 100% recognition rates, so coaching is complete.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "Lighting was adjusted by the caregiver, and all six choosable looks (left, right, up, left-up, right-up, closed) were recognized with 100% accuracy. The system is ready for communication."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Lighting was adjusted by the caregiver, and all six choosable looks (left, right, up, left-up, right-up, closed) were recognized with 100% accuracy. The system is ready for communication."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "dim_room_unfixable",
+  "description": "The room is dim and the caregiver cannot add light, but the looks still work: the coach should test them rather than give up.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 10,
+  "simulated_seconds": 52.5,
+  "wall_seconds": 43.7,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) passed testing with 100% recognition rates. Vakyam is ready for communication.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "We need to inspect the camera to check image quality and face positioning.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 30.6,
+     "frame_brightness": 18.9,
+     "sharpness": 971.1,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {
+      "TOO_DARK": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 1.02
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera image is too dark, so we need to ask the caregiver to improve the lighting.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "Could you please turn on a light or open the curtains to brighten the user's face?"
+    },
+    "result": {
+     "answer": "cannot"
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The caregiver is unable to change the lighting, so we will check the template distinctness.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "Templates are sufficiently distinct, so we will now test the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.025,
+     "median_margin": 0.254,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.72
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The left look performed reliably, so we will test the right look next.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.024,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.77
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The right look was recognized reliably, so we will test the up look now.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.026,
+     "median_margin": 0.214,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.77
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The up look passed reliably, so we will now test the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.026,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.7
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The left-up look passed reliably, so we will now test the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.026,
+     "median_margin": 0.25,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.83
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The right-up look passed reliably, so we will now test the closed look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.139,
+     "median_margin": 0.624,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.39
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "All choosable looks were recognized reliably, so calibration coaching is complete.",
+    "tool": "finish",
+    "input": {
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) passed testing with 100% recognition rates. Vakyam is ready for communication.",
+     "outcome": "ready"
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) passed testing with 100% recognition rates. Vakyam is ready for communication."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "very_dark_unfixable",
+  "description": "The room is very dark and nobody can add light. At the set threshold several looks fail; one approved sensitivity change restores them without misreading the resting look.",
+  "policy": "gemini",
+  "outcome": "needs_help",
+  "designed_outcome": "ready",
+  "ground_truth_ok": false,
+  "correct": true,
+  "steps": 3,
+  "simulated_seconds": 32.9,
+  "wall_seconds": 36.5,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "The camera image is too dark (78% of frames underexposed) for reliable eye tracking, and the lighting cannot be adjusted right now. Please provide adequate lighting on the user's face or move the setup near a light source, then recalibrate.",
+  "ground_truth": {
+   "recognised": {
+    "left": 0.0,
+    "right": 0.03,
+    "up": 0.0,
+    "left-up": 0.0,
+    "right-up": 0.0,
+    "closed": 0.0
+   },
+   "resting_misread_rate": 0.73,
+   "ok": false
+  },
+  "tools": [
+   "inspect_camera",
+   "ask_caregiver",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "Calibration has completed, so I will inspect the camera image to check face positioning and quality.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 14.1,
+     "frame_brightness": 10.5,
+     "sharpness": 3026.9,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {
+      "TOO_DARK": 0.78
+     }
+    },
+    "is_error": false,
+    "seconds": 1.02
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera image is too dark, so I am asking the caregiver to turn on a light.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "The camera view is too dark; please turn on a light or open the curtains to illuminate the user's face."
+    },
+    "result": {
+     "answer": "cannot"
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The caregiver cannot adjust the lighting to fix the dark image, so I am ending coaching to request human assistance.",
+    "tool": "finish",
+    "input": {
+     "summary": "The camera image is too dark (78% of frames underexposed) for reliable eye tracking, and the lighting cannot be adjusted right now. Please provide adequate lighting on the user's face or move the setup near a light source, then recalibrate.",
+     "outcome": "needs_help"
+    },
+    "result": {
+     "outcome": "needs_help",
+     "summary": "The camera image is too dark (78% of frames underexposed) for reliable eye tracking, and the lighting cannot be adjusted right now. Please provide adequate lighting on the user's face or move the setup near a light source, then recalibrate."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "no_face",
+  "description": "The screen was knocked and the camera no longer sees a face; the caregiver re-aims it.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 11,
+  "simulated_seconds": 63.5,
+  "wall_seconds": 43.6,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "Camera alignment was corrected and all choosable looks (left, right, up, left-up, right-up, closed) were tested and recognised with 100% accuracy. The system is ready for communication.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "instruct_user",
+   "ask_caregiver",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "We are starting the coaching session and inspecting the camera to check picture quality.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 0.0,
+     "face_width_px": null,
+     "face_brightness": null,
+     "frame_brightness": null,
+     "sharpness": null,
+     "yaw_deg": null,
+     "pitch_deg": null,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.7
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "No face was detected on camera, so I am asking the user to face the screen.",
+    "tool": "instruct_user",
+    "input": {
+     "message": "Please face the screen and look straight ahead.",
+     "wait_seconds": 4
+    },
+    "result": {
+     "instructed": "Please face the screen and look straight ahead.",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 0.0,
+      "face_width_px": null,
+      "face_brightness": null,
+      "frame_brightness": null,
+      "sharpness": null,
+      "yaw_deg": null,
+      "pitch_deg": null,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 2.11
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "The user is still not visible on camera, so I am asking the caregiver to reposition the screen to frame the user's face.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "Please reposition the screen so the camera points directly at the user's face."
+    },
+    "result": {
+     "answer": "done",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 1.0,
+      "face_width_px": 200.0,
+      "face_brightness": 126.0,
+      "frame_brightness": 79.1,
+      "sharpness": 4284.2,
+      "yaw_deg": 0.0,
+      "pitch_deg": 1.9,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 1.53
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The camera view is now clear with the face centered, so I am checking template distinctness across all looks.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2502
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.26
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2626
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5354
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5374
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "All calibrated templates are distinct, so I am beginning self-tests starting with the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The left look passed reliably, so I am now testing the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.261,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The right look was recognised reliably, so I am moving on to test the up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.221,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.67
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The up look passed reliably, so I am now testing the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.258,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.09
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The left-up look passed reliably, so I am now testing the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.003,
+     "median_margin": 0.256,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.17
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "The right-up look was recognised reliably, so I am testing the closed eyes look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.016,
+     "median_margin": 0.665,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.2
+   },
+   {
+    "step": 11,
+    "policy": "gemini",
+    "rationale": "All choosable looks have passed self-tests with full accuracy, so I am completing the calibration coaching session.",
+    "tool": "finish",
+    "input": {
+     "summary": "Camera alignment was corrected and all choosable looks (left, right, up, left-up, right-up, closed) were tested and recognised with 100% accuracy. The system is ready for communication.",
+     "outcome": "ready"
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "Camera alignment was corrected and all choosable looks (left, right, up, left-up, right-up, closed) were tested and recognised with 100% accuracy. The system is ready for communication."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "no_face_unfixable",
+  "description": "The camera no longer sees a face and nobody can move the screen: the coach must stop and say so, not loop.",
+  "policy": "gemini",
+  "outcome": "needs_help",
+  "designed_outcome": "needs_help",
+  "ground_truth_ok": false,
+  "correct": true,
+  "steps": 4,
+  "simulated_seconds": 38.9,
+  "wall_seconds": 14.4,
+  "approvals_requested": 0,
+  "caregiver_requests": 1,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "No face was detected by the camera, and the camera position could not be adjusted. Please ensure the user is facing the screen and reposition the camera so their face is clearly in view.",
+  "ground_truth": {
+   "recognised": {
+    "left": 0.0,
+    "right": 0.0,
+    "up": 0.0,
+    "left-up": 0.0,
+    "right-up": 0.0,
+    "closed": 0.0
+   },
+   "resting_misread_rate": 1.0,
+   "ok": false
+  },
+  "tools": [
+   "inspect_camera",
+   "instruct_user",
+   "ask_caregiver",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "Calibration has just finished, so I will inspect the camera image to make sure lighting and positioning are good.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 0.0,
+     "face_width_px": null,
+     "face_brightness": null,
+     "frame_brightness": null,
+     "sharpness": null,
+     "yaw_deg": null,
+     "pitch_deg": null,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.34
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "No face was detected on the camera, so I will ask the user to face the screen.",
+    "tool": "instruct_user",
+    "input": {
+     "message": "Please face the screen and look towards the camera.",
+     "wait_seconds": 4
+    },
+    "result": {
+     "instructed": "Please face the screen and look towards the camera.",
+     "camera_after": {
+      "frames": 60,
+      "face_found_rate": 0.0,
+      "face_width_px": null,
+      "face_brightness": null,
+      "frame_brightness": null,
+      "sharpness": null,
+      "yaw_deg": null,
+      "pitch_deg": null,
+      "issues": {}
+     }
+    },
+    "is_error": false,
+    "seconds": 1.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "No face is detected after prompting the user, so I will ask the caregiver to adjust the camera and screen position.",
+    "tool": "ask_caregiver",
+    "input": {
+     "message": "Please adjust the screen or camera so the user's face is centered and clearly visible."
+    },
+    "result": {
+     "answer": "cannot"
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The caregiver is unable to adjust the camera and no face is detected, so calibration cannot proceed without assistance.",
+    "tool": "finish",
+    "input": {
+     "summary": "No face was detected by the camera, and the camera position could not be adjusted. Please ensure the user is facing the screen and reposition the camera so their face is clearly in view.",
+     "outcome": "needs_help"
+    },
+    "result": {
+     "outcome": "needs_help",
+     "summary": "No face was detected by the camera, and the camera position could not be adjusted. Please ensure the user is facing the screen and reposition the camera so their face is clearly in view."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "strict_threshold",
+  "description": "Sensitivity was set too strict for this noisy camera: closed eyes, which have little texture, are the right match but rejected. The caregiver approves a change.",
+  "policy": "gemini",
+  "outcome": "ready",
+  "designed_outcome": "ready",
+  "ground_truth_ok": true,
+  "correct": true,
+  "steps": 11,
+  "simulated_seconds": 70.1,
+  "wall_seconds": 44.1,
+  "approvals_requested": 1,
+  "caregiver_requests": 0,
+  "recalibrations": 0,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are recognised reliably with high confidence. Sensitivity was adjusted to 10 to ensure accurate closed-eye detection.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 1.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": true
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "propose_sensitivity",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "The calibration session has just begun, so I am inspecting the camera to verify the face position and lighting.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 5707.8,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.44
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera picture is clear and well-positioned, so I will now compare the calibrated eye templates to check for confusing pairs.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2556
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5329
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5386
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "Template comparisons showed no confusable looks, so I will now test recognition for the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.7
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The left look was recognised reliably, so I will now test the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.259,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The right look was recognised reliably, so I will now test the up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.218,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.84
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The up look was recognised reliably, so I will now test the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.64
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The left-up look was recognised reliably, so I will now test the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.014,
+     "median_margin": 0.255,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.5
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The right-up look was recognised reliably, so I will now test the closed look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.592,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.5
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The closed look was consistently the best match but exceeded the error threshold, so I will propose adjusting the sensitivity to allow it.",
+    "tool": "propose_sensitivity",
+    "input": {
+     "value": 10,
+     "reason": "Closed eyes match consistently with an error of 0.105, which is above the current 0.08 limit. A sensitivity of 10 raises the limit to 0.20."
+    },
+    "result": {
+     "approved": true,
+     "sensitivity": 10
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "The caregiver approved the new sensitivity, so I am re-testing the closed look to confirm recognition.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.594,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 1.59
+   },
+   {
+    "step": 11,
+    "policy": "gemini",
+    "rationale": "All choosable looks have been tested and are reliably recognised, so calibration coaching is complete.",
+    "tool": "finish",
+    "input": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are recognised reliably with high confidence. Sensitivity was adjusted to 10 to ensure accurate closed-eye detection."
+    },
+    "result": {
+     "outcome": "ready",
+     "summary": "All choosable looks (left, right, up, left-up, right-up, and closed) are recognised reliably with high confidence. Sensitivity was adjusted to 10 to ensure accurate closed-eye detection."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ },
+ {
+  "scenario": "strict_threshold_denied",
+  "description": "As above, but the caregiver declines the change.",
+  "policy": "gemini",
+  "outcome": "needs_help",
+  "designed_outcome": "needs_help",
+  "ground_truth_ok": false,
+  "correct": true,
+  "steps": 14,
+  "simulated_seconds": 104.3,
+  "wall_seconds": 64.9,
+  "approvals_requested": 1,
+  "caregiver_requests": 0,
+  "recalibrations": 2,
+  "policies_used": [
+   "gemini"
+  ],
+  "fallback_reason": null,
+  "summary": "All open eye directions (left, right, up, left-up, right-up) work reliably. The closed look is accurately matched but rejected because current sensitivity (4) requires an error below 0.08, while closed eye error is ~0.105. Please approve increasing sensitivity to 10 (error limit 0.20) in settings so closed eyes can be recognized.",
+  "ground_truth": {
+   "recognised": {
+    "left": 1.0,
+    "right": 1.0,
+    "up": 1.0,
+    "left-up": 1.0,
+    "right-up": 1.0,
+    "closed": 0.0
+   },
+   "resting_misread_rate": 0.0,
+   "ok": false
+  },
+  "tools": [
+   "inspect_camera",
+   "check_templates",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "self_test",
+   "propose_sensitivity",
+   "recalibrate_look",
+   "self_test",
+   "recalibrate_look",
+   "self_test",
+   "finish"
+  ],
+  "trace": [
+   {
+    "step": 1,
+    "policy": "gemini",
+    "rationale": "We need to check the camera feed first to ensure the user's face is clearly visible and properly lit.",
+    "tool": "inspect_camera",
+    "input": {},
+    "result": {
+     "frames": 60,
+     "face_found_rate": 1.0,
+     "face_width_px": 200.0,
+     "face_brightness": 126.0,
+     "frame_brightness": 79.1,
+     "sharpness": 5707.8,
+     "yaw_deg": 0.0,
+     "pitch_deg": 1.9,
+     "issues": {}
+    },
+    "is_error": false,
+    "seconds": 0.44
+   },
+   {
+    "step": 2,
+    "policy": "gemini",
+    "rationale": "The camera view is clear and well-positioned, so now we check if any calibrated templates are too close to each other.",
+    "tool": "check_templates",
+    "input": {},
+    "result": {
+     "calibrated": [
+      "straight",
+      "left",
+      "right",
+      "up",
+      "closed",
+      "left-up",
+      "right-up"
+     ],
+     "closest_pairs": [
+      {
+       "looks": [
+        "straight",
+        "up"
+       ],
+       "distance": 0.2556
+      },
+      {
+       "looks": [
+        "left",
+        "left-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "right",
+        "right-up"
+       ],
+       "distance": 0.2696
+      },
+      {
+       "looks": [
+        "up",
+        "right-up"
+       ],
+       "distance": 0.5329
+      },
+      {
+       "looks": [
+        "up",
+        "left-up"
+       ],
+       "distance": 0.5386
+      }
+     ],
+     "confusable": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 3,
+    "policy": "gemini",
+    "rationale": "All templates are well separated, so we will now test the recognition of the left look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left"
+    },
+    "result": {
+     "look": "left",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 4,
+    "policy": "gemini",
+    "rationale": "The left look was recognised reliably, so now we test the right look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right"
+    },
+    "result": {
+     "look": "right",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.259,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.7
+   },
+   {
+    "step": 5,
+    "policy": "gemini",
+    "rationale": "The right look performed perfectly, so we proceed to test the up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "up"
+    },
+    "result": {
+     "look": "up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.218,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.7
+   },
+   {
+    "step": 6,
+    "policy": "gemini",
+    "rationale": "The up look was recognised reliably, so now we test the left-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "left-up"
+    },
+    "result": {
+     "look": "left-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.013,
+     "median_margin": 0.257,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.7
+   },
+   {
+    "step": 7,
+    "policy": "gemini",
+    "rationale": "The left-up look was recognised reliably, so now we test the right-up look.",
+    "tool": "self_test",
+    "input": {
+     "look": "right-up"
+    },
+    "result": {
+     "look": "right-up",
+     "frames": 75,
+     "recognised_rate": 1.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.014,
+     "median_margin": 0.255,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.72
+   },
+   {
+    "step": 8,
+    "policy": "gemini",
+    "rationale": "The right-up look was recognised reliably, so now we test the closed look.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.592,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.67
+   },
+   {
+    "step": 9,
+    "policy": "gemini",
+    "rationale": "The closed look was consistently the best match but rejected due to error threshold, so we propose adjusting the sensitivity.",
+    "tool": "propose_sensitivity",
+    "input": {
+     "reason": "The closed look is consistently the best match but its template error is 0.105, which requires a sensitivity of at least 10 to be accepted.",
+     "value": 10
+    },
+    "result": {
+     "approved": false,
+     "sensitivity": 4
+    },
+    "is_error": false,
+    "seconds": 0.0
+   },
+   {
+    "step": 10,
+    "policy": "gemini",
+    "rationale": "Because the sensitivity adjustment was declined, we will recalibrate the closed look template.",
+    "tool": "recalibrate_look",
+    "input": {
+     "instruction": "Please gently close your eyes and hold them closed.",
+     "look": "closed"
+    },
+    "result": {
+     "captured": true,
+     "status": "captured",
+     "closest_pairs_with_this_look": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 3.0
+   },
+   {
+    "step": 11,
+    "policy": "gemini",
+    "rationale": "The closed look has been recalibrated, so we will self-test it again to see if it is recognised.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.108,
+     "median_margin": 0.588,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.69
+   },
+   {
+    "step": 12,
+    "policy": "gemini",
+    "rationale": "The closed look error is still above the threshold, so we will try recalibrating it once more with a clearer prompt.",
+    "tool": "recalibrate_look",
+    "input": {
+     "look": "closed",
+     "instruction": "Close your eyes fully and keep your face relaxed."
+    },
+    "result": {
+     "captured": true,
+     "status": "captured",
+     "closest_pairs_with_this_look": [],
+     "threshold": 0.15
+    },
+    "is_error": false,
+    "seconds": 2.98
+   },
+   {
+    "step": 13,
+    "policy": "gemini",
+    "rationale": "The closed look has been recorded again, so we test its recognition rate.",
+    "tool": "self_test",
+    "input": {
+     "look": "closed"
+    },
+    "result": {
+     "look": "closed",
+     "frames": 75,
+     "recognised_rate": 0.0,
+     "best_match_rate": 1.0,
+     "median_error": 0.105,
+     "median_margin": 0.588,
+     "confused_with": {}
+    },
+    "is_error": false,
+    "seconds": 0.64
+   },
+   {
+    "step": 14,
+    "policy": "gemini",
+    "rationale": "The closed look was consistently the best match but exceeded the error threshold despite recalibration, so caregiver assistance is needed.",
+    "tool": "finish",
+    "input": {
+     "summary": "All open eye directions (left, right, up, left-up, right-up) work reliably. The closed look is accurately matched but rejected because current sensitivity (4) requires an error below 0.08, while closed eye error is ~0.105. Please approve increasing sensitivity to 10 (error limit 0.20) in settings so closed eyes can be recognized.",
+     "outcome": "needs_help"
+    },
+    "result": {
+     "outcome": "needs_help",
+     "summary": "All open eye directions (left, right, up, left-up, right-up) work reliably. The closed look is accurately matched but rejected because current sensitivity (4) requires an error below 0.08, while closed eye error is ~0.105. Please approve increasing sensitivity to 10 (error limit 0.20) in settings so closed eyes can be recognized."
+    },
+    "is_error": false,
+    "seconds": 0.0
+   }
+  ]
+ }
+]

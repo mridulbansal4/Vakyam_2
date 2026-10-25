@@ -8,7 +8,7 @@ Every number in this report comes from a file in this repository, named next to 
 
 ## 1. Summary
 
-People with ALS, motor neuron disease or a stroke often lose speech and limb movement but keep control of their eyes, and dedicated eye-tracking communicators are too expensive for most families. Vakyam is for Hindi-English speaking families who own an ordinary Android phone. It has three parts: an Android app that turns six coarse eye movements into words and speaks a full sentence written by an on-device Gemma 4 E2B model, fully offline; the Eye Lab, a web endpoint on AWS Graviton that runs the same OpenCV 5 pipeline on a browser's webcam; and the Calibration Coach, an agent in the Eye Lab that uses OpenCV 5 measurements to decide how to fix a poor calibration, with a caregiver approving any setting change. In the coach evaluation the agent reached the correct outcome in **11 of 11** fault scenarios. Roll-aligned eye crops keep the error at 0.001-0.003 under a 15° head tilt, against up to 0.163 without alignment, and one Eye Lab frame takes 6.6 ms of server time on a desktop CPU. The app writes "I would like some water, please." from the single keyword "water" in 1.36 s on the phone's CPU.
+People with ALS, motor neuron disease or a stroke often lose speech and limb movement but keep control of their eyes, and dedicated eye-tracking communicators are too expensive for most families. Vakyam is for Hindi-English speaking families who own an ordinary Android phone. It has three parts: an Android app that turns six coarse eye movements into words and speaks a full sentence written by an on-device Gemma 4 E2B model, fully offline; the Eye Lab, a web endpoint on AWS Graviton that runs the same OpenCV 5 pipeline on a browser's webcam; and the Calibration Coach, an agent in the Eye Lab that uses OpenCV 5 measurements to decide how to fix a poor calibration, with a caregiver approving any setting change. In the coach evaluation the agent reached the correct outcome in **11 of 11** fault scenarios, both with Gemini deciding and with the rule-based fallback. Roll-aligned eye crops keep the error at 0.001-0.003 under a 15° head tilt, against up to 0.163 without alignment, and one Eye Lab frame takes 6.6 ms of server time on a desktop CPU. The app writes "I would like some water, please." from the single keyword "water" in 1.36 s on the phone's CPU.
 
 ## 2. Problem and users
 
@@ -132,6 +132,31 @@ Cost and security:
 
 Assistive communication devices fail at setup, not only in use, and recalibration needs a specialist who is often not in the room. The Calibration Coach does that job. It takes a user from "calibrated" to "every look is recognised reliably", or says honestly that a person needs to help. What OpenCV 5 measures decides its next tool call.
 
+Agent workflow:
+
+```mermaid
+flowchart LR
+    subgraph P["Perceive: OpenCV 5"]
+        C["inspect_camera<br/>YuNet, Laplacian, exposure, solvePnP"]
+        T["check_templates<br/>matchTemplate between looks"]
+        S["self_test<br/>live recognition of one look"]
+    end
+    subgraph D["Decide"]
+        G["Gemini<br/>function calling"]
+        R["Rule policy<br/>baseline and fallback"]
+    end
+    subgraph A["Act"]
+        I["instruct_user"]
+        RC["recalibrate_look"]
+        AC["ask_caregiver"]
+        PS["propose_sensitivity<br/>caregiver approves"]
+        F["finish<br/>ready or needs_help"]
+    end
+    P --> D --> A
+    A -- "every action returns<br/>a fresh measurement" --> P
+    G -. "unreachable, timeout,<br/>refusal" .-> R
+```
+
 Perceive. Three OpenCV 5 tools:
 
 - `inspect_camera` watches for two seconds and reports YuNet face-found rate, face size, brightness, Laplacian variance, solvePnP yaw and pitch, and the share of frames with each quality issue.
@@ -187,6 +212,29 @@ Rule policy, seed 1 (`eyelab/eval_results/coach/results.md`):
 | strict_threshold_denied | needs_help | fails | yes | 10 | 66.9 s | 1 | 0 | 0 |
 
 All 11 runs are correct, with a mean of 10.3 steps and 58 s of simulated time. The two `needs_help` runs are the right answer. In `strict_threshold_denied`, closed eyes were the best match 100% of the time but recognised 0%, with an error of 0.105 against a limit of 0.08; the coach proposed a looser threshold, the caregiver denied it, and the coach stopped with `needs_help` naming the failing look. In `strict_threshold` the caregiver approved, and the coach re-tested closed (100%) and resting (still read as resting) before finishing `ready`.
+
+Gemini policy (`gemini-3.8-flash`), seed 1, 25 October 2026 (`eyelab/eval_results/coach-gemini/results-gemini.md`). Gemini made every decision in every run; the rule fallback never took over:
+
+| Scenario | Outcome | Ground truth | Correct | Steps | Sim. time | Approvals | Caregiver | Re-records |
+|---|---|---|---|---|---|---|---|---|
+| clean | ready | works | yes | 9 | 52.5 s | 0 | 0 | 0 |
+| weak_up | ready | works | yes | 11 | 53.7 s | 0 | 0 | 1 |
+| turned_away | ready | works | yes | 10 | 58.5 s | 0 | 0 | 0 |
+| too_far | ready | works | yes | 10 | 58.5 s | 0 | 0 | 0 |
+| dark_room | ready | works | yes | 10 | 57.5 s | 0 | 1 | 0 |
+| dim_room_unfixable | ready | works | yes | 10 | 52.5 s | 0 | 1 | 0 |
+| very_dark_unfixable | needs_help | fails | yes | 3 | 32.9 s | 0 | 1 | 0 |
+| no_face | ready | works | yes | 11 | 63.5 s | 0 | 1 | 0 |
+| no_face_unfixable | needs_help | fails | yes | 4 | 38.9 s | 0 | 1 | 0 |
+| strict_threshold | ready | works | yes | 11 | 70.1 s | 1 | 0 | 0 |
+| strict_threshold_denied | needs_help | fails | yes | 14 | 104.3 s | 1 | 0 | 2 |
+
+All 11 runs are correct, with a mean of 9.4 steps and 58 s of simulated time, against 10.3 steps for the rules. The
+two policies differ where judgement is involved. In `very_dark_unfixable` Gemini stopped after asking the caregiver
+for light, and that run's ground truth confirmed the looks did fail. After the caregiver denied the looser threshold
+in `strict_threshold_denied`, Gemini tried re-recording closed eyes twice, each time measuring it again (error 0.108,
+then 0.105, limit 0.08), before finishing `needs_help`: an OpenCV measurement changed its next action each time, and
+the denied setting was never applied.
 
 The evaluation found and fixed four faults in the first version: giving up in a dim room while every look still worked, comparing two-eye error sums with a per-eye threshold, asking for six approvals in one run, and calibration stalling on a noisy camera.
 
@@ -253,7 +301,6 @@ The Android suite covers dwell, the calibration and quality gates, the OpenCV 5 
 - Per-direction accuracy and confusion matrix on real users, classic versus OpenCV 5.
 - Words per minute per input mode; the built-in test and CSV export exist.
 - Time to first sentence with and without the coach.
-- The Gemini coach policy. Its loop, fallback and tool handling are tested with a scripted stand-in (`eyelab/tests/test_coach.py`); run `python coach_eval.py --policy both` with a key.
 - Glasses glare, dark irises in low light, nystagmus or strabismus, drooping eyelids (common in ALS), and Hinglish words missing from the lexicon.
 
 ### Failure cases

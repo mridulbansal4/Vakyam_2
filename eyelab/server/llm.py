@@ -54,9 +54,13 @@ class GeminiKey:
         return value.strip()
 
 
+GEMINI_MIN_TIMEOUT_S = 10  # the API answers 400 to any request with a shorter deadline
+
+
 def gemini_client(key: str, timeout_s: float):
     from google import genai
     from google.genai import types
+    timeout_s = max(timeout_s, GEMINI_MIN_TIMEOUT_S)
     return genai.Client(api_key=key, http_options=types.HttpOptions(timeout=int(timeout_s * 1000)))
 
 

@@ -48,7 +48,7 @@ class Settings:
             aws_region=e("AWS_REGION", "us-east-1"),
             gemini_model=e("EYELAB_GEMINI_MODEL", "gemini-3.8-flash"),
             gemini_secret=e("EYELAB_GEMINI_SECRET", ""),  # Secrets Manager name; GEMINI_API_KEY wins when set
-            sentence_timeout_s=float(e("EYELAB_SENTENCE_TIMEOUT_S", "8")),
+            sentence_timeout_s=float(e("EYELAB_SENTENCE_TIMEOUT_S", "10")),  # Gemini's minimum deadline
             polly_enabled=e("EYELAB_POLLY", "0") == "1",
             polly_voice=e("EYELAB_POLLY_VOICE", "Joanna"),
             max_sessions=int(e("EYELAB_MAX_SESSIONS", "20")),
